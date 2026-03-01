@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --swiss-red: #E3000F;    /* Iconic Swiss Flag Red */
+  --swiss-dark: #111827;   /* Charcoal Premium Black */
+  --swiss-light: #F8F9FA;  /* Pure Clean Silver/White */
+}
+
+body {
+  background-color: var(--swiss-light);
+  color: var(--swiss-dark);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+.font-luxury { font-family: 'Playfair Display', serif; }
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #E3000F; border-radius: 10px; }
