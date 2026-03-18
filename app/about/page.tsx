@@ -1,42 +1,24 @@
 "use client";
-import Navbar from "@/components/Navbar";
-import { ShieldCheck, Users, Globe, Clock } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
 
-export default function About() {
+export default function AboutPage() {
   return (
-    <div className="bg-black min-h-screen text-white">
-      <Navbar theme="dark" />
-      
-      {/* Hero */}
-      <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10"/>
-         <img src="https://images.unsplash.com/photo-1548171915-e79a380a2a4b?q=80&w=2400" className="absolute inset-0 w-full h-full object-cover opacity-50"/>
-         <div className="relative z-20 text-center px-6">
-            <h1 className="text-5xl md:text-7xl font-serif italic mb-6">Our Legacy</h1>
-            <p className="text-gold-500 text-xs font-bold uppercase tracking-[0.3em]">Est. 2026</p>
-         </div>
+    <div className="min-h-screen bg-white">
+      <div className="h-[60vh] relative overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1585123334904-845d60e97b29?q=80&w=2070" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <h1 className="text-white text-7xl font-serif tracking-tighter">Our Heritage</h1>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-24 space-y-12 text-center">
-         <p className="text-xl md:text-2xl font-light leading-relaxed text-gray-300">
-            "Essential Rush wasn't born to sell watches. We were born to curate time. 
-            We believe that a timepiece isn't just an accessory; it's a custodian of your legacy."
-         </p>
-
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12">
-            {[
-               { icon: ShieldCheck, label: "Certified Authentic" },
-               { icon: Users, label: "20k+ Members" },
-               { icon: Globe, label: "Global Shipping" },
-               { icon: Clock, label: "24/7 Concierge" },
-            ].map((item, i) => (
-               <div key={i} className="flex flex-col items-center gap-4 p-6 border border-white/10 rounded-2xl hover:border-gold-500 transition-colors">
-                  <item.icon className="text-gold-500" size={32}/>
-                  <span className="text-xs font-bold uppercase tracking-widest">{item.label}</span>
-               </div>
-            ))}
-         </div>
+      <div className="max-w-3xl mx-auto py-24 px-6 text-center space-y-12">
+        <span className="text-[#D4AF37] text-xs font-bold tracking-[.4em] uppercase">Since 2026</span>
+        <h2 className="text-4xl font-serif leading-snug">Essential Rush was born from a singular obsession: the pursuit of horological perfection.</h2>
+        <p className="text-gray-500 leading-relaxed">We don't just sell watches; we secure legacies. Every timepiece that passes through our vault is scrutinized by generational masters, ensuring that when you wear an Essential Rush piece, you wear history.</p>
+        <div className="pt-12 border-t border-gray-100">
+          <Link href="/" className="text-sm font-bold border-b-2 border-black pb-1 hover:text-[#D4AF37] hover:border-[#D4AF37] transition-all">Back to Home</Link>
+        </div>
       </div>
     </div>
   );

@@ -1,25 +1,29 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { CombinedProviders } from "@/components/Providers";
-import Navbar from "@/components/Navbar";
-import ClientLogicWrapper from "@/components/ClientLogicWrapper";
+import { NextAuthProvider } from "@/components/NextAuthProvider";
+import GlobalBanner from "@/components/GlobalBanner"; // 🚨 Naya Banner Import
 
-export const metadata = {
-  title: "Essential Rush | Luxury Blue Edition",
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Essential Rush | Curators of Time",
+  description: "The ultimate horological destination.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body>
-        {/* Sabse pehle Providers aayenge taaki useCart null na ho */}
-        <CombinedProviders>
-          <Navbar />
-          {/* Ye wrapper ensure karega ki hooks Provider ke andar hain */}
-          <ClientLogicWrapper /> 
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </CombinedProviders>
+      <body className={inter.className}>
+        <NextAuthProvider>
+          {/* Yahan humne Global Banner lagaya hai */}
+          <GlobalBanner />
+          {children}
+        </NextAuthProvider>
       </body>
     </html>
   );

@@ -1,39 +1,120 @@
-export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import mongoose from "mongoose";
+import { Lead, ActivityLog } from "@/models/Enterprise";
+import { NextResponse } from "next/server";
 
-// Lead Model (Inline for Jugad)
-const leadSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: String,
-  phone: { type: String, required: true },
-  message: String,
-  interestedIn: String, // Watch name if any
-  status: { type: String, default: "New" }, // New, Contacted, Sold
-}, { timestamps: true });
+/**
+ * CRM IDENTITY CONTROLLER v4.0
+ * Manages Client Identity Verification & Acquisition Intent Tracking
+ */
 
-const Lead = mongoose.models.Lead || mongoose.model("Lead", leadSchema);
-
-// POST: Nayi Inquiry Save Karna
-export async function POST(req: NextRequest) {
-  try {
-    await connectDB();
-    const body = await req.json();
-    await Lead.create(body);
-    return NextResponse.json({ success: true, message: "Request Sent to Concierge" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
-}
-
-// GET: Admin ke liye saari leads lana
+// 1. GET: Fetch Registry Leads (Admin Node Only)
 export async function GET() {
   try {
     await connectDB();
-    const leads = await Lead.find().sort({ createdAt: -1 });
-    return NextResponse.json({ success: true, leads });
+
+    // Fetching all leads sorted by most recent interaction
+    const leads = await Lead.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json(leads);
   } catch (error: any) {
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+// 2. POST: Secure Lead Capture (Frontend Entry)
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+    const body = await req.json();
+
+    // Verification: Legal Name and Secure Line are mandatory
+    if (!body.name || !body.phone) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Identification protocols incomplete: Name and Phone required." 
+      }, { status: 400 });
+    }
+
+    const newLead = await Lead.create({
+      name: body.name,
+      phone: body.phone,
+      product: body.product || "General Vault Access",
+      status: 'New'
+    });
+
+    // Logging the acquisition intent for enterprise audit
+    await ActivityLog.create({
+      action: "CLIENT_REGISTRY_ENTRY",
+      details: `Identity verified for ${body.name}. Intent: ${body.product || 'General'}`,
+      target: "CRM_NODE"
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Identity Bonded Successfully", 
+      data: newLead 
+    }, { status: 201 });
+
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+// 3. PATCH: Status Synchronization (Admin Dashboard)
+export async function PATCH(req: Request) {
+  try {
+    await connectDB();
+    const { id, status } = await req.json();
+
+    if (!id || !status) {
+      return NextResponse.json({ success: false, error: "Node ID and Status required" }, { status: 400 });
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(
+      id,
+      { $set: { status: status } },
+      { new: true }
+    );
+
+    await ActivityLog.create({
+      action: "CLIENT_STATUS_UPDATE",
+      details: `Lead status for ${updatedLead.name} changed to ${status}.`,
+      target: "CRM_NODE"
+    });
+
+    return NextResponse.json({ success: true, data: updatedLead });
+
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+// 4. DELETE: Secure Registry Purge
+export async function DELETE(req: Request) {
+  try {
+    await connectDB();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Identification missing" }, { status: 400 });
+    }
+
+    const deleted = await Lead.findByIdAndDelete(id);
+
+    if (deleted) {
+      await ActivityLog.create({
+        action: "CLIENT_REGISTRY_PURGE",
+        details: `Registry entry for ${deleted.name} purged by admin.`,
+        target: "CRM_NODE"
+      });
+    }
+
+    return NextResponse.json({ success: true, message: "Registry entry removed" });
+
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

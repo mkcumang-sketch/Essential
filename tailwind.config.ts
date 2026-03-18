@@ -9,24 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // SwissTimeHouse Style Luxury Palette
-        swiss: {
-          cream: "#F8F6F2",  // मुख्य बैकग्राउंड
-          gold: "#C9A24D",   // बटन्स और एक्सेंट के लिए
-          dark: "#1A1A1A",   // टेक्स्ट के लिए डीप चारकोल
-          muted: "#E5E1DA",  // हल्के बॉर्डर के लिए
-        },
+        rolexGreen: "#006039",
+        rolexGold: "#a37e2c",
+        rolexBlack: "#212121",
       },
       fontFamily: {
-        // Fonts को यहाँ रजिस्टर करें
-        serif: ["var(--font-playfair)", "serif"],
-        sans: ["var(--font-inter)", "sans-serif"],
-      },
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-      },
+        serif: ['"Playfair Display"', 'serif'],
+        sans: ['"Inter"', 'sans-serif'],
+      }
     },
   },
   plugins: [],

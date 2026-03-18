@@ -1,21 +1,42 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongodb';
+import mongoose from 'mongoose';
+
+const CMSSchema = new mongoose.Schema({
+  heroSlides: { type: Array, default: [] },
+  aboutConfig: { type: Object, default: {} },
+  galleryImages: { type: Array, default: [] } // 🚨 ADDED FOR DYNAMIC GALLERY
+}, { timestamps: true });
+
+const CMS = mongoose.models.CMS || mongoose.model('CMS', CMSSchema);
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const content = await prisma.siteContent.findUnique({ where: { section: "hero" } });
-    return NextResponse.json({ success: true, data: content?.data || {} });
-  } catch (e) { return NextResponse.json({ success: false }, { status: 500 }); }
+    await connectDB();
+    let cmsData = await CMS.findOne({});
+    if (!cmsData) cmsData = await CMS.create({});
+    return NextResponse.json({ success: true, data: cmsData });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
   try {
+    await connectDB();
     const body = await req.json();
-    await prisma.siteContent.upsert({
-      where: { section: "hero" },
-      update: { data: body },
-      create: { section: "hero", data: body }
-    });
-    return NextResponse.json({ success: true });
-  } catch (e) { return NextResponse.json({ success: false }, { status: 500 }); }
+    let cmsData = await CMS.findOne({});
+    
+    if (cmsData) {
+      cmsData = await CMS.findByIdAndUpdate(cmsData._id, { $set: body }, { new: true });
+    } else {
+      cmsData = await CMS.create(body);
+    }
+    
+    return NextResponse.json({ success: true, data: cmsData });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

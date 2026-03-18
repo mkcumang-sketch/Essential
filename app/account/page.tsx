@@ -1,111 +1,130 @@
 "use client";
-import { User, Package, MapPin, LogOut } from "lucide-react";
-export const dynamic = 'force-dynamic';
-import { useState } from "react";
 
-export default function Account() {
-  const [activeTab, setActiveTab] = useState("orders");
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User, Package, Heart, Wallet, ShieldCheck, 
+  LogOut, ArrowLeft, ChevronRight, Gift, Clock 
+} from 'lucide-react';
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function CustomerDashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  if (status === "loading") return <div className="h-screen flex items-center justify-center font-black tracking-widest text-[10px] uppercase">Authenticating...</div>;
+  if (!session) {
+    router.push('/');
+    return null;
+  }
 
   return (
-    <div className="bg-[#FAFAFA] min-h-screen pt-32 pb-20">
-      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-10">
-        
-        {/* 👤 SIDEBAR NAVIGATION */}
-        <aside className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-sm shadow-sm border border-gray-100">
-            <div className="flex items-center gap-4 mb-8 border-b border-gray-100 pb-6">
-              <div className="w-12 h-12 bg-black text-white flex items-center justify-center rounded-full font-bold text-lg">AS</div>
-              <div>
-                <h3 className="font-bold uppercase text-sm">Aryan Sharma</h3>
-                <p className="text-xs text-gray-400">Elite Member</p>
-              </div>
+    <div className="min-h-screen bg-[#FAFAFA] text-[#050505] font-sans pb-20">
+      
+      {/* ♞ NAV ♞ */}
+      <nav className="py-6 px-8 md:px-16 flex items-center justify-between bg-white border-b border-gray-100">
+        <button onClick={() => router.push('/catalogue')} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[4px] text-gray-400 hover:text-black transition-colors"><ArrowLeft size={16}/> Store</button>
+        <div className="text-2xl text-[#050505]">♞</div>
+        <button onClick={() => signOut()} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[4px] text-red-500 hover:text-red-700 transition-colors">Logout <LogOut size={14}/></button>
+      </nav>
+
+      <main className="max-w-[1400px] mx-auto px-6 md:px-16 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+         
+         {/* LEFT SIDEBAR */}
+         <aside className="lg:col-span-3 space-y-8">
+            <div className="bg-white p-8 rounded-[30px] border border-gray-100 shadow-sm text-center">
+               <img src={session.user?.image || ""} className="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-[#D4AF37] p-1"/>
+               <h2 className="text-xl font-serif italic font-black mb-1">{session.user?.name}</h2>
+               <p className="text-[10px] font-black uppercase tracking-[3px] text-gray-400 mb-4">{session.user?.email}</p>
+               <div className="inline-flex items-center gap-2 bg-[#FAFAFA] border border-[#D4AF37]/30 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest text-[#D4AF37]">
+                 <ShieldCheck size={12}/> Elite Member
+               </div>
             </div>
-            
-            <nav className="space-y-1">
-              <TabButton active={activeTab === "orders"} onClick={() => setActiveTab("orders")} icon={<Package size={16}/>} label="My Orders" />
-              <TabButton active={activeTab === "addresses"} onClick={() => setActiveTab("addresses")} icon={<MapPin size={16}/>} label="Addresses" />
-              <TabButton active={activeTab === "profile"} onClick={() => setActiveTab("profile")} icon={<User size={16}/>} label="Profile Settings" />
-              <button className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 transition-colors rounded-sm mt-4">
-                <LogOut size={16} /> Sign Out
-              </button>
-            </nav>
-          </div>
-        </aside>
 
-        {/* 📦 MAIN CONTENT AREA */}
-        <main className="lg:col-span-3">
-          {activeTab === "orders" && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">Order History</h2>
-              
-              {/* Fake Order 1 */}
-              <div className="bg-white border border-gray-100 p-6 rounded-sm hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-6 border-b border-gray-50 pb-4">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Order Placed</span>
-                    <span className="font-bold text-sm">Feb 21, 2026</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Total</span>
-                    <span className="font-bold text-sm">₹1,45,000</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 bg-gray-50 rounded-sm overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200" className="w-full h-full object-cover mix-blend-multiply" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold uppercase text-sm">Rolex Submariner</h4>
-                    <span className="inline-block bg-green-100 text-green-700 text-[10px] font-bold uppercase px-2 py-1 rounded-sm mt-2">Delivered</span>
-                  </div>
-                  <button className="ml-auto border border-gray-200 px-4 py-2 text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors">
-                    View Invoice
-                  </button>
-                </div>
-              </div>
-
-               {/* Fake Order 2 */}
-               <div className="bg-white border border-gray-100 p-6 rounded-sm hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-6 border-b border-gray-50 pb-4">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Order Placed</span>
-                    <span className="font-bold text-sm">Jan 10, 2026</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">Total</span>
-                    <span className="font-bold text-sm">₹55,000</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 bg-gray-50 rounded-sm overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1619134778706-c734062f8546?w=200" className="w-full h-full object-cover mix-blend-multiply" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold uppercase text-sm">Seiko Prospex</h4>
-                    <span className="inline-block bg-blue-100 text-blue-700 text-[10px] font-bold uppercase px-2 py-1 rounded-sm mt-2">In Transit</span>
-                  </div>
-                  <button className="ml-auto border border-gray-200 px-4 py-2 text-xs font-bold uppercase hover:bg-black hover:text-white transition-colors">
-                    Track Item
-                  </button>
-                </div>
-              </div>
-
+            <div className="bg-white rounded-[30px] border border-gray-100 shadow-sm overflow-hidden p-4 space-y-2">
+               {[
+                 { id: 'overview', icon: User, label: 'Portfolio Overview' },
+                 { id: 'orders', icon: Package, label: 'Order History' },
+                 { id: 'wallet', icon: Wallet, label: 'Imperial Wallet & Rewards' },
+                 { id: 'wishlist', icon: Heart, label: 'Saved Assets' }
+               ].map((tab) => (
+                 <button 
+                   key={tab.id} 
+                   onClick={() => setActiveTab(tab.id)}
+                   className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#050505] text-white' : 'text-gray-500 hover:bg-[#FAFAFA] hover:text-black'}`}
+                 >
+                   <tab.icon size={16}/> {tab.label}
+                 </button>
+               ))}
             </div>
-          )}
-        </main>
+         </aside>
 
-      </div>
+         {/* RIGHT CONTENT AREA */}
+         <div className="lg:col-span-9">
+            <AnimatePresence mode="wait">
+               
+               {/* OVERVIEW TAB */}
+               {activeTab === 'overview' && (
+                 <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="space-y-8">
+                    <h1 className="text-4xl font-serif italic mb-8">Welcome back, {session.user?.name?.split(' ')[0]}.</h1>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div className="bg-[#050505] text-white p-8 rounded-[30px] shadow-2xl relative overflow-hidden">
+                          <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet size={100}/></div>
+                          <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-400 mb-2">Wallet Balance</p>
+                          <h3 className="text-4xl font-black mb-6">₹0.00</h3>
+                          <button className="bg-[#D4AF37] text-black px-6 py-3 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-white transition-all">Add Funds</button>
+                       </div>
+
+                       <div className="bg-white border border-gray-200 p-8 rounded-[30px] shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 right-0 p-8 opacity-5 text-[#D4AF37]"><Gift size={100}/></div>
+                          <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-400 mb-2">Reward Points</p>
+                          <h3 className="text-4xl font-black mb-6 text-[#D4AF37]">2,450 <span className="text-sm text-gray-400 font-serif italic">pts</span></h3>
+                          <p className="text-xs text-gray-500 font-medium">Equals ₹245 discount on your next requisition.</p>
+                       </div>
+                    </div>
+
+                    <div className="bg-white border border-gray-100 p-8 rounded-[30px] shadow-sm">
+                       <h3 className="font-serif italic text-xl mb-6 flex items-center gap-3"><Clock size={18} className="text-[#D4AF37]"/> Recent Activity</h3>
+                       <div className="text-center py-12 text-gray-400">
+                          <Package size={32} className="mx-auto mb-4 opacity-50"/>
+                          <p className="text-[10px] font-black uppercase tracking-widest">No recent requisitions found.</p>
+                       </div>
+                    </div>
+                 </motion.div>
+               )}
+
+               {/* ORDERS TAB */}
+               {activeTab === 'orders' && (
+                 <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}}>
+                    <h2 className="text-3xl font-serif italic mb-8">Your Requisitions</h2>
+                    <div className="bg-white border border-gray-100 rounded-[30px] p-12 text-center shadow-sm">
+                       <p className="text-gray-500 font-serif italic mb-4">You haven't secured any assets yet.</p>
+                       <Link href="/catalogue" className="inline-block bg-[#050505] text-white px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[4px] hover:bg-[#D4AF37] hover:text-black transition-colors">Explore Vault</Link>
+                    </div>
+                 </motion.div>
+               )}
+
+               {/* WISHLIST TAB */}
+               {activeTab === 'wishlist' && (
+                 <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}}>
+                    <h2 className="text-3xl font-serif italic mb-8">Saved Assets</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                       {/* Placeholder for Wishlist Items */}
+                       <div className="bg-white border border-gray-100 border-dashed rounded-[30px] p-12 text-center flex flex-col items-center justify-center">
+                          <Heart size={32} className="text-gray-300 mb-4"/>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No items saved.</p>
+                       </div>
+                    </div>
+                 </motion.div>
+               )}
+
+            </AnimatePresence>
+         </div>
+      </main>
     </div>
-  );
-}
-
-function TabButton({ active, onClick, icon, label }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all rounded-sm ${active ? "bg-black text-white" : "text-gray-500 hover:bg-gray-50 hover:text-black"}`}
-    >
-      {icon} {label}
-    </button>
   );
 }

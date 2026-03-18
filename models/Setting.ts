@@ -1,18 +1,24 @@
 import mongoose from 'mongoose';
 
-const SettingSchema = new mongoose.Schema({
-  // Hero Section Multi-Slider
-  heroSlides: [{
-    imageUrl: String,
-    heading: String,
-    subtext: String,
-  }],
-  // Moving Logos Section
-  categories: [{
-    name: String,       // e.g., "Men's Collection", "Celebrity"
-    imageUrl: String,   // Logo or Image URL
-    link: String        // e.g., "/collection/mens"
-  }]
+const SettingsSchema = new mongoose.Schema({
+  id: { type: String, default: 'global_config' },
+  theme: {
+    saleActive: { type: Boolean, default: false },
+    saleName: { type: String, default: 'DIWALI DHAMAKA' },
+    bannerText: { type: String, default: 'FLAT 20% OFF SITEWIDE' },
+    primaryColor: { type: String, default: '#D4AF37' },
+  },
+  finance: {
+    upiId: { type: String, default: '' },
+    bankName: { type: String, default: '' },
+    accNo: { type: String, default: '' },
+    ifsc: { type: String, default: '' },
+  },
+  seo: {
+    metaTitle: { type: String, default: 'Essential Rush | Curators of Time' },
+    metaDesc: { type: String, default: 'Luxury Requisition and Timeless Assets.' },
+    keywords: { type: String, default: 'watches, gadgets, luxury' },
+  }
 }, { timestamps: true });
 
-export default mongoose.models.Setting || mongoose.model('Setting', SettingSchema);
+export default mongoose.models.Settings || mongoose.model('Settings', SettingsSchema);

@@ -1,14 +1,9 @@
 import mongoose from "mongoose";
-import dns from "dns";
-
-// 🚀 THE ULTIMATE BYPASS: Ye Node.js ko naye network me atakne se rokega
-dns.setDefaultResultOrder("ipv4first");
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 
-// ... (baaki ka poora code same rahega)
 if (!MONGODB_URI) {
-  throw new Error("Please define MONGODB_URI in .env.local");
+  throw new Error("❌ Error: MONGODB_URI is missing in .env file.");
 }
 
 let cached = (global as any).mongoose;
@@ -17,28 +12,28 @@ if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
-export const connectDB = async () => {
-  if (cached.conn) {
-    return cached.conn;
-  }
+export async function connectDB() {
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      family: 4, // Bypasses Windows/Jio DNS blocks
       serverSelectionTimeoutMS: 5000, 
-      family: 4, // 🚀 THE MAGIC FIX: Ye line Node.js ko IPv4 use karne pe majboor karegi
     };
 
+    console.log("⏳ Connecting to MongoDB vault...");
+
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log("✅ Database Connected Successfully!");
+      console.log("✅ BOOM! DATABASE CONNECTED SUCCESSFULLY!");
       return mongoose;
-    }).catch((error) => {
-      console.error("❌ DB Connection Blocked by Network.");
+    }).catch((err) => {
+      console.error("❌ MONGODB CONNECTION CRASHED:", err.message);
       cached.promise = null;
-      throw error;
+      throw err;
     });
   }
-  
+
   try {
     cached.conn = await cached.promise;
   } catch (e) {
@@ -47,4 +42,4 @@ export const connectDB = async () => {
   }
 
   return cached.conn;
-};
+}

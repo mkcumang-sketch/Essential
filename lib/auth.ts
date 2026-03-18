@@ -1,20 +1,28 @@
-import GoogleProvider from "next-auth/providers/google";
-import { connectDB } from "./db";
-import User from "@/models/User";
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // Yahan tera VIP Admin password set hai
+        if (credentials?.email === "admin@gmail.com" && credentials?.password === "admin") {
+          return { id: "1", name: "Admin", email: "admin@gmail.com", role: "admin" };
+        }
+        return null;
+      }
+    })
   ],
-  callbacks: {
-    async session({ session }: any) {
-      await connectDB();
-      const dbUser = await User.findOne({ email: session.user.email });
-      session.user.role = dbUser?.role || "user"; // Role-based Access
-      return session;
-    },
+  pages: {
+    signIn: '/login', // Ye 2 form aane wali problem rokega
   },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET || "EssentialRush_Ultra_Premium_Secret_2026",
 };

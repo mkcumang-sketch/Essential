@@ -1,93 +1,180 @@
 "use client";
-import Link from "next/link";
-import { ArrowRight, Anchor, Cpu, Wind } from "lucide-react";
 
-export default function HeritagePage() {
+import React, { useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import { Menu, Search, ShoppingBag, ArrowLeft, ShieldCheck, Award, Compass, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// ================= ANIMATION UTILS =================
+const FadeUp = ({ children, delay = 0, className = "" }: any) => (
+  <motion.div initial={{ y: 80, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay }} viewport={{ once: true }} className={className}>
+    {children}
+  </motion.div>
+);
+
+const CustomCursor = () => {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const cursorX = useSpring(mouseX, { damping: 25, stiffness: 700 });
+  const cursorY = useSpring(mouseY, { damping: 25, stiffness: 700 });
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white text-black font-serif">
-      
-      {/* 🏔️ SECTION 1: THE MOUNTAIN HERO */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070" 
-          className="absolute inset-0 w-full h-full object-cover opacity-80"
-          alt="Swiss Alps"
+    <motion.div className="fixed top-0 left-0 w-8 h-8 border border-[#D4AF37] rounded-full pointer-events-none z-[999] hidden md:flex items-center justify-center mix-blend-difference" style={{ x: cursorX, y: cursorY, translateX: "-50%", translateY: "-50%" }}>
+      <div className="w-1 h-1 bg-[#D4AF37] rounded-full"></div>
+    </motion.div>
+  );
+};
+
+// ================= MAIN COMPONENT =================
+function HeritageEngine() {
+  const router = useRouter();
+  const heroRef = useRef(null);
+  
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const smoothScroll = useSpring(scrollYProgress, { stiffness: 60, damping: 20, mass: 0.2 });
+
+  const textY = useTransform(smoothScroll, [0, 1], ["0%", "150%"]);
+  const textOpacity = useTransform(smoothScroll, [0, 0.5], [1, 0]);
+  const imageScale = useTransform(smoothScroll, [0, 1], [1, 1.2]);
+
+  const timeline = [
+    { year: "1839", title: "The Horological Dawn", desc: "The foundational blueprints of our first grand complication were drafted by master artisans in Geneva." },
+    { year: "1926", title: "Defying the Elements", desc: "Introduction of the world's first hermetically sealed case, ensuring precision in extreme depths." },
+    { year: "1969", title: "The Automatic Era", desc: "Revolutionizing kinematics with the first self-winding chronograph caliber." },
+    { year: "2026", title: "Essential Rush", desc: "The modern apex of luxury acquisition, curating history's greatest timepieces for the next generation." }
+  ];
+
+  return (
+    <div className="bg-[#050505] text-[#FAFAFA] font-sans selection:bg-[#D4AF37] selection:text-black min-h-screen overflow-x-hidden">
+      <CustomCursor />
+
+      {/* ♞ FROSTED NAVIGATION ♞ */}
+      <nav className="fixed top-0 w-full h-24 md:h-28 bg-[#050505]/80 backdrop-blur-xl z-[150] border-b border-white/5 flex items-center justify-between px-6 md:px-16 transition-all">
+        <button onClick={() => router.back()} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[4px] hover:text-[#D4AF37] transition-colors"><ArrowLeft size={18}/> Back</button>
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer mt-2">
+          <div className="text-[#D4AF37] text-3xl md:text-4xl mb-0.5 drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]">♞</div>
+          <h1 className="text-xl md:text-2xl font-serif font-black tracking-[12px] uppercase text-white group-hover:text-[#D4AF37] transition-colors">Essential</h1>
+        </Link>
+        <div className="flex items-center gap-6">
+           <button onClick={() => router.push('/catalogue')} className="hover:text-[#D4AF37] transition-colors"><Search size={22}/></button>
+           <button onClick={() => router.push('/checkout')} className="hover:text-[#D4AF37] transition-colors"><ShoppingBag size={22}/></button>
+        </div>
+      </nav>
+
+      {/* ♞ CINEMATIC PARALLAX HERO ♞ */}
+      <section ref={heroRef} className="relative h-screen w-full overflow-hidden flex items-center justify-center">
+        <motion.img 
+          style={{ scale: imageScale }}
+          src="https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=2000" 
+          className="absolute inset-0 w-full h-full object-cover grayscale filter contrast-125 opacity-40" 
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white"></div>
-        <div className="relative z-10 text-center space-y-6 px-4">
-          <p className="text-gold text-[10px] font-bold uppercase tracking-[0.6em] animate-pulse">Est. 1924 • Swiss Valleys</p>
-          <h1 className="text-6xl md:text-[100px] leading-none uppercase italic tracking-tighter">Born in <br /> the Silence.</h1>
-          <div className="w-20 h-[1px] bg-black mx-auto mt-10"></div>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]"></div>
+        
+        <motion.div style={{ y: textY, opacity: textOpacity }} className="relative z-10 text-center px-6">
+           <p className="text-[#D4AF37] text-[10px] md:text-xs font-black uppercase tracking-[20px] md:tracking-[30px] mb-8">Our Genesis</p>
+           <h1 className="text-6xl md:text-[140px] lg:text-[180px] font-serif tracking-tighter leading-[0.8] text-white italic drop-shadow-2xl">
+             Legacy in <br/> Motion.
+           </h1>
+        </motion.div>
       </section>
 
-      {/* 🛠️ SECTION 2: CRAFTSMANSHIP GRID */}
-      <section className="py-32 max-w-[1400px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-          <div className="space-y-10">
-            <h2 className="text-4xl md:text-6xl italic uppercase tracking-tighter">The Hands <br /> of Time</h2>
-            <p className="text-gray-500 font-sans leading-loose text-sm max-w-md">
-              Every Essential Rush timepiece undergoes 400 hours of precision calibration. Our master watchmakers in the Jura Mountains assemble 120 microscopic parts by hand, ensuring that your legacy ticks with absolute perfection.
-            </p>
-            <div className="grid grid-cols-2 gap-8 pt-6">
-              <div className="space-y-2">
-                <Cpu className="w-6 h-6 text-gold" />
-                <h4 className="text-[10px] font-bold uppercase tracking-widest">Nano-Calibration</h4>
-                <p className="text-[10px] text-gray-400 font-sans italic">Accuracy within 0.02 seconds.</p>
-              </div>
-              <div className="space-y-2">
-                <Wind className="w-6 h-6 text-gold" />
-                <h4 className="text-[10px] font-bold uppercase tracking-widest">Atmospheric Sealed</h4>
-                <p className="text-[10px] text-gray-400 font-sans italic">Protected against 50ATM pressure.</p>
-              </div>
-            </div>
-          </div>
+      {/* ♞ THE PHILOSOPHY ♞ */}
+      <section className="py-32 md:py-48 px-6 md:px-20 max-w-[1400px] mx-auto text-center relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4AF37] blur-[250px] opacity-[0.05] rounded-full pointer-events-none"></div>
+        <FadeUp>
+          <div className="text-[#D4AF37] mb-12 flex justify-center"><ShieldCheck size={50} strokeWidth={1}/></div>
+          <h2 className="text-4xl md:text-7xl font-serif italic mb-16 leading-tight tracking-tighter">"We do not merely sell timepieces. We act as custodians for mechanical masterpieces transitioning between generations."</h2>
+          <p className="text-gray-400 font-serif text-xl md:text-3xl leading-relaxed max-w-4xl mx-auto italic">
+            At Essential Rush, our philosophy is rooted in absolute provenance. Every asset that enters our vault undergoes a rigorous 30-day horological authentication process in our Geneva laboratory, ensuring the legacy you acquire is mathematically perfect.
+          </p>
+        </FadeUp>
+      </section>
+
+      {/* ♞ THE TIMELINE ♞ */}
+      <section className="py-32 md:py-48 bg-[#0A0A0A] border-t border-white/5 relative">
+        <div className="max-w-[1600px] mx-auto px-6 md:px-20">
+          <FadeUp className="text-center mb-32">
+            <h2 className="text-5xl md:text-8xl font-serif italic tracking-tighter text-white">The Timeline.</h2>
+          </FadeUp>
+          
           <div className="relative">
-            <img 
-              src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=1974" 
-              className="w-full h-auto shadow-2xl grayscale hover:grayscale-0 transition-all duration-[2s]" 
-            />
-            <div className="absolute -bottom-10 -left-10 bg-black text-white p-10 hidden md:block">
-               <p className="text-xs italic">"We don't build watches. We forge memories."</p>
+            {/* Center Line */}
+            <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[#D4AF37]/30 to-transparent md:-translate-x-1/2"></div>
+            
+            <div className="space-y-24 md:space-y-40">
+              {timeline.map((item, i) => (
+                <FadeUp key={i} delay={0.2}>
+                  <div className={`flex flex-col md:flex-row items-center justify-between w-full relative ${i % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                    <div className="hidden md:block w-5/12"></div>
+                    
+                    {/* Glowing Node */}
+                    <div className="absolute left-[-11px] md:left-1/2 md:-translate-x-1/2 w-6 h-6 rounded-full bg-[#050505] border-2 border-[#D4AF37] z-10 shadow-[0_0_15px_#D4AF37]"></div>
+                    
+                    <div className={`w-full md:w-5/12 pl-12 md:pl-0 ${i % 2 === 0 ? 'md:text-right md:pr-16' : 'md:text-left md:pl-16'}`}>
+                      <h3 className="text-5xl md:text-7xl font-serif text-[#D4AF37] mb-6">{item.year}</h3>
+                      <h4 className="text-3xl font-serif italic text-white mb-6 tracking-tighter">{item.title}</h4>
+                      <p className="text-gray-400 text-lg leading-relaxed font-serif italic">{item.desc}</p>
+                    </div>
+                  </div>
+                </FadeUp>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* 📜 SECTION 3: THE LEGACY TIMELINE */}
-      <section className="bg-[#FDFBF7] py-32 border-y border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h3 className="text-3xl italic uppercase mb-20 tracking-tighter">A Century of Precision</h3>
-          <div className="space-y-20 relative">
-             {/* Vertical Line */}
-             <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-200 -translate-x-1/2 hidden md:block"></div>
-             
-             {[
-               { year: "1924", event: "The first prototype forged in a small Swiss workshop." },
-               { year: "1958", event: "Introduced the first anti-magnetic diver's masterpiece." },
-               { year: "2025", event: "Essential Rush goes global with the Digital Vault." }
-             ].map((item, i) => (
-               <div key={i} className={`flex flex-col md:flex-row items-center justify-between ${i % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
-                  <div className="w-full md:w-[40%] text-center md:text-left space-y-2">
-                     <span className="text-gold text-2xl font-black font-sans">{item.year}</span>
-                     <p className="text-xs uppercase font-bold tracking-widest leading-relaxed">{item.event}</p>
+      {/* ♞ CRAFTSMANSHIP GRID ♞ */}
+      <section className="py-32 md:py-48 bg-[#050505] relative overflow-hidden">
+        <div className="max-w-[2000px] mx-auto px-6 md:px-20">
+          <FadeUp className="mb-24 flex flex-col md:flex-row justify-between items-end border-b border-white/10 pb-12">
+            <div>
+              <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[10px] mb-6">The Ateliers</p>
+              <h2 className="text-6xl md:text-[100px] font-serif tracking-tighter italic">Swiss Mastery.</h2>
+            </div>
+          </FadeUp>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {[
+              { title: "Anglage & Polishing", desc: "Hours of microscopic hand-finishing on every bridge.", img: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?q=80&w=800" },
+              { title: "Chronometric Testing", desc: "Regulated to superlative standards exceeding COSC.", img: "https://images.unsplash.com/photo-1508685096489-77a46807e604?q=80&w=800" },
+              { title: "Final Assembly", desc: "Assembled by master watchmakers with decades of lineage.", img: "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=800" }
+            ].map((craft, i) => (
+              <FadeUp key={i} delay={i * 0.2}>
+                <div className="group relative h-[600px] rounded-[40px] overflow-hidden bg-black shadow-2xl">
+                  <img src={craft.img} className="w-full h-full object-cover opacity-40 group-hover:opacity-80 transition-opacity duration-1000 grayscale group-hover:grayscale-0" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent p-12 flex flex-col justify-end">
+                    <h4 className="text-3xl font-serif italic text-white mb-4 group-hover:-translate-y-2 transition-transform">{craft.title}</h4>
+                    <p className="text-gray-400 font-serif italic text-lg opacity-0 group-hover:opacity-100 transition-opacity">{craft.desc}</p>
                   </div>
-                  <div className="w-4 h-4 rounded-full bg-black border-4 border-white z-10 my-4 md:my-0"></div>
-                  <div className="w-full md:w-[40%]"></div>
-               </div>
-             ))}
+                </div>
+              </FadeUp>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 🏁 CTA SECTION */}
-      <section className="py-40 text-center bg-white">
-          <h2 className="text-4xl italic mb-10">Own the Heritage.</h2>
-          <Link href="/collection" className="bg-black text-white px-12 py-5 text-[10px] font-black uppercase tracking-[0.5em] hover:bg-gold hover:text-black transition-all">
-             Enter The Collection <ArrowRight className="ml-4 w-4 h-4 inline" />
-          </Link>
+      {/* ♞ FOOTER CALL TO ACTION ♞ */}
+      <section className="py-40 bg-[#001A0F] text-center border-t border-[#D4AF37]/20">
+        <FadeUp>
+          <div className="w-20 h-20 mx-auto rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] mb-10"><Compass size={32}/></div>
+          <h2 className="text-5xl md:text-7xl font-serif italic mb-10">Own the Heritage.</h2>
+          <p className="text-gray-400 text-xl md:text-2xl font-serif italic max-w-2xl mx-auto mb-16">Enter the vault to acquire pieces that transcend time.</p>
+          <button onClick={() => router.push('/catalogue')} className="bg-[#D4AF37] text-black px-16 py-6 rounded-full text-[10px] font-black uppercase tracking-[8px] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.4)] flex items-center gap-4 mx-auto group">
+            Explore Registry <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform"/>
+          </button>
+        </FadeUp>
       </section>
 
     </div>
   );
 }
+
+export default dynamic(() => Promise.resolve(HeritageEngine), { ssr: false });
