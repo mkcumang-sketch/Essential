@@ -30,4 +30,5 @@ const OrderSchema = new mongoose.Schema({
   affiliateCode: { type: String, default: null } 
 }, { timestamps: true });
 
-export default mongoose.models.Order || mongoose.model('Order', OrderSchema);
+const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
+export { Order };

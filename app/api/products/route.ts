@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Product from '@/models/Product';
+import { Product } from '@/models/Product';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';

@@ -15,13 +15,10 @@ const ProductSchema = new mongoose.Schema({
   description: { type: String },
   slug: { type: String, unique: true, sparse: true }, 
   totalSold: { type: Number, default: 0 },
-  
-  // 🚨 NEW ENTERPRISE FEATURES 🚨
-  seoScore: { type: Number, default: 0 }, // AI calculated
-  tags: { type: [String], default: [] }, // Auto-generated
-  variants: { type: Array, default: [] }, // Size/Color options
-  linkedProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }], // Upsell
+  seoScore: { type: Number, default: 0 },
+  tags: { type: [String], default: [] },
   lifecycleStatus: { type: String, enum: ['NEW', 'TRENDING', 'CLEARANCE', 'END_OF_LIFE'], default: 'NEW' }
 }, { timestamps: true, strict: false }); 
 
-export default mongoose.models.Product || mongoose.model('Product', ProductSchema);
+const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+export { Product };

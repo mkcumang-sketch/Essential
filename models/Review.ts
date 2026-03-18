@@ -5,9 +5,9 @@ const ReviewSchema = new mongoose.Schema({
   userName: { type: String, required: true },
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
-  // 🚨 CONTROLLED VISIBILITY 🚨
   visibility: { type: String, enum: ['private', 'public', 'rejected'], default: 'private' },
   isAdminGenerated: { type: Boolean, default: false }
 }, { timestamps: true });
 
-export default mongoose.models.Review || mongoose.model('Review', ReviewSchema);
+const Review = mongoose.models.Review || mongoose.model('Review', ReviewSchema);
+export { Review };

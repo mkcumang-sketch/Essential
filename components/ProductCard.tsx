@@ -23,6 +23,4 @@ const ProductCard = ({ watch, addToCart }: { watch: any, addToCart: any }) => {
     </motion.div>
   );
 };
-
-// 🚨 YEH SABSE ZAROORI LINE HAI
 export default ProductCard;

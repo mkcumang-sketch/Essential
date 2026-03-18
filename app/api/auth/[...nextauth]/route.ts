@@ -1,29 +1,27 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-const handler = NextAuth({
+const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      if (session?.user) {
-        // Aap yahan check kar sakte ho ki admin email kaunsi hai
-        const adminEmails = ["umang.sharma@example.com", "your.email@gmail.com"]; // Yahan apni email dalo
+    async session({ session }) {
+      if (session.user) {
+        // Check if the logged-in email matches the ADMIN_EMAIL in .env.local
+        const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
         
-        if (session.user.email && adminEmails.includes(session.user.email)) {
-            (session.user as any).role = "SUPER_ADMIN";
-        } else {
-            (session.user as any).role = "USER";
-        }
+        // Give SUPER_ADMIN power if it matches
+        (session.user as any).role = isAdmin ? "SUPER_ADMIN" : "USER";
       }
       return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

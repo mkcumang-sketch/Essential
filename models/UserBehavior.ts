@@ -14,4 +14,5 @@ const UserBehaviorSchema = new mongoose.Schema({
   cartAbandons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
 }, { timestamps: true });
 
-export default mongoose.models.UserBehavior || mongoose.model('UserBehavior', UserBehaviorSchema);
+const UserBehavior = mongoose.models.UserBehavior || mongoose.model('UserBehavior', UserBehaviorSchema);
+export { UserBehavior };
