@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/NextAuthProvider";
-import GlobalBanner from "@/components/GlobalBanner"; // 🚨 Naya Banner Import
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +20,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <NextAuthProvider>
           {/* Yahan humne Global Banner lagaya hai */}
-          <GlobalBanner />
+        
           {children}
         </NextAuthProvider>
       </body>

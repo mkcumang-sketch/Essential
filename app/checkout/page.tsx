@@ -2,144 +2,244 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Lock, ArrowRight, CheckCircle2, CreditCard, ChevronLeft } from 'lucide-react';
+import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
+import { 
+  ShieldCheck, CreditCard, Wallet, Gift, Users, MapPin, Globe, CheckCircle, Phone, RefreshCcw
+} from 'lucide-react';
+import Link from 'next/link';
 
-export default function LuxuryCheckout() {
+export default function PremiumCheckout() {
   const router = useRouter();
+  const { data: session } = useSession();
+  
   const [cart, setCart] = useState<any[]>([]);
-  const [cartTotal, setCartTotal] = useState(0);
-  const [step, setStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [orderId, setOrderId] = useState('');
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [isPromoApplied, setIsPromoApplied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const [customer, setCustomer] = useState({
-      name: '', email: '', phone: '', address: '', city: '', zipCode: ''
+    name: '', email: '', phone: '', address: '', city: '', zipCode: '', country: 'India', source: 'Direct'
   });
 
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('luxury_cart') || '[]');
-    if (savedCart.length === 0) {
-        router.push('/');
-    } else {
-        setCart(savedCart);
-        const total = savedCart.reduce((acc: number, item: any) => acc + ((item.offerPrice || item.price || item.basePrice || 0) * (item.qty || 1)), 0);
-        setCartTotal(total);
+    setCart(savedCart);
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const sourceParam = urlParams.get('source') || urlParams.get('utm_source');
+    if (sourceParam) {
+        const normalizedSource = sourceParam.charAt(0).toUpperCase() + sourceParam.slice(1).toLowerCase();
+        localStorage.setItem('traffic_source', normalizedSource);
     }
-  }, [router]);
-
-  // 🚨 SILENT ABANDONED CART TRACKER
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (customer.phone.length >= 10) {
-        fetch('/api/checkout/capture', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: customer.phone, cart })
-        }).catch(() => console.log("Trace missed"));
-      }
-    }, 2000); 
-    return () => clearTimeout(timer);
-  }, [customer.phone, cart]);
-
-  const handleCheckoutSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customer.name || !customer.phone || !customer.address) return alert("Complete all required fields.");
-    setIsLoading(true);
-    const affiliateCode = localStorage.getItem('affiliate_ref');
-
-    try {
-        const res = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ customer, cart, affiliateCode })
-        });
-        const data = await res.json();
+    const savedSource = localStorage.getItem('traffic_source') || 'Direct';
+    
+    if (session?.user) {
+        setCustomer(prev => ({ 
+            ...prev, 
+            name: session.user?.name || '', 
+            email: session.user?.email || '',
+            source: savedSource
+        }));
         
-        if (res.ok && data.success) {
-            setOrderId(data.orderId);
-            setStep(2); 
-            localStorage.removeItem('luxury_cart');
-        } else {
-            alert("Transaction Failed: " + data.error);
-        }
-    } catch (error) {
-        alert("Network Error.");
-    } finally {
-        setIsLoading(false);
+        fetch(`/api/user/dashboard?email=${session.user?.email}`)
+          .then(res => res.json())
+          .then(data => { if (data.success && data.data) setWalletBalance(data.data.walletBalance); })
+          .catch(()=>{});
+    } else {
+        setCustomer(prev => ({ ...prev, source: savedSource }));
     }
+  }, [session]);
+
+  const subtotal = cart.reduce((acc, item) => acc + (item.offerPrice || item.price || item.basePrice || 0) * item.qty, 0);
+  const discountAmount = isPromoApplied ? subtotal * 0.10 : 0; 
+  const walletDeduction = useWallet ? Math.min(walletBalance, subtotal - discountAmount) : 0;
+  const grandTotal = subtotal - discountAmount - walletDeduction;
+
+  const handleApplyPromo = () => {
+      if(promoCode.length > 3) setIsPromoApplied(true);
+      else alert("Invalid Requisition Code");
   };
 
-  if (cart.length === 0 && step === 1) return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
+  const handleCheckout = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (cart.length === 0) return alert("Your vault is empty.");
+      setIsSubmitting(true);
+
+      const affiliateRef = localStorage.getItem('affiliate_ref');
+
+      try {
+          const res = await fetch('/api/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  items: cart,
+                  customer,
+                  promoCode: isPromoApplied ? promoCode : null,
+                  useWallet,
+                  userEmail: session?.user?.email,
+                  affiliateRef,
+                  totalAmount: grandTotal
+              })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+              localStorage.removeItem('luxury_cart'); 
+              setOrderSuccess(true);
+          } else {
+              alert("Transaction Failed. Ensure all database models are synced.");
+          }
+      } catch (error) { alert("Network Error"); }
+      finally { setIsSubmitting(false); }
+  };
+
+  if (orderSuccess) {
+      return (
+          <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-center px-6 selection:bg-[#D4AF37] selection:text-black">
+              <CheckCircle size={80} className="text-[#D4AF37] mb-8" />
+              <h1 className="text-5xl md:text-7xl font-serif italic text-white mb-4 tracking-tighter">Asset Secured.</h1>
+              <p className="text-gray-400 text-sm md:text-base mb-10 max-w-md font-serif italic">Your requisition has been verified. Global logistics will dispatch your asset shortly.</p>
+              <Link href="/account" className="px-10 py-5 bg-[#D4AF37] text-black font-black uppercase tracking-[5px] text-[10px] rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.3)] hover:bg-white transition-all">
+                  Track in Vault
+              </Link>
+          </div>
+      );
+  }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#D4AF37] selection:text-black flex flex-col md:flex-row">
-      <div className="w-full md:w-[45%] bg-[#050505] p-10 md:p-20 flex flex-col justify-between border-r border-white/5 relative overflow-hidden">
-         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#D4AF37] blur-[300px] opacity-[0.03] pointer-events-none"></div>
-         <div className="relative z-10">
-            <button onClick={() => router.push('/')} className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-12 text-xs font-black uppercase tracking-widest"><ChevronLeft size={14}/> Return to Vault</button>
-            <div className="flex items-center gap-4 mb-16"><div className="text-[#D4AF37] text-3xl">♞</div><h1 className="text-xl font-serif font-black tracking-[10px] uppercase text-white">Essential</h1></div>
-            <h2 className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[8px] mb-8">Requisition Manifest</h2>
-            <div className="space-y-8 mb-12 max-h-[40vh] overflow-y-auto pr-4 custom-scrollbar">
-               {cart.map((item, i) => (
-                  <div key={i} className="flex gap-6 items-center">
-                     <div className="w-20 h-20 bg-white/5 rounded-2xl p-2 flex items-center justify-center border border-white/5">{item.imageUrl ? <img src={item.imageUrl} alt={item.name || item.title} className="h-full object-contain drop-shadow-xl" /> : <div className="text-xs text-gray-600">No Image</div>}</div>
-                     <div className="flex-1"><p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{item.brand || 'Luxury'}</p><h4 className="text-sm font-serif italic mb-1">{item.name || item.title}</h4><p className="text-[10px] font-black text-[#D4AF37]">QTY: {item.qty || 1}</p></div>
-                     <p className="text-lg font-serif font-black">₹{((item.offerPrice || item.price || item.basePrice || 0) * (item.qty || 1)).toLocaleString('en-IN')}</p>
-                  </div>
-               ))}
+    <div className="min-h-screen bg-[#FAFAFA] text-black font-sans selection:bg-[#D4AF37] selection:text-white">
+      
+      <header className="bg-[#050505] py-6 px-10 flex justify-between items-center border-b-[5px] border-[#D4AF37]">
+         <Link href="/" className="text-2xl font-serif font-black tracking-[5px] uppercase text-white">Essential</Link>
+         <div className="flex items-center gap-3 text-[9px] font-black uppercase tracking-widest text-[#D4AF37]"><ShieldCheck size={16}/> Secure SSL Checkout</div>
+      </header>
+
+      <main className="max-w-[1600px] mx-auto px-6 md:px-12 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+         
+         <div className="lg:col-span-7 space-y-12">
+            <div className="border-b border-gray-200 pb-6">
+                <h2 className="text-4xl font-serif italic tracking-tighter text-[#050505]">Client Information</h2>
             </div>
-         </div>
-         <div className="relative z-10 border-t border-white/10 pt-10 mt-auto">
-            <div className="flex justify-between items-center mb-6 text-gray-400 text-xs font-bold uppercase tracking-widest"><span>Insured Dispatch</span><span className="text-[#D4AF37]">Complimentary</span></div>
-            <div className="flex justify-between items-end"><span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Total Allocation</span><span className="text-4xl font-serif font-black tracking-tighter text-white">₹{cartTotal.toLocaleString('en-IN')}</span></div>
-         </div>
-      </div>
+            
+            <form onSubmit={handleCheckout} className="space-y-8" id="checkout-form">
+                
+                <div className="bg-gray-100 p-6 rounded-2xl border border-gray-200">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2 mb-4"><Globe size={14}/> Intelligence Node: Origin Route</label>
+                    <div className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm font-bold text-gray-500 flex justify-between items-center cursor-not-allowed">
+                        <span>{customer.source}</span>
+                        <ShieldCheck size={16} className="text-[#D4AF37]"/>
+                    </div>
+                    <p className="text-[8px] text-gray-400 mt-3 font-mono uppercase tracking-widest">Source verified automatically by secure protocol.</p>
+                </div>
 
-      <div className="w-full md:w-[55%] p-10 md:p-24 flex items-center justify-center relative overflow-y-auto custom-scrollbar">
-         <div className="w-full max-w-lg">
-            <AnimatePresence mode="wait">
-               {step === 1 && (
-                  <motion.div key="form" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}}>
-                     <ShieldCheck className="text-[#D4AF37] mb-8" size={40} strokeWidth={1} />
-                     <h2 className="text-4xl font-serif tracking-tighter mb-4">Diplomatic Clearance</h2>
-                     <p className="text-gray-400 text-sm leading-relaxed mb-12 font-medium">To secure this allocation within India, please provide your identity and destination coordinates.</p>
-                     
-                     <form onSubmit={handleCheckoutSubmit} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <input required type="text" value={customer.name} onChange={(e) => setCustomer({...customer, name: e.target.value})} placeholder="Full Legal Name" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-colors" />
-                            <input required type="tel" value={customer.phone} onChange={(e) => setCustomer({...customer, phone: e.target.value})} placeholder="Mobile (+91 xxxx-xxxxxx)" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-colors" />
-                        </div>
-                        <input required type="email" value={customer.email} onChange={(e) => setCustomer({...customer, email: e.target.value})} placeholder="Primary Email Address" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-colors" />
-                        <div className="pt-4 pb-2"><p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest flex items-center gap-2"><Lock size={12}/> Delivery Coordinates</p></div>
-                        <input required type="text" value={customer.address} onChange={(e) => setCustomer({...customer, address: e.target.value})} placeholder="Street Address / Building" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-colors" />
-                        <div className="grid grid-cols-2 gap-5">
-                            <input required type="text" value={customer.city} onChange={(e) => setCustomer({...customer, city: e.target.value})} placeholder="City / District" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-colors" />
-                            <input required type="text" value={customer.zipCode} onChange={(e) => setCustomer({...customer, zipCode: e.target.value})} placeholder="Pincode (e.g. 400001)" className="w-full bg-black border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] transition-colors" />
-                        </div>
-                        <div className="bg-[#050505] border border-[#D4AF37]/30 p-5 rounded-2xl flex items-center gap-4 mt-8">
-                           <CreditCard className="text-[#D4AF37]" size={24}/>
-                           <div><p className="text-sm font-bold">RTGS / Concierge Pay</p><p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Our team will contact you for payment.</p></div>
-                        </div>
-                        <button type="submit" disabled={isLoading} className="w-full py-6 mt-8 bg-[#D4AF37] text-black font-black uppercase rounded-2xl text-[11px] tracking-[4px] hover:bg-white transition-all flex justify-center items-center gap-3 disabled:opacity-50 shadow-[0_10px_30px_rgba(212,175,55,0.2)]">
-                           {isLoading ? <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div> : <>Authorize Requisition <ArrowRight size={16}/></>}
-                        </button>
-                     </form>
-                  </motion.div>
-               )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2"><Users size={14}/> Full Name</label>
+                        <input required value={customer.name} onChange={e=>setCustomer({...customer, name: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" placeholder="John Doe"/>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2"><Phone size={14}/> Phone Protocol</label>
+                        <input required value={customer.phone} onChange={e=>setCustomer({...customer, phone: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" placeholder="+91 98765 43210"/>
+                    </div>
+                </div>
 
-               {step === 2 && (
-                  <motion.div key="success" initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} className="text-center py-10">
-                     <div className="w-32 h-32 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mx-auto mb-10 border border-[#D4AF37]/30 shadow-[0_0_50px_rgba(212,175,55,0.2)]"><CheckCircle2 className="text-[#D4AF37]" size={50} /></div>
-                     <h2 className="text-4xl font-serif tracking-tighter mb-4 text-white">Allocation Secured.</h2>
-                     <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] mb-8">Requisition ID: {orderId}</p>
-                     <p className="text-gray-400 text-sm leading-relaxed font-medium mb-12 max-w-sm mx-auto">Your request has been logged into the global mainframe. Our concierge team will contact you shortly to arrange the secure transfer of funds and diplomatic delivery within India.</p>
-                     <button onClick={() => router.push('/')} className="bg-white text-black px-10 py-4 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-[#D4AF37] transition-colors">Return to Vault</button>
-                  </motion.div>
-               )}
-            </AnimatePresence>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Email Address (For Vault Receipt)</label>
+                    <input required type="email" value={customer.email} onChange={e=>setCustomer({...customer, email: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" placeholder="john@elite.com"/>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-2"><MapPin size={14}/> Shipping Coordinates</label>
+                    <textarea required value={customer.address} onChange={e=>setCustomer({...customer, address: e.target.value})} rows={3} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" placeholder="Street Address, Appt, Floor..."/>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <input required value={customer.city} onChange={e=>setCustomer({...customer, city: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" placeholder="City / Region"/>
+                        <input required value={customer.zipCode} onChange={e=>setCustomer({...customer, zipCode: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" placeholder="Zip / Pincode"/>
+                        <input required value={customer.country} onChange={e=>setCustomer({...customer, country: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" readOnly />
+                    </div>
+                </div>
+            </form>
          </div>
-      </div>
+
+         <div className="lg:col-span-5 bg-[#050505] p-10 md:p-12 rounded-[40px] text-white shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37] blur-[100px] opacity-[0.05] pointer-events-none rounded-full"></div>
+
+            <h3 className="text-2xl font-serif italic mb-8 border-b border-white/10 pb-6 relative z-10">Order Summary</h3>
+
+            <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 relative z-10">
+                {cart.length === 0 ? <p className="text-gray-500 italic font-serif">Vault is empty.</p> : cart.map((item, i) => (
+                   <div key={i} className="flex gap-4 items-center">
+                       <div className="w-20 h-24 bg-white/5 rounded-xl p-2 shrink-0 border border-white/10">
+                          <img src={item.imageUrl || item.images?.[0]} className="w-full h-full object-contain mix-blend-screen" />
+                       </div>
+                       <div className="flex-1">
+                          <p className="text-[8px] font-black uppercase text-[#D4AF37] tracking-widest">{item.brand}</p>
+                          <h4 className="text-sm font-serif text-white line-clamp-1">{item.name}</h4>
+                          <p className="text-[10px] text-gray-500 mt-1">Qty: {item.qty}</p>
+                       </div>
+                       <div className="text-right">
+                          <p className="font-mono font-bold text-white text-sm">₹{((item.offerPrice || item.price || item.basePrice || 0) * item.qty).toLocaleString()}</p>
+                       </div>
+                   </div>
+                ))}
+            </div>
+
+            <div className="space-y-6 mb-10 relative z-10">
+                <div className="flex gap-3">
+                   <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 flex items-center gap-3 focus-within:border-[#D4AF37] transition-colors">
+                      <Gift size={16} className="text-gray-500" />
+                      <input value={promoCode} onChange={e=>setPromoCode(e.target.value)} disabled={isPromoApplied} className="bg-transparent border-none outline-none text-xs text-white w-full py-4 uppercase font-mono" placeholder="Requisition Code" />
+                   </div>
+                   <button onClick={handleApplyPromo} disabled={isPromoApplied} className={`px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${isPromoApplied ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-[#D4AF37] text-black hover:bg-white'}`}>
+                      {isPromoApplied ? 'Applied' : 'Apply'}
+                   </button>
+                </div>
+
+                {walletBalance > 0 && (
+                   <div className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 p-5 rounded-2xl flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                         <div className="p-2 bg-[#D4AF37] text-black rounded-lg"><Wallet size={16}/></div>
+                         <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">Empire Wallet</p>
+                            <p className="text-xs font-mono font-bold text-white mt-1">Bal: ₹{walletBalance.toLocaleString()}</p>
+                         </div>
+                      </div>
+                      <button onClick={()=>setUseWallet(!useWallet)} className={`w-12 h-6 rounded-full p-1 transition-colors ${useWallet ? 'bg-[#D4AF37]' : 'bg-white/20'}`}>
+                         <div className={`w-4 h-4 bg-black rounded-full transition-transform ${useWallet ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                      </button>
+                   </div>
+                )}
+            </div>
+
+            <div className="space-y-4 border-t border-white/10 pt-6 mb-8 relative z-10">
+                <div className="flex justify-between text-xs text-gray-400 font-bold uppercase tracking-widest">
+                   <span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span>
+                </div>
+                {isPromoApplied && (
+                   <div className="flex justify-between text-xs text-green-500 font-bold uppercase tracking-widest">
+                      <span>Discount (Promo)</span><span>- ₹{discountAmount.toLocaleString()}</span>
+                   </div>
+                )}
+                {useWallet && (
+                   <div className="flex justify-between text-xs text-[#D4AF37] font-bold uppercase tracking-widest">
+                      <span>Wallet Applied</span><span>- ₹{walletDeduction.toLocaleString()}</span>
+                   </div>
+                )}
+                <div className="flex justify-between items-end border-t border-white/10 pt-6 mt-4">
+                   <span className="text-sm font-black uppercase tracking-[4px] text-gray-300">Total Capital</span>
+                   <span className="text-4xl font-serif font-black text-white">₹{grandTotal.toLocaleString()}</span>
+                </div>
+            </div>
+
+            <button type="submit" form="checkout-form" disabled={isSubmitting} className="w-full py-6 bg-[#D4AF37] text-black rounded-2xl font-black uppercase text-[11px] tracking-[5px] hover:bg-white transition-all shadow-[0_10px_40px_rgba(212,175,55,0.3)] flex items-center justify-center gap-3 relative z-10">
+                {isSubmitting ? <span className="animate-spin"><RefreshCcw size={18}/></span> : <><CreditCard size={18}/> Authorize Transaction</>}
+            </button>
+         </div>
+
+      </main>
     </div>
   );
 }

@@ -1,299 +1,266 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, ShieldCheck, Award, Truck, Star, Lock, MapPin, Sparkles, UserCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { 
+    ShoppingBag, ShieldCheck, ArrowLeft, Plus, Star, Box, Video as VideoIcon, 
+    Truck, CheckCircle, RefreshCcw, User, X, Camera, UploadCloud
+} from 'lucide-react';
 
-export default function LuxuryProductPage({ params }: { params: any }) {
-  const router = useRouter();
-  const [product, setProduct] = useState<any>(null);
-  const [dynamicPrice, setDynamicPrice] = useState<number | null>(null);
-  const [recommended, setRecommended] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [activeImage, setActiveImage] = useState(0);
+export default function LuxuryProductPage() {
+    const router = useRouter();
+    const params = useParams(); 
+    const slug = params?.slug as string;
+    
+    const [product, setProduct] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [cart, setCart] = useState<any[]>([]);
+    const [activeMedia, setActiveMedia] = useState<{type: 'image'|'video'|'3d', url: string}>({ type: 'image', url: '' });
+    
+    const [productReviews, setProductReviews] = useState<any[]>([]);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    
+    // 🌟 REVIEW STATE (With Media Support) 🌟
+    const [reviewForm, setReviewForm] = useState({ userName: '', comment: '', rating: 5 });
+    const [reviewMedia, setReviewMedia] = useState<string[]>([]);
+    const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+    const [reviewStatus, setReviewStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
-  // Review Form State
-  const [reviewForm, setReviewForm] = useState({ userName: '', rating: 5, comment: '' });
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+    useEffect(() => {
+        setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
+        if (!slug) return;
 
-  useEffect(() => {
-    const initPage = async () => {
-      try {
-        let identifier = "";
-        try {
-            const resolvedParams = await params;
-            identifier = resolvedParams?.slug || resolvedParams?.id;
-        } catch (e) {
-            console.log("Params skipped");
-        }
+        const fetchProductAndReviews = async () => {
+            try {
+                const res = await fetch(`/api/products`);
+                const data = await res.json();
+                
+                if (data.data) {
+                    const foundProduct = data.data.find((p: any) => p.slug === slug || p._id === slug);
+                    if (foundProduct) {
+                        setProduct(foundProduct);
+                        setActiveMedia({ type: 'image', url: foundProduct.imageUrl });
 
-        if (!identifier) identifier = window.location.pathname.split('/').pop() || "";
-        if (!identifier || identifier === "undefined") { setLoading(false); return; }
+                        // 🌟 STRICT FILTER FOR PUBLIC + GHOST REVIEWS 🌟
+                        const revRes = await fetch(`/api/reviews`).then(r => r.json());
+                        let pubReviews = [];
+                        if (revRes.data) {
+                            pubReviews = revRes.data.filter((r: any) => (r.product === foundProduct._id || r.product === 'GLOBAL') && r.visibility === 'public');
+                        }
+                        
+                        const myLocalReviews = JSON.parse(localStorage.getItem('my_ghost_reviews') || '[]');
+                        const mySpecificLocal = myLocalReviews.filter((r: any) => r.product === foundProduct._id || r.product === 'GLOBAL');
+                        
+                        const finalLocal = mySpecificLocal.filter((localRev: any) => 
+                            !pubReviews.some((pubRev: any) => pubRev.userName === localRev.userName && pubRev.comment === localRev.comment)
+                        );
 
-        let sessionId = localStorage.getItem('er_session');
-        if (!sessionId) {
-            sessionId = `sess_${Math.random().toString(36).substr(2, 9)}`;
-            localStorage.setItem('er_session', sessionId);
-        }
+                        setProductReviews([...finalLocal, ...pubReviews]);
+                    }
+                }
+            } catch (e) { console.error(e); }
+            finally { setIsLoading(false); }
+        };
 
-        // 1. Fetch Product
-        const res = await fetch(`/api/products/${identifier}`, { cache: 'no-store' });
-        if (res.ok) {
-          const json = await res.json();
-          const data = json.data ? json.data : json;
-          
-          if (data && (data._id || data.slug)) {
-              setProduct(data);
+        fetchProductAndReviews();
+    }, [slug]);
 
-              // AI Tracking
-              fetch('/api/ai/track', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sessionId, action: 'VIEW', productId: data._id, category: data.category })
-              }).catch(()=>{});
-
-              // Dynamic Pricing
-              fetch(`/api/ai/pricing?productId=${data._id}&sessionId=${sessionId}`)
-                .then(r => r.json())
-                .then(p => { if(p.dynamicPrice) setDynamicPrice(p.dynamicPrice) }).catch(()=>{});
-              
-              // Fetch Approved Reviews
-              fetch(`/api/reviews?productId=${data._id}`)
-                .then(r => r.json())
-                .then(data => { if(data.success) setReviews(data.data) }).catch(()=>{});
-          }
-        }
-
-        // Fetch Recommendations
-        const recRes = await fetch(`/api/ai/recommendations?sessionId=${sessionId}`);
-        if(recRes.ok) {
-            const recData = await recRes.json();
-            setRecommended(recData.recommended.filter((w:any) => w.slug !== identifier && w._id !== identifier).slice(0, 4));
-        }
-
-      } catch (error) { console.error("Error loading asset"); } finally { setLoading(false); }
+    const addToCart = () => {
+        const exists = cart.find(item => item._id === product._id);
+        const newCart = exists ? cart.map(i => i._id === product._id ? {...i, qty: i.qty+1} : i) : [...cart, {...product, qty: 1}];
+        setCart(newCart);
+        localStorage.setItem('luxury_cart', JSON.stringify(newCart));
+        router.push('/checkout');
     };
-    
-    initPage();
-  }, [params]);
 
-  const addToCart = (itemToCart = product) => {
-    setIsAdding(true);
-    const sessionId = localStorage.getItem('er_session');
-    
-    fetch('/api/ai/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, action: 'CART', productId: itemToCart._id, category: itemToCart.category })
-    }).catch(()=>{});
+    // 🌟 CUSTOMER MEDIA UPLOAD 🌟
+    const handleCustomerMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        setIsUploadingMedia(true);
+        const formData = new FormData();
+        formData.append("file", file);
 
-    let cart = JSON.parse(localStorage.getItem('luxury_cart') || '[]');
-    const itemFinalPrice = dynamicPrice || itemToCart.offerPrice || itemToCart.price || itemToCart.basePrice;
-    
-    const exists = cart.find((item: any) => item._id === itemToCart._id);
-    if (exists) {
-      cart = cart.map((item: any) => item._id === itemToCart._id ? { ...item, qty: item.qty + 1 } : item);
-    } else {
-      cart.push({ ...itemToCart, qty: 1, finalPriceAdded: itemFinalPrice });
-    }
-    localStorage.setItem('luxury_cart', JSON.stringify(cart));
-    setTimeout(() => { setIsAdding(false); router.push('/checkout'); }, 500);
-  };
+        try {
+            const res = await fetch("/api/upload", { method: "POST", body: formData });
+            const data = await res.json();
+            if (data.success && data.url) {
+                setReviewMedia(prev => [...prev, data.url]);
+            } else { alert("Upload failed."); }
+        } catch(err) { alert("Network error."); } finally { setIsUploadingMedia(false); }
+    };
 
-  const submitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...reviewForm, product: product._id })
-      });
-      if(res.ok) {
-        setReviewSubmitted(true);
-        setReviewForm({ userName: '', rating: 5, comment: '' });
-      }
-    } catch (error) { alert("Failed to submit review"); }
-  };
+    const handleReviewSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!reviewForm.userName || !reviewForm.comment) return alert("Fill name and review.");
+        setReviewStatus('submitting');
+        
+        try {
+            const payload = { 
+                ...reviewForm, 
+                media: reviewMedia, 
+                product: product._id, 
+                visibility: 'pending', // <--- ALWAYS PENDING FOR ADMIN APPROVAL
+                isAdminGenerated: false 
+            };
+            
+            const res = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            
+            if (res.ok) {
+                // 🌟 GHOST BAN: Save locally so user feels happy 🌟
+                const localReview = { ...payload, isGhost: true };
+                setProductReviews(prev => [localReview, ...prev]);
+                const existingLocal = JSON.parse(localStorage.getItem('my_ghost_reviews') || '[]');
+                localStorage.setItem('my_ghost_reviews', JSON.stringify([localReview, ...existingLocal]));
 
-  if (loading) return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="w-10 h-10 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
-  if (!product) return <div className="h-screen bg-[#050505] text-white flex flex-col gap-6 items-center justify-center font-serif italic text-2xl">Asset removed from Vault.<button onClick={()=>router.push('/')} className="text-sm font-sans not-italic text-[#D4AF37] border border-[#D4AF37] px-6 py-2 rounded-full">Return to Vault</button></div>;
+                setReviewStatus('success');
+                setTimeout(() => { setIsReviewModalOpen(false); setReviewStatus('idle'); setReviewForm({ userName: '', comment: '', rating: 5 }); setReviewMedia([]); }, 2000);
+            } else { alert("Failed to submit."); setReviewStatus('idle'); }
+        } catch (err) { alert("Network error."); setReviewStatus('idle'); }
+    };
 
-  const displayPrice = dynamicPrice || product.offerPrice || product.price || product.basePrice || 0;
-  const originalPrice = product.price || product.basePrice || 0;
-  const discountPercent = originalPrice > displayPrice ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
-  
-  // Handle Multiple Images safely
-  const imagesArray = product.images?.length > 0 ? product.images : [product.imageUrl];
-  const specs = product.specifications || {};
+    if (isLoading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
 
-  return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-[#D4AF37] selection:text-black font-sans">
-      
-      {/* ♞ LUXURY NAVBAR ♞ */}
-      <nav className="w-full bg-[#050505]/90 backdrop-blur-2xl border-b border-white/5 py-6 px-10 flex items-center justify-between sticky top-0 z-50">
-        <button onClick={() => router.push('/')} className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#D4AF37] transition-colors"><ArrowLeft size={16}/> Back to Vault</button>
-        <div className="text-3xl text-[#D4AF37] font-serif font-black tracking-[10px] flex items-center gap-4">♞ <span className="hidden md:block text-white uppercase">ESSENTIAL</span></div>
-        <div className="w-24"></div> 
-      </nav>
-
-      <div className="max-w-[1700px] mx-auto py-16 px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-16 relative">
-          
-          <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-[#D4AF37] blur-[350px] opacity-[0.05] pointer-events-none"></div>
-
-          {/* COLUMN 1: Multi-Image Gallery */}
-          <div className="lg:col-span-5 flex gap-6 z-10">
-             <div className="hidden md:flex flex-col gap-4 overflow-y-auto custom-scrollbar max-h-[600px] pr-2">
-                {imagesArray.map((img: string, idx: number) => (
-                  <div key={idx} onMouseEnter={()=>setActiveImage(idx)} className={`w-20 h-20 border-2 rounded-2xl overflow-hidden cursor-pointer p-3 transition-all ${activeImage === idx ? 'border-[#D4AF37] bg-white/10' : 'border-white/5 bg-white/5 opacity-50 hover:opacity-100'}`}>
-                    <img src={img} className="w-full h-full object-contain" />
-                  </div>
-                ))}
-             </div>
-             <div className="flex-1 bg-[#0A0A0A] border border-white/5 rounded-[40px] p-12 flex items-center justify-center relative shadow-2xl overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <motion.img key={activeImage} initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} src={imagesArray[activeImage]} className="w-full max-h-[600px] object-contain drop-shadow-[0_30px_60px_rgba(212,175,55,0.15)] relative z-10" />
-             </div>
-          </div>
-
-          {/* COLUMN 2: Product Details & Specs */}
-          <div className="lg:col-span-4 space-y-8 z-10 pt-4">
-              <div>
-                 <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[8px] mb-4">{product.brand || 'Luxury Vault'}</p>
-                 <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tighter leading-[1.1]">{product.name || product.title}</h1>
-              </div>
-              
-              <div className="flex items-center gap-4 border-b border-white/10 pb-8">
-                 <div className="flex text-[#D4AF37]"><Star size={14} fill="currentColor"/><Star size={14} fill="currentColor"/><Star size={14} fill="currentColor"/><Star size={14} fill="currentColor"/><Star size={14} fill="currentColor"/></div>
-                 <span className="text-gray-400 text-xs font-black uppercase tracking-widest cursor-pointer hover:text-white">{reviews.length} Verified Reviews</span>
-              </div>
-
-              <div className="space-y-3 py-4">
-                 {discountPercent > 0 && <div className="flex items-end gap-4"><span className="text-[#D4AF37] text-2xl font-light mb-1">-{discountPercent}%</span><span className="text-5xl font-black font-serif tracking-tighter">₹{Number(displayPrice).toLocaleString('en-IN')}</span></div>}
-                 {discountPercent === 0 && <div className="text-5xl font-black font-serif tracking-tighter">₹{Number(displayPrice).toLocaleString('en-IN')}</div>}
-                 
-                 {originalPrice > displayPrice && <p className="text-gray-500 text-xs font-black uppercase tracking-widest">Global MSRP: <span className="line-through">₹{Number(originalPrice).toLocaleString('en-IN')}</span></p>}
-                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-[3px]">Taxes & Duties Included</p>
-              </div>
-
-              <p className="text-gray-400 text-lg leading-relaxed font-serif italic">"{product.description || 'A timeless piece of horological mastery, forged for those who command the room.'}"</p>
-
-              {/* Dynamic Specifications */}
-              {Object.keys(specs).length > 0 && (
-                <div className="border-t border-white/10 pt-8 mt-8">
-                  <h3 className="font-bold text-sm uppercase tracking-widest text-[#D4AF37] mb-6">Technical Specifications</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(specs).map(([key, val]: any, i:number) => (
-                      <div key={i} className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">{key}</p>
-                        <p className="text-sm font-bold text-white">{val}</p>
-                      </div>
-                    ))}
-                  </div>
+    return (
+        <div className="min-h-screen bg-[#FAFAFA] text-black">
+            
+            <header className="fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center z-50">
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-black"><ArrowLeft size={16}/> Back</Link>
+                <div className="relative cursor-pointer group" onClick={() => router.push('/checkout')}>
+                    <ShoppingBag size={24} className="text-black"/>
+                    {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-[#D4AF37] text-black w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">{cart.length}</span>}
                 </div>
-              )}
-          </div>
+            </header>
 
-          {/* COLUMN 3: Buy Box */}
-          <div className="lg:col-span-3 z-10">
-              <div className="bg-[#0A0A0A] border border-[#D4AF37]/30 rounded-[40px] p-8 shadow-2xl sticky top-32">
-                 <p className="text-3xl font-black font-serif mb-6">₹{Number(displayPrice).toLocaleString('en-IN')}</p>
-                 
-                 <div className="space-y-4 mb-8">
-                    <p className="flex items-center gap-3 text-xs font-bold text-gray-300"><Truck size={16} className="text-[#D4AF37]"/> <span>Complimentary Insured Delivery</span></p>
-                    <p className="flex items-center gap-3 text-xs font-bold text-gray-300"><MapPin size={16} className="text-[#D4AF37]"/> <span>Delivering to Authorized Nodes</span></p>
-                 </div>
+            <main className="max-w-[1200px] mx-auto pt-32 pb-20 px-6 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                
+                <div className="space-y-4">
+                    <div className="w-full aspect-[4/5] bg-white rounded-3xl flex items-center justify-center overflow-hidden border border-gray-200 shadow-sm p-6">
+                        <AnimatePresence mode="wait">
+                            {activeMedia.type === 'image' && activeMedia.url && <motion.img key={activeMedia.url} src={activeMedia.url} className="w-full h-full object-contain mix-blend-multiply" />}
+                            {activeMedia.type === 'video' && activeMedia.url && <motion.video key="vid" autoPlay loop muted playsInline className="w-full h-full object-cover rounded-2xl"><source src={activeMedia.url} /></motion.video>}
+                            {activeMedia.type === '3d' && activeMedia.url && <motion.iframe key="3d" src={activeMedia.url} className="w-full h-full border-none rounded-2xl" />}
+                        </AnimatePresence>
+                    </div>
+                </div>
 
-                 <h4 className={`text-sm font-black uppercase tracking-widest mb-8 px-4 py-2 inline-block rounded-full ${product.stock > 0 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                    {product.stock > 0 ? 'Available in Vault' : 'Vault Locked'}
-                 </h4>
+                <div className="flex flex-col justify-center">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{product.brand}</p>
+                    <h1 className="text-4xl md:text-5xl font-serif text-black leading-tight mb-6">{product.name}</h1>
+                    
+                    <div className="flex items-end gap-3 mb-8">
+                        <p className="text-4xl font-serif font-black text-[#D4AF37]">₹{Number(product.offerPrice || product.price).toLocaleString('en-IN')}</p>
+                        {(product.offerPrice && product.price > product.offerPrice) && <p className="text-gray-400 line-through text-sm mb-1">₹{Number(product.price).toLocaleString()}</p>}
+                    </div>
 
-                 <button onClick={()=>addToCart(product)} disabled={isAdding || product.stock <= 0} className="w-full bg-[#D4AF37] hover:bg-white text-black py-5 rounded-2xl font-black text-[11px] uppercase tracking-[4px] mb-4 shadow-[0_10px_30px_rgba(212,175,55,0.2)] transition-all disabled:opacity-50">
-                    {isAdding ? "Processing..." : "Add to Portfolio"}
-                 </button>
+                    <p className="text-gray-600 font-serif text-lg leading-relaxed mb-10">{product.description}</p>
 
-                 <div className="mt-8 flex items-center justify-center gap-3 text-gray-500 text-[10px] font-black uppercase tracking-[3px]">
-                    <Lock size={14}/> Military Grade Encryption
-                 </div>
-              </div>
-          </div>
-      </div>
+                    <button onClick={addToCart} className="w-full py-5 bg-black text-white rounded-xl font-bold uppercase text-sm tracking-widest hover:bg-[#D4AF37] hover:text-black transition-colors shadow-lg">Add to Cart</button>
+                </div>
+            </main>
 
-      {/* ♞ REVIEW SYSTEM (Frontend) ♞ */}
-      <div className="max-w-[1700px] mx-auto py-16 px-6 md:px-12 border-t border-white/5">
-        <h2 className="text-3xl font-serif italic text-white mb-10">Client Experiences</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-           <div className="lg:col-span-1">
-              <h3 className="text-lg font-black uppercase tracking-widest text-[#D4AF37] mb-6">Submit Your Experience</h3>
-              {reviewSubmitted ? (
-                 <div className="bg-green-500/10 border border-green-500/20 p-8 rounded-3xl text-green-500 text-sm font-bold">
-                    Thank you. Your review has been securely transmitted for concierge approval. It is currently private.
-                 </div>
-              ) : (
-                <form onSubmit={submitReview} className="space-y-5 bg-[#0A0A0A] p-8 rounded-[30px] border border-white/5">
-                   <input required value={reviewForm.userName} onChange={(e)=>setReviewForm({...reviewForm, userName: e.target.value})} placeholder="Your Name" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" />
-                   <select value={reviewForm.rating} onChange={(e)=>setReviewForm({...reviewForm, rating: Number(e.target.value)})} className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]">
-                      <option value="5">5 Stars - Exceptional</option>
-                      <option value="4">4 Stars - Excellent</option>
-                      <option value="3">3 Stars - Good</option>
-                   </select>
-                   <textarea required value={reviewForm.comment} onChange={(e)=>setReviewForm({...reviewForm, comment: e.target.value})} rows={4} placeholder="Describe your experience..." className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37]" />
-                   <button type="submit" className="w-full py-4 bg-white/10 hover:bg-[#D4AF37] hover:text-black text-white font-black uppercase rounded-xl text-[10px] tracking-[3px] transition-all">Submit Securely</button>
-                </form>
-              )}
-           </div>
-           <div className="lg:col-span-2 space-y-6">
-              {reviews.length === 0 ? <p className="text-gray-500 font-serif italic">No public reviews available for this asset yet.</p> : 
-                reviews.map((rev, i) => (
-                  <div key={i} className="bg-[#0A0A0A] p-8 rounded-[30px] border border-white/5">
-                     <div className="flex items-center gap-4 mb-4">
-                        <UserCircle size={40} className="text-gray-600" />
-                        <div>
-                           <p className="font-bold text-white flex items-center gap-2">{rev.userName} {rev.isAdminGenerated && <ShieldCheck size={14} className="text-[#D4AF37]"/>}</p>
-                           <div className="flex text-[#D4AF37] mt-1">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={10} fill="currentColor"/>)}</div>
+            {/* 🌟 ENHANCED PRODUCT REVIEWS SECTION 🌟 */}
+            <section className="max-w-[1200px] mx-auto px-6 pb-32 border-t border-gray-200 pt-20">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-10">
+                    <h2 className="text-3xl font-serif text-black">Customer Reviews</h2>
+                    <button onClick={() => setIsReviewModalOpen(true)} className="mt-4 md:mt-0 px-8 py-3 bg-white border-2 border-black text-black font-bold uppercase text-xs rounded-full hover:bg-black hover:text-white transition-colors flex items-center gap-2">
+                        <Camera size={16}/> Write a Review
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {productReviews.length === 0 ? (
+                        <p className="text-gray-500 italic">No reviews yet. Be the first to review!</p>
+                    ) : productReviews.map((rev, i) => (
+                        <div key={i} className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                            {rev.isGhost && <div className="absolute top-0 left-0 w-full h-1 bg-green-500/30"></div>}
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><User size={20}/></div>
+                                    <div>
+                                        <p className="font-bold text-black">{rev.userName}</p>
+                                        <p className="text-[10px] text-green-600 font-bold uppercase flex items-center gap-1"><CheckCircle size={10}/> Verified Buyer</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1 text-[#D4AF37]">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={14} fill="currentColor"/>)}</div>
+                            </div>
+                            <p className="text-gray-600 text-sm mb-4">"{rev.comment}"</p>
+                            
+                            {/* 🌟 MEDIA DISPLAY IN REVIEWS 🌟 */}
+                            {rev.media && rev.media.length > 0 && (
+                                <div className="flex gap-3 overflow-x-auto pt-2 border-t border-gray-100">
+                                    {rev.media.map((mediaUrl: string, mIdx: number) => (
+                                        mediaUrl.match(/\.(mp4|webm|mov)$/i) ? 
+                                            <video key={mIdx} src={mediaUrl} controls className="h-20 w-20 object-cover rounded-lg border border-gray-200 shrink-0" /> : 
+                                            <img key={mIdx} src={mediaUrl} className="h-20 w-20 object-cover rounded-lg border border-gray-200 shrink-0" />
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                     </div>
-                     <p className="text-gray-400 font-serif italic text-sm leading-relaxed">"{rev.comment}"</p>
-                  </div>
-                ))
-              }
-           </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 🌟 REVIEW UPLOAD MODAL 🌟 */}
+            <AnimatePresence>
+                {isReviewModalOpen && (
+                <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[300] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white p-8 rounded-3xl w-full max-w-md relative my-8 shadow-2xl">
+                        <button onClick={() => setIsReviewModalOpen(false)} className="absolute top-4 right-4 bg-gray-100 text-gray-500 rounded-full p-2"><X size={20}/></button>
+                        
+                        {reviewStatus === 'success' ? (
+                            <div className="text-center py-10">
+                                <CheckCircle size={50} className="text-green-500 mx-auto mb-4" />
+                                <h3 className="text-2xl font-serif text-black mb-2">Review Submitted!</h3>
+                                <p className="text-gray-500 text-sm">Thank you for sharing your experience.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <h3 className="text-xl font-serif font-bold text-black mb-6">Write a Review</h3>
+                                <div className="space-y-5">
+                                    <input value={reviewForm.userName} onChange={e=>setReviewForm({...reviewForm, userName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="Your Name"/>
+                                    
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 block">Rating</label>
+                                        <div className="flex gap-2">
+                                            {[1,2,3,4,5].map(star => (
+                                                <button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`${reviewForm.rating >= star ? 'text-[#D4AF37]' : 'text-gray-300'}`}><Star size={24} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="Your experience..."/>
+                                    
+                                    {/* MEDIA UPLOAD IN REVIEW */}
+                                    <div className="border-t border-gray-100 pt-4">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-2 flex items-center gap-2"><Camera size={14}/> Add Photo / Video</label>
+                                        <div className="flex flex-wrap gap-3">
+                                            {reviewMedia.map((url, idx) => (
+                                                <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                                                    {url.match(/\.(mp4|webm|mov)$/i) ? <video src={url} className="w-full h-full object-cover"/> : <img src={url} className="w-full h-full object-cover"/>}
+                                                    <button onClick={()=>setReviewMedia(reviewMedia.filter(x => x !== url))} className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-0.5"><X size={10}/></button>
+                                                </div>
+                                            ))}
+                                            <div className="relative w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-black transition-colors flex flex-col items-center justify-center cursor-pointer bg-gray-50">
+                                                {isUploadingMedia ? <RefreshCcw size={16} className="text-gray-400 animate-spin"/> : <><UploadCloud size={16} className="text-gray-400 mb-1"/><span className="text-[8px] font-bold text-gray-500 uppercase">Upload</span></>}
+                                                <input type="file" accept="image/*,video/*" onChange={handleCustomerMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isUploadingMedia}/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button onClick={handleReviewSubmit} disabled={reviewStatus === 'submitting' || isUploadingMedia} className="w-full py-4 bg-black text-white font-bold rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
+                                        {reviewStatus === 'submitting' ? 'Submitting...' : 'Submit Review'}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </motion.div>
+                )}
+            </AnimatePresence>
         </div>
-      </div>
-
-      {/* ♞ AI RECOMMENDED SECTION ♞ */}
-      {recommended.length > 0 && (
-         <div className="bg-[#0A0A0A] border-t border-white/5 py-24 px-6 md:px-12 mt-20">
-            <div className="max-w-[1700px] mx-auto">
-               <div className="flex flex-col items-center justify-center text-center mb-16">
-                  <Sparkles size={30} className="text-[#D4AF37] mb-6" strokeWidth={1} />
-                  <h2 className="text-4xl md:text-5xl font-serif tracking-tighter mb-4 text-white">Curated For You</h2>
-                  <p className="text-[10px] font-black uppercase tracking-[8px] text-gray-500">Based on your horological preferences</p>
-               </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {recommended.map((rec: any, i: number) => (
-                     <Link href={`/product/${rec.slug || rec._id}`} key={i} className="group bg-[#050505] p-8 rounded-[40px] border border-white/5 hover:border-[#D4AF37]/30 transition-all flex flex-col h-full">
-                        <div className="aspect-[4/5] bg-white/5 rounded-3xl flex items-center justify-center p-8 mb-8 overflow-hidden relative">
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
-                           <img src={rec.imageUrl || (rec.images && rec.images[0])} className="max-h-full object-contain group-hover:scale-110 transition-transform duration-700 relative z-0 drop-shadow-xl" />
-                        </div>
-                        <div className="flex-1 flex flex-col">
-                           <p className="text-[#D4AF37] text-[9px] font-black uppercase tracking-[4px] mb-2">{rec.brand || 'Luxury'}</p>
-                           <p className="text-white text-xl font-serif italic group-hover:text-[#D4AF37] transition-colors line-clamp-2 mb-6">{rec.name || rec.title}</p>
-                           <div className="mt-auto pt-6 border-t border-white/5 flex justify-between items-center">
-                              <p className="text-2xl font-black font-serif">₹{Number(rec.offerPrice || rec.price || rec.basePrice || 0).toLocaleString('en-IN')}</p>
-                           </div>
-                        </div>
-                     </Link>
-                  ))}
-               </div>
-            </div>
-         </div>
-      )}
-    </div>
-  );
+    );
 }

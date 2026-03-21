@@ -1,43 +1,39 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Agent from '@/models/Agent';
+import mongoose from 'mongoose';
+import { Agent } from '@/models/Agent';
 
-// 🔴 POST: Godmode se naya Agent banega
+export const dynamic = 'force-dynamic';
+
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) return;
+  await mongoose.connect(process.env.MONGODB_URI as string);
+};
+
+export async function GET() {
+  try {
+    await connectDB();
+    const agents = await Agent.find().sort({ createdAt: -1 });
+    return NextResponse.json({ success: true, data: agents });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Failed to fetch agents" });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     await connectDB();
     const body = await req.json();
     
-    // Auto-generate uppercase tracking code if not provided
-    const code = body.code ? body.code.toUpperCase() : body.name.split(' ')[0].toUpperCase() + Math.floor(10 + Math.random() * 90);
-
-    const newAgent = await Agent.create({ 
-        name: body.name,
-        email: body.email,
-        code: code,
-        tier: body.tier || 'Imperial Agent',
-        commissionRate: Number(body.commissionRate || 5)
-    });
-
-    return NextResponse.json({ success: true, agent: newAgent });
-  } catch (error: any) {
-    console.error("Agent Recruitment Error:", error);
-    // Handle unique email/code errors smoothly
-    if(error.code === 11000) {
-        return NextResponse.json({ error: "Agent with this Email or Code already exists." }, { status: 400 });
+    // Agar custom code nahi dala, toh auto-generate karo
+    if (!body.code) {
+        body.code = 'REF-' + body.name.substring(0, 3).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+    } else {
+        body.code = body.code.toUpperCase();
     }
-    return NextResponse.json({ error: "Failed to recruit agent" }, { status: 500 });
-  }
-}
 
-// 🟢 GET: Godmode ke Dashboard mein saare agents dikhane ke liye
-export async function GET() {
-  try {
-    await connectDB();
-    // Sort by highest revenue
-    const agents = await Agent.find({}).sort({ revenue: -1 });
-    return NextResponse.json({ success: true, data: agents });
+    const newAgent = await Agent.create(body);
+    return NextResponse.json({ success: true, data: newAgent });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch sales force" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to create agent" });
   }
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Product from '@/models/Product';
-import UserBehavior from '@/models/UserBehavior';
+import { Product } from '@/models/Product';
+import { UserBehavior } from '@/models/UserBehavior';
 import PricingRule from '@/models/PricingRule';
 
 export async function GET(req: Request) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import UserBehavior from '@/models/UserBehavior';
+import { UserBehavior }from '@/models/UserBehavior';
 
 export async function POST(req: Request) {
   try {
