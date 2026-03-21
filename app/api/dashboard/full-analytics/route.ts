@@ -1,45 +1,38 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Order } from '@/models/Order';
+import mongoose from 'mongoose';
 
-export const dynamic = 'force-dynamic';
+// Minimal Order Schema just to calculate totals
+const orderSchema = new mongoose.Schema({
+    totalAmount: { type: Number, default: 0 },
+    status: { type: String, default: 'PROCESSING' }
+}, { strict: false });
 
-export async function GET() {
-  try {
-    await connectDB();
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
-    // 1. Overall Metrics
-    const metrics = await Order.aggregate([
-      { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" }, totalOrders: { $sum: 1 } } }
-    ]);
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (e) {}
+};
 
-    // 2. Country-wise Sales
-    const countrySales = await Order.aggregate([
-      { $group: { _id: "$customer.country", revenue: { $sum: "$totalAmount" }, count: { $sum: 1 } } },
-      { $sort: { revenue: -1 } }
-    ]);
+export async function GET(req: Request) {
+    try {
+        await connectDB();
 
-    // 3. Traffic Sources
-    const trafficSources = await Order.aggregate([
-      { $group: { _id: "$trafficSource", count: { $sum: 1 } } }
-    ]);
+        // 1. Get all successful orders
+        const orders = await Order.find({ status: { $ne: 'CANCELLED' } });
+        
+        // 2. Calculate Math
+        const totalOrders = orders.length;
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
-    // 4. Salesperson Leaderboard (Affiliates)
-    const leaderboard = await Order.aggregate([
-      { $match: { affiliateCode: { $ne: null } } },
-      { $group: { _id: "$affiliateCode", revenue: { $sum: "$totalAmount" }, orders: { $sum: 1 } } },
-      { $sort: { revenue: -1 } },
-      { $limit: 5 }
-    ]);
-
-    return NextResponse.json({ 
-      success: true, 
-      metrics: metrics[0] || { totalRevenue: 0, totalOrders: 0 },
-      countrySales, 
-      trafficSources, 
-      leaderboard 
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+        return NextResponse.json({
+            success: true,
+            metrics: {
+                totalOrders: totalOrders,
+                totalRevenue: totalRevenue,
+            }
+        });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Failed to compile matrix metrics" }, { status: 500 });
+    }
 }

@@ -35,6 +35,3 @@ export default function VisionariesPage() {
     </div>
   );
 }
-
-//
-export default dynamic(() => Promise.resolve(VisionariesPage), { ssr: false });

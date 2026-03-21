@@ -1,110 +1,73 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Order } from '@/models/Order';
-import { Product } from '@/models/Product';
 import mongoose from 'mongoose';
 
-/**
- * ORDER & REQUISITION CONTROLLER v4.0
- * Handles Secure Transactions, Stock Management, and Fulfillment Lifecycle
- */
+// 🌟 SECURE ORDER SCHEMA 🌟
+const orderSchema = new mongoose.Schema({
+    orderId: { type: String, required: true, unique: true },
+    paymentId: { type: String, required: true },
+    totalAmount: { type: Number, required: true },
+    status: { type: String, default: 'PROCESSING' }, // PENDING, PROCESSING, DISPATCHED, DELIVERED
+    customer: {
+        name: String,
+        email: String,
+        phone: String,
+        address: String,
+        city: String,
+        state: String,
+        pincode: String,
+        country: { type: String, default: 'IN' }
+    },
+    items: [{
+        product: String,
+        quantity: Number,
+        price: Number
+    }]
+}, { timestamps: true });
 
-// 1. GET: Fetch All Requisitions (Dashboard Intelligence)
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (e) { console.error(e); }
+};
+
 export async function GET(req: Request) {
-  try {
-    await connectDB();
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
-
-    let query = {};
-    if (status && status !== "ALL") {
-      query = { status };
-    }
-
-    // High-performance lean query
-    const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return NextResponse.json({ success: true, data: orders });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
-}
-
-// 3. PATCH: Status Synchronization (Fulfillment Lifecycle)
-export async function PATCH(req: Request) {
-  try {
-    await connectDB();
-    const { id, status, location, eta } = await req.json();
-
-    if (!id) {
-      return NextResponse.json({ success: false, error: "Node ID required." }, { status: 400 });
-    }
-
-    const updatedData: any = {};
-    if (status) updatedData.status = status;
-    if (location) updatedData.location = location;
-    if (eta) updatedData.eta = eta;
-
-    const updatedOrder = await Order.findByIdAndUpdate(
-      id,
-      { $set: updatedData },
-      { new: true }
-    );
-
-    // Audit Log
     try {
-        if(mongoose.models.ActivityLog) {
-            await mongoose.models.ActivityLog.create({
-              action: "ORDER_STATUS_UPDATE",
-              details: `Order ${updatedOrder.orderId} transitioned.`,
-              target: updatedOrder._id
-            });
-        }
-    } catch(e){}
-
-    return NextResponse.json({ success: true, data: updatedOrder });
-
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+        await connectDB();
+        const orders = await Order.find({}).sort({ createdAt: -1 });
+        return NextResponse.json({ success: true, data: orders });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Failed to fetch orders" }, { status: 500 });
+    }
 }
 
-// 4. DELETE: Secure Order Cancellation
-export async function DELETE(req: Request) {
-  try {
-    await connectDB();
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+export async function POST(req: Request) {
+    try {
+        await connectDB();
+        const body = await req.json();
+        
+        // Generate a fallback Order ID if Razorpay didn't provide one (for mock testing)
+        const newOrderId = body.orderId || `ORD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
 
-    if (!id) {
-      return NextResponse.json({ success: false, error: "Identification missing." }, { status: 400 });
+        const newOrder = await Order.create({
+            ...body,
+            orderId: newOrderId
+        });
+
+        return NextResponse.json({ success: true, data: newOrder });
+    } catch (error: any) {
+        console.error("Order Creation Error:", error);
+        return NextResponse.json({ success: false, error: "Failed to secure transaction" }, { status: 500 });
     }
+}
 
-    const order = await Order.findById(id);
-    if (order) {
-      // Revert Stock if cancelled
-      for (const item of order.items) {
-        await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } });
-      }
-      
-      await Order.findByIdAndDelete(id);
-
-      try {
-        if(mongoose.models.ActivityLog) {
-            await mongoose.models.ActivityLog.create({
-              action: "ORDER_PURGE",
-              details: `Requisition ${order.orderId} removed. Stock reverted.`,
-              target: id
-            });
-        }
-      } catch(e){}
+export async function PATCH(req: Request) {
+    try {
+        await connectDB();
+        const { id, status } = await req.json();
+        const updatedOrder = await Order.findByIdAndUpdate(id, { status }, { new: true });
+        return NextResponse.json({ success: true, data: updatedOrder });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Failed to update order status" }, { status: 500 });
     }
-
-    return NextResponse.json({ success: true, message: "Registry settled." });
-
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
 }

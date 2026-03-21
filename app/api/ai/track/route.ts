@@ -1,44 +1,46 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { UserBehavior }from '@/models/UserBehavior';
+import mongoose from 'mongoose';
+
+// 🌟 THE LEAD SCHEMA (For tracking Abandoned Carts) 🌟
+const leadSchema = new mongoose.Schema({
+    sessionId: { type: String, required: true, unique: true },
+    action: String,
+    productId: String,
+    category: String,
+    phone: String,
+    email: String,
+    cartTotal: { type: Number, default: 0 },
+    status: { type: String, default: 'abandoned' }
+}, { timestamps: true });
+
+const Lead = mongoose.models.Lead || mongoose.model('Lead', leadSchema);
+
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (e) {}
+};
 
 export async function POST(req: Request) {
-  try {
-    await connectDB();
-    const { sessionId, action, productId, category } = await req.json();
-    if (!sessionId) return NextResponse.json({ error: "Session missing" }, { status: 400 });
+    try {
+        await connectDB();
+        const body = await req.json();
+        const { sessionId, action, productId, category } = body;
 
-    let behavior = await UserBehavior.findOne({ sessionId });
-    if (!behavior) behavior = new UserBehavior({ sessionId });
+        // Generate a random session ID if browser didn't send one
+        const safeSessionId = sessionId || `GUEST_${Date.now()}`;
 
-    // Scoring System Logic
-    let scoreDelta = 0;
-    if (action === 'VIEW') scoreDelta = 10;
-    if (action === 'CART') scoreDelta = 20;
-    if (action === 'PURCHASE') scoreDelta = 50;
+        // Save the silent drop to database
+        await Lead.findOneAndUpdate(
+            { sessionId: safeSessionId },
+            { 
+                $set: { updatedAt: new Date() },
+                $setOnInsert: { sessionId: safeSessionId, action, productId, category, status: 'abandoned' }
+            },
+            { upsert: true, new: true }
+        );
 
-    // Update Product Score
-    if (productId) {
-      const currentScore = behavior.productScores.get(productId) || 0;
-      behavior.productScores.set(productId, currentScore + scoreDelta);
-      
-      // Update Recently Viewed
-      if (action === 'VIEW') {
-         behavior.recentlyViewed = behavior.recentlyViewed.filter((id: any) => id.toString() !== productId);
-         behavior.recentlyViewed.unshift(productId);
-         if (behavior.recentlyViewed.length > 10) behavior.recentlyViewed.pop(); // Keep last 10
-      }
+        return NextResponse.json({ success: true, message: "Tracked securely." });
+    } catch (error) {
+        return NextResponse.json({ success: false }, { status: 500 });
     }
-
-    // Update Category Affinity
-    if (category) {
-      const catScore = behavior.categoryScores.get(category) || 0;
-      behavior.categoryScores.set(category, catScore + 5);
-    }
-
-    await behavior.save();
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 }
