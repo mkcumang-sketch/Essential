@@ -264,3 +264,4 @@ export default function LuxuryProductPage() {
         </div>
     );
 }
+export default dynamic(() => Promise.resolve(product), { ssr: false });

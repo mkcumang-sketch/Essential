@@ -1,80 +1,82 @@
 "use client";
-import { useWishlist } from "@/context/WishlistContext";
-import { useCart } from "@/context/CartContext";
-import { ShoppingCart, Trash2, Heart } from "lucide-react";
-import Link from "next/link";
-import { motion } from "framer-motion";
 
-export default function Wishlist() {
-  const { wishlist, toggleWishlist } = useWishlist();
-  const { addToCart } = useCart();
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Trash2, ArrowLeft, Heart, ShoppingBag } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-  if (wishlist.length === 0) {
+function WishlistPage() {
+    const router = useRouter();
+    const [wishlist, setWishlist] = useState<any[]>([]);
+    const [cart, setCart] = useState<any[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    useEffect(() => {
+        // Safe Client-Side Loading
+        setWishlist(JSON.parse(localStorage.getItem('luxury_wishlist') || '[]'));
+        setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
+        setIsLoaded(true);
+    }, []);
+
+    const removeItem = (id: string) => {
+        const newWishlist = wishlist.filter(item => item._id !== id);
+        setWishlist(newWishlist);
+        localStorage.setItem('luxury_wishlist', JSON.stringify(newWishlist));
+    };
+
+    const moveToCart = (product: any) => {
+        const newCart = [...cart, { ...product, qty: 1 }];
+        setCart(newCart);
+        localStorage.setItem('luxury_cart', JSON.stringify(newCart));
+        removeItem(product._id);
+        router.push('/cart');
+    };
+
+    if (!isLoaded) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
+
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 bg-[#F9F9F9] pt-32">
-        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-          <Heart className="w-10 h-10 text-gray-300" />
-        </div>
-        <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 text-gray-300">Your Wishlist is Empty</h2>
-        <p className="text-gray-500 mb-8 max-w-md">Save items you love here to track their availability.</p>
-        <Link href="/products" className="bg-[#111] text-white px-8 py-4 font-bold uppercase tracking-widest hover:bg-[#D32F2F] transition-colors">
-          Browse Collection
-        </Link>
-      </div>
-    );
-  }
+        <div className="min-h-screen bg-[#FAFAFA] text-black">
+            <header className="w-full bg-white border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black"><ArrowLeft size={16}/> Back to Vault</Link>
+                <h1 className="text-2xl font-serif font-black tracking-[5px] uppercase absolute left-1/2 -translate-x-1/2">Essential</h1>
+            </header>
 
-  return (
-    <div className="bg-white min-h-screen pt-40 pb-20">
-      <div className="max-w-[1400px] mx-auto px-6">
-        <div className="flex items-end justify-between mb-12 border-b border-gray-100 pb-6">
-          <h1 className="text-4xl font-black uppercase tracking-tighter">
-            My Wishlist <span className="text-[#D32F2F]">({wishlist.length})</span>
-          </h1>
-          <Link href="/products" className="text-xs font-bold uppercase tracking-widest border-b border-black pb-1 hover:text-[#D32F2F] hover:border-[#D32F2F] transition-all">
-            Continue Shopping
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {wishlist.map((item) => (
-            <motion.div 
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              key={item.id} 
-              className="group border border-gray-100 rounded-sm hover:shadow-xl transition-all duration-300 relative bg-white"
-            >
-              {/* Remove Button */}
-              <button 
-                onClick={() => toggleWishlist(item)}
-                className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-sm text-gray-400 hover:text-[#D32F2F] z-10 transition-colors"
-                title="Remove from Wishlist"
-              >
-                <Trash2 size={16} />
-              </button>
-
-              <div className="h-64 overflow-hidden p-6 bg-gray-50">
-                <img src={item.img} alt={item.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
-              </div>
-              
-              <div className="p-6">
-                <p className="text-[10px] font-bold uppercase text-gray-400 mb-1 tracking-widest">{item.brand || "Luxury"}</p>
-                <h3 className="text-sm font-bold uppercase mb-3 line-clamp-1">{item.name}</h3>
-                <p className="text-lg font-black text-[#D32F2F] mb-4">₹{item.price.toLocaleString()}</p>
+            <main className="max-w-4xl mx-auto pt-16 pb-20 px-6">
+                <h2 className="text-4xl font-serif text-black mb-10 flex items-center gap-4"><Heart size={32} className="text-[#D4AF37]"/> Saved Assets</h2>
                 
-                <button 
-                  onClick={() => addToCart(item)}
-                  className="w-full bg-black text-white py-3 text-xs font-bold uppercase tracking-widest hover:bg-[#D32F2F] transition-colors flex items-center justify-center gap-2"
-                >
-                  <ShoppingCart size={14} /> Move to Cart
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                {wishlist.length === 0 ? (
+                    <div className="bg-white p-12 rounded-[30px] border border-gray-200 text-center shadow-sm">
+                        <Heart size={60} className="mx-auto text-gray-300 mb-6"/>
+                        <h3 className="text-2xl font-serif mb-2">Your wishlist is empty</h3>
+                        <p className="text-gray-500 text-sm mb-8">Save your favorite timepieces here for later.</p>
+                        <Link href="/" className="px-8 py-4 bg-black text-white font-bold uppercase text-xs rounded-full hover:bg-[#D4AF37] hover:text-black transition-colors inline-block">Explore Vault</Link>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {wishlist.map((item, i) => (
+                            <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key={i} className="bg-white p-6 rounded-[25px] border border-gray-200 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+                                <div className="w-24 h-24 bg-gray-50 rounded-xl p-2 shrink-0">
+                                    <img src={item.imageUrl || (item.images && item.images[0])} className="w-full h-full object-contain mix-blend-multiply" />
+                                </div>
+                                <div className="flex-1 text-center md:text-left">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{item.brand}</p>
+                                    <h4 className="text-lg font-serif font-bold text-black">{item.name}</h4>
+                                    <p className="text-sm font-bold mt-2">₹{Number(item.offerPrice || item.price).toLocaleString('en-IN')}</p>
+                                </div>
+                                <div className="flex gap-3 mt-4 md:mt-0 w-full md:w-auto">
+                                    <button onClick={() => moveToCart(item)} className="flex-1 md:flex-none px-6 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-[#D4AF37] hover:text-black transition-colors flex items-center justify-center gap-2"><ShoppingBag size={14}/> Move to Cart</button>
+                                    <button onClick={() => removeItem(item._id)} className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors"><Trash2 size={18}/></button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </main>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
+
+// 🌟 THIS BYPASSES VERCEL SERVER BUILD CRASH 🌟
+export default dynamic(() => Promise.resolve(WishlistPage), { ssr: false });
