@@ -499,11 +499,19 @@ const [honeyPot, setHoneyPot] = useState("");
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10">
-          {filteredWatches.length === 0 ? (
-             <div className="col-span-full py-20 text-center flex flex-col items-center justify-center">
-                <Shield size={40} className="text-gray-200 mb-4"/>
-                <p className="font-serif italic text-2xl text-gray-400">No Watches Found.</p>
-             </div>
+         {filteredWatches.length === 0 ? (
+             <motion.div initial={{opacity:0}} animate={{opacity:1}} className="col-span-full py-32 text-center flex flex-col items-center justify-center bg-gray-50 rounded-[40px] border border-gray-100">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
+                    <Sparkles size={30} className="text-gray-300"/>
+                </div>
+                <h3 className="text-3xl md:text-4xl font-serif text-gray-900 mb-4">Curating the Vault</h3>
+                <p className="text-gray-500 font-serif text-lg max-w-md leading-relaxed px-4">
+                    Our horologists are currently preparing an exclusive selection of timepieces for this category. Please check back shortly for private acquisitions.
+                </p>
+                <button onClick={() => {setSearchTerm(''); setActiveCategory('ALL');}} className="mt-8 text-xs font-medium uppercase tracking-widest text-gray-900 border-b border-gray-900 pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
+                    View Entire Collection
+                </button>
+             </motion.div>
           ) : (
             <AnimatePresence mode='popLayout'>
               {filteredWatches.map((watch: any, i: number) => (
