@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// 🌟 FIXED: Added a dummy fallback key to prevent Vercel build crash 🌟
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_to_pass_build_123');
 
 export async function POST(req: Request) {
   try {
     const { to, subject, customerName, orderId, amount } = await req.json();
 
     const data = await resend.emails.send({
-      from: 'Essential Store <onboarding@resend.dev>', // Jab asli domain loge tab isko badal dena (e.g., orders@essentialrush.com)
+      from: 'Essential Store <onboarding@resend.dev>', 
       to: [to],
       subject: subject || 'Order Confirmation - Essential',
       html: `
