@@ -1,138 +1,79 @@
 "use client";
 
-import { useCart } from "@/context/CartContext";
-import Link from "next/link";
-import { ArrowLeft, Trash2, Plus, Minus, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+function CartPage() {
+    const router = useRouter();
+    const [cart, setCart] = useState<any[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-  // Final Bill (Total) calculate karne ka automatic math
-  const subtotal = cart.reduce((total: number, item: any) => total + (item.price * item.quantity), 0);
-  const finalTotal = subtotal; // Luxury watches mein shipping humesha free hoti hai!
+    useEffect(() => {
+        // Sirf browser mein load hoga, Vercel ko crash nahi karega
+        setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
+        setIsLoaded(true);
+    }, []);
 
-  return (
-    <div className="min-h-screen bg-white dark:bg-[#050505] transition-colors duration-300">
-      
-      {/* 1. HEADER SECTION */}
-      <div className="w-full bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-900 py-12">
-        <div className="max-w-[1400px] mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black dark:text-white mb-4">
-            Your Selection
-          </h1>
-          <Link href="/#collection" className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Continue Exploring
-          </Link>
-        </div>
-      </div>
+    const removeItem = (id: string) => {
+        const newCart = cart.filter(item => item._id !== id);
+        setCart(newCart);
+        localStorage.setItem('luxury_cart', JSON.stringify(newCart));
+    };
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        
-        {/* AGAR CART KHALI HAI */}
-        {cart.length === 0 ? (
-          <div className="text-center py-20 border border-gray-100 dark:border-gray-900">
-            <p className="text-sm font-bold tracking-[0.2em] uppercase text-black dark:text-white mb-4">Your Cart is Empty</p>
-            <Link href="/#collection" className="inline-block bg-black text-white dark:bg-white dark:text-black px-8 py-4 text-xs font-extrabold uppercase tracking-widest hover:opacity-80 transition-opacity">
-              Discover Masterpieces
-            </Link>
-          </div>
-        ) : (
-          
-          /* AGAR CART MEIN WATCHES HAIN */
-          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-            
-            {/* LEFT SIDE: Watches ki List */}
-            <div className="w-full lg:w-[65%] space-y-8">
-              
-              {/* Table ki Heading (Mobile pe chup jayegi) */}
-              <div className="hidden md:grid grid-cols-12 gap-4 pb-4 border-b border-gray-200 dark:border-gray-800 text-xs font-bold tracking-widest uppercase text-gray-400">
-                <div className="col-span-6">Product</div>
-                <div className="col-span-3 text-center">Quantity</div>
-                <div className="col-span-3 text-right">Total</div>
-              </div>
+    const cartTotal = cart.reduce((total, item) => total + ((item.offerPrice || item.price) * (item.qty || 1)), 0);
 
-              {/* Asli Watches ki List */}
-              {cart.map((item: any) => (
-                <div key={item._id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-6 border-b border-gray-100 dark:border-gray-900">
-                  
-                  {/* Photo aur Naam */}
-                  <div className="col-span-6 flex items-center space-x-6">
-                    <div className="w-24 h-32 bg-gray-50 dark:bg-[#111] relative overflow-hidden flex-shrink-0">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold uppercase tracking-wide text-black dark:text-white mb-2">{item.title}</h3>
-                      <p className="text-xs text-gray-500 font-bold tracking-widest">₹{item.price.toLocaleString("en-IN")}</p>
-                    </div>
-                  </div>
+    if (!isLoaded) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
 
-                  {/* Quantity (+ / -) Button */}
-                  <div className="col-span-3 flex justify-center items-center space-x-4 my-4 md:my-0">
-                    <button onClick={() => updateQuantity(item._id, "decrease")} className="p-2 border border-gray-200 dark:border-gray-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-sm font-black w-4 text-center text-black dark:text-white">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item._id, "increase")} className="p-2 border border-gray-200 dark:border-gray-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors">
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
+    return (
+        <div className="min-h-screen bg-[#FAFAFA] text-black">
+            <header className="w-full bg-white border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center">
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black"><ArrowLeft size={16}/> Continue Shopping</Link>
+                <h1 className="text-2xl font-serif font-black tracking-[5px] uppercase absolute left-1/2 -translate-x-1/2">Essential</h1>
+            </header>
 
-                  {/* Price aur Delete Button */}
-                  <div className="col-span-3 flex justify-between md:justify-end items-center space-x-6">
-                    <span className="text-sm font-black text-black dark:text-white">
-                      ₹{(item.price * item.quantity).toLocaleString("en-IN")}
-                    </span>
-                    <button onClick={() => removeFromCart(item._id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-
-            {/* RIGHT SIDE: Final Bill (Order Summary) */}
-            <div className="w-full lg:w-[35%]">
-              <div className="bg-gray-50 dark:bg-[#0a0a0a] p-8 border border-gray-200 dark:border-gray-900 sticky top-32">
-                <h2 className="text-lg font-black uppercase tracking-widest text-black dark:text-white mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-                  Order Summary
-                </h2>
+            <main className="max-w-4xl mx-auto pt-16 pb-20 px-6">
+                <h2 className="text-4xl font-serif text-black mb-10 flex items-center gap-4"><ShoppingBag size={32} className="text-[#D4AF37]"/> Your Asset Cart</h2>
                 
-                <div className="space-y-4 text-sm mb-8">
-                  <div className="flex justify-between text-gray-500 font-semibold tracking-wide">
-                    <span>Subtotal</span>
-                    <span>₹{subtotal.toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-500 font-semibold tracking-wide">
-                    <span>Insured Shipping</span>
-                    <span className="text-green-600 uppercase text-xs tracking-widest font-bold">Complimentary</span>
-                  </div>
-                  <div className="flex justify-between text-gray-500 font-semibold tracking-wide">
-                    <span>Taxes</span>
-                    <span>Included</span>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mb-8">
-                  <div className="flex justify-between items-end">
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Total</span>
-                    <span className="text-3xl font-black text-black dark:text-white">₹{finalTotal.toLocaleString("en-IN")}</span>
-                  </div>
-                </div>
-
-                <button className="w-full bg-black text-white dark:bg-white dark:text-black py-5 text-sm font-extrabold tracking-[0.2em] uppercase hover:opacity-80 transition-opacity flex items-center justify-center mb-6">
-                  Proceed to Checkout
-                </button>
-
-                <div className="flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                  <ShieldCheck className="w-4 h-4 mr-2" /> Secure 256-bit Encryption
-                </div>
-              </div>
-            </div>
-
-          </div>
-        )}
-      </div>
-    </div>
-  );
+                {cart.length === 0 ? (
+                    <div className="bg-white p-12 rounded-[30px] border border-gray-200 text-center shadow-sm">
+                        <ShoppingBag size={60} className="mx-auto text-gray-300 mb-6"/>
+                        <h3 className="text-2xl font-serif mb-2">Your cart is empty</h3>
+                        <p className="text-gray-500 text-sm mb-8">Browse our collection to add premium timepieces.</p>
+                        <Link href="/" className="px-8 py-4 bg-black text-white font-bold uppercase text-xs rounded-full hover:bg-[#D4AF37] hover:text-black transition-colors">Explore Vault</Link>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {cart.map((item, i) => (
+                            <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key={i} className="bg-white p-6 rounded-[25px] border border-gray-200 flex items-center gap-6 shadow-sm">
+                                <div className="w-24 h-24 bg-gray-50 rounded-xl p-2 shrink-0">
+                                    <img src={item.imageUrl || (item.images && item.images[0])} className="w-full h-full object-contain mix-blend-multiply" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{item.brand}</p>
+                                    <h4 className="text-lg font-serif font-bold text-black">{item.name}</h4>
+                                    <p className="text-sm font-bold mt-2">₹{Number(item.offerPrice || item.price).toLocaleString('en-IN')}</p>
+                                </div>
+                                <button onClick={() => removeItem(item._id)} className="p-3 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors"><Trash2 size={18}/></button>
+                            </motion.div>
+                        ))}
+                        
+                        <div className="bg-black text-white p-8 rounded-[30px] mt-10 shadow-xl">
+                            <div className="flex justify-between items-center mb-8 border-b border-white/20 pb-6">
+                                <span className="font-serif text-xl">Total Investment</span>
+                                <span className="text-3xl font-serif font-black text-[#D4AF37]">₹{cartTotal.toLocaleString('en-IN')}</span>
+                            </div>
+                            <button onClick={() => router.push('/checkout')} className="w-full py-5 bg-[#D4AF37] text-black font-black uppercase tracking-[4px] rounded-2xl hover:bg-white transition-colors text-sm">Proceed to Checkout</button>
+                        </div>
+                    </div>
+                )}
+            </main>
+        </div>
+    );
 }
+
+// 🌟 THE MAGIC FIX: Bypasses Vercel SSR Crash 🌟
+export default dynamic(() => Promise.resolve(CartPage), { ssr: false });
