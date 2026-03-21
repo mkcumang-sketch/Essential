@@ -2,243 +2,190 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSession, signIn, signOut } from "next-auth/react";
-import { 
-  Package, Wallet, Gift, LayoutDashboard, LogOut, ArrowLeft, ExternalLink, 
-  Copy, CheckCircle, ShieldCheck, MapPin, Shield // 🌟 SHIELD ADD KAR DIYA YAHAN
-} from 'lucide-react';
 import Link from 'next/link';
+import { ArrowLeft, MapPin, CheckCircle, Clock, ShieldCheck, Box, LogOut } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
-export default function VIPClientDashboard() {
-  const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState('OVERVIEW');
-  const [userData, setUserData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+const TRACKING_STEPS = ["PENDING", "PROCESSING", "DISPATCHED", "TRANSIT", "DELIVERED"];
 
-  useEffect(() => {
-    if (session?.user?.email) {
-      fetch(`/api/user/dashboard?email=${session.user.email}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) setUserData(data.data);
-          setIsLoading(false);
-        })
-        .catch(() => setIsLoading(false));
-    }
-  }, [session]);
+function ElegantAccountPage() {
+    const { data: session, status } = useSession();
+    const router = useRouter();
+    
+    const [myOrders, setMyOrders] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    // 🛡️ SECURITY INTERCEPTOR: Redirect unauthenticated traffic to Login
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            // Send to login, and tell login to send them back here after success
+            router.push('/login?callbackUrl=/account');
+        }
+    }, [status, router]);
 
-  // 🌟 LUXURY LOADING STATE 🌟
-  if (status === "loading" || (status === "authenticated" && isLoading)) {
-    return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
-  }
-
-  // 🌟 LOGIN PROMPT IF NOT LOGGED IN 🌟
-  if (status === "unauthenticated") {
-    return (
-      <div className="h-screen bg-[#050505] flex flex-col items-center justify-center text-center px-6 relative overflow-hidden">
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#D4AF37] blur-[150px] opacity-10 rounded-full pointer-events-none"></div>
-         <ShieldCheck size={60} className="text-[#D4AF37] mb-8" />
-         <h1 className="text-5xl md:text-7xl font-serif italic text-white mb-4 tracking-tighter">Client Protocol</h1>
-         <p className="text-gray-400 text-sm md:text-base mb-10 max-w-md font-serif italic">Authenticate to access your private vault, track global shipments, and manage your empire wallet.</p>
-         <button onClick={() => signIn("google")} className="px-10 py-5 bg-[#D4AF37] text-black font-black uppercase tracking-[5px] text-[10px] rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.3)] hover:bg-white transition-all">
-            Authenticate via Google
-         </button>
-         <Link href="/" className="mt-10 text-[10px] text-gray-500 uppercase tracking-widest hover:text-white transition-colors border-b border-gray-800 pb-1">Return to Base</Link>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-[#D4AF37] selection:text-black flex flex-col md:flex-row">
-      
-      {/* 🌟 SIDEBAR 🌟 */}
-      <aside className="w-full md:w-[320px] bg-[#0A0A0A] border-r border-white/5 flex flex-col shrink-0">
-         <div className="p-8 border-b border-white/5">
-            <Link href="/" className="flex items-center gap-3 text-[9px] text-gray-500 font-black uppercase tracking-widest hover:text-[#D4AF37] transition-colors mb-10 w-max"><ArrowLeft size={14}/> Exit Vault</Link>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-gray-800 to-black border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37] text-xl font-serif mb-4 overflow-hidden">
-               {session?.user?.image ? <img src={session.user.image} className="w-full h-full object-cover" /> : session?.user?.name?.charAt(0) || 'V'}
-            </div>
-            <h2 className="text-xl font-serif italic text-white truncate">{session?.user?.name}</h2>
-            <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{session?.user?.email}</p>
-         </div>
-         <nav className="flex-1 p-6 space-y-2">
-            {[
-              { id: 'OVERVIEW', icon: LayoutDashboard, label: 'Vault Overview' },
-              { id: 'ORDERS', icon: Package, label: 'Requisitions (Orders)' },
-              { id: 'WALLET', icon: Wallet, label: 'Empire Wallet' },
-              { id: 'REFERRAL', icon: Gift, label: 'Invite Protocol' },
-            ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
-                 <tab.icon size={16} /> {tab.label}
-              </button>
-            ))}
-         </nav>
-         <div className="p-6 border-t border-white/5">
-            <button onClick={() => signOut()} className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest"><LogOut size={14}/> Disconnect</button>
-         </div>
-      </aside>
-
-      {/* 🌟 MAIN CONTENT 🌟 */}
-      <main className="flex-1 p-6 md:p-16 overflow-y-auto custom-scrollbar relative">
-         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#D4AF37] blur-[150px] opacity-[0.03] rounded-full pointer-events-none"></div>
-
-         <AnimatePresence mode="wait">
+    // 🔄 AUTO-FETCH CLIENT DATA
+    useEffect(() => {
+        const fetchClientOrders = async () => {
+            if (status !== "authenticated" || !session?.user) return;
             
-            {/* OVERVIEW TAB */}
-            {activeTab === 'OVERVIEW' && (
-               <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key="overview" className="space-y-10 relative z-10">
-                  <h3 className="text-4xl font-serif italic text-white mb-8">Welcome to your <span className="text-[#D4AF37]">Private Vault.</span></h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                     {/* Wallet Card */}
-                     <div className="bg-gradient-to-br from-[#111] to-black border border-[#D4AF37]/30 p-8 rounded-[30px] flex flex-col justify-between shadow-xl cursor-pointer hover:border-[#D4AF37] transition-all" onClick={()=>setActiveTab('WALLET')}>
-                        <div className="flex justify-between items-start mb-6">
-                           <div className="p-3 bg-[#D4AF37]/10 rounded-xl text-[#D4AF37]"><Wallet size={20}/></div>
-                           <span className="text-[9px] uppercase font-black tracking-widest text-green-500 bg-green-500/10 px-3 py-1 rounded-full">Active</span>
-                        </div>
+            try {
+                const ts = new Date().getTime();
+                const res = await fetch(`/api/orders?t=${ts}`);
+                const data = await res.json();
+                
+                if (data.success && data.data) {
+                    const userEmail = session.user.email?.toLowerCase();
+                    const userPhone = (session.user as any).phone;
+
+                    // Automatically filter orders matching the logged-in user's email or phone
+                    const clientOrders = data.data.filter((o: any) => {
+                        const orderEmail = o.customer?.email?.toLowerCase();
+                        const orderPhone = o.customer?.phone;
+                        return (userEmail && orderEmail === userEmail) || (userPhone && orderPhone === userPhone);
+                    });
+                    
+                    setMyOrders(clientOrders);
+                }
+            } catch (error) {
+                console.error("Tracking Error:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (status === "authenticated") {
+            fetchClientOrders();
+        }
+    }, [status, session]);
+
+    // Calculate progress percentage for the timeline bar
+    const getProgressWidth = (status: string) => {
+        const idx = TRACKING_STEPS.indexOf(status.toUpperCase());
+        if (idx === -1) return "0%";
+        if (status === "CANCELLED") return "100%";
+        return `${(idx / (TRACKING_STEPS.length - 1)) * 100}%`;
+    };
+
+    // Show elegant loader while checking session or fetching data
+    if (status === "loading" || (status === "authenticated" && isLoading)) {
+        return (
+            <div className="h-screen bg-white flex flex-col items-center justify-center">
+                <div className="w-10 h-10 border-2 border-gray-900 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-[10px] font-medium uppercase tracking-[2px] text-gray-500">Authenticating Identity...</p>
+            </div>
+        );
+    }
+
+    // Do not render anything if unauthenticated (the useEffect will redirect them)
+    if (status === "unauthenticated") return null;
+
+    return (
+        <div className="min-h-screen bg-[#FAFAFA] text-gray-900 selection:bg-gray-200 selection:text-black pb-32 font-sans">
+            
+            {/* MINIMAL HEADER */}
+            <header className="w-full bg-white/90 backdrop-blur-xl border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+                <Link href="/" className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[2px] text-gray-500 hover:text-gray-900 transition-colors">
+                    <ArrowLeft size={16}/> Back to Store
+                </Link>
+                <h1 className="text-xl font-serif tracking-[4px] uppercase absolute left-1/2 -translate-x-1/2">Essential</h1>
+                <button onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[2px] text-gray-400 hover:text-red-500 transition-colors">
+                    Log Out <LogOut size={14}/>
+                </button>
+            </header>
+
+            <main className="max-w-4xl mx-auto pt-16 px-6 md:px-10">
+                
+                <div className="text-center mb-16">
+                    <h2 className="text-4xl md:text-5xl font-serif text-gray-900 mb-4">Welcome, {session?.user?.name || 'Client'}</h2>
+                    <p className="text-gray-500 text-sm max-w-lg mx-auto">Manage your acquisitions and track your global logistics shipments below.</p>
+                </div>
+
+                <div className="space-y-10">
+                    <div className="flex justify-between items-end border-b border-gray-200 pb-6">
                         <div>
-                           <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-1">Available Balance</p>
-                           <h2 className="text-4xl font-serif text-white font-black">₹{userData?.walletBalance?.toLocaleString('en-IN') || 0}</h2>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-2"><CheckCircle size={14} className="text-green-500"/> Secure Session</p>
+                            <h3 className="text-xl font-serif text-gray-900">{session?.user?.email || (session?.user as any)?.phone || 'Encrypted Identity'}</h3>
                         </div>
-                     </div>
+                        <span className="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[2px]">{myOrders.length} Assets</span>
+                    </div>
 
-                     {/* Orders Card */}
-                     <div className="bg-[#0A0A0A] border border-white/5 p-8 rounded-[30px] flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all" onClick={()=>setActiveTab('ORDERS')}>
-                        <div className="flex justify-between items-start mb-6">
-                           <div className="p-3 bg-white/5 rounded-xl text-gray-400"><Package size={20}/></div>
+                    {myOrders.length === 0 ? (
+                        <div className="bg-white border border-gray-200 p-16 rounded-3xl text-center shadow-sm">
+                            <Box size={50} className="text-gray-300 mx-auto mb-6"/>
+                            <h4 className="text-2xl font-serif text-gray-900 mb-4">No Acquisitions Found</h4>
+                            <p className="text-gray-500 text-sm mb-8">We couldn't locate any active orders linked to your profile.</p>
+                            <Link href="/#ourcollection" className="px-8 py-4 bg-black text-white font-medium uppercase text-[10px] tracking-[2px] rounded-full hover:bg-gray-800 transition-all inline-block">Explore Collection</Link>
                         </div>
-                        <div>
-                           <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-1">Total Requisitions</p>
-                           <h2 className="text-4xl font-serif text-white font-black">{userData?.orders?.length || 0} Assets</h2>
+                    ) : (
+                        <div className="space-y-8">
+                            {myOrders.map((order, i) => (
+                                <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay: i*0.1}} key={order._id || i} className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                                    
+                                    {/* Order Header */}
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 border-b border-gray-100 pb-6">
+                                        <div>
+                                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Order Number</p>
+                                            <p className="text-lg font-medium text-gray-900 tracking-widest">#{order.orderId?.slice(-6) || 'UKN'}</p>
+                                        </div>
+                                        <div className="text-left md:text-right">
+                                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">Total Value</p>
+                                            <p className="text-xl font-serif text-gray-900">₹{(order.totalAmount || 0).toLocaleString('en-IN')}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Live Timeline Tracker */}
+                                    <div className="mb-10">
+                                        <div className="flex justify-between mb-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-900 flex items-center gap-2"><MapPin size={14}/> Shipping Status</p>
+                                            <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-600' : order.status === 'CANCELLED' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-900'}`}>{order.status || 'PROCESSING'}</span>
+                                        </div>
+                                        
+                                        <div className="relative w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-4">
+                                            <motion.div 
+                                                initial={{ width: 0 }} 
+                                                animate={{ width: getProgressWidth(order.status || 'PROCESSING') }} 
+                                                transition={{ duration: 1, ease: "easeOut" }}
+                                                className={`absolute top-0 left-0 h-full rounded-full ${order.status === 'CANCELLED' ? 'bg-red-500' : order.status === 'DELIVERED' ? 'bg-green-500' : 'bg-gray-900'}`}
+                                            />
+                                        </div>
+
+                                        <div className="flex justify-between text-[9px] font-medium uppercase tracking-widest text-gray-400">
+                                            {TRACKING_STEPS.map((step, idx) => (
+                                                <span key={step} className={`text-center ${order.status === 'CANCELLED' ? 'text-gray-300' : TRACKING_STEPS.indexOf(order.status?.toUpperCase() || 'PROCESSING') >= idx ? 'text-gray-900' : ''}`}>{step}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Order Details */}
+                                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-200 pb-2">Delivery Details</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <p className="text-xs font-serif text-gray-900 mb-1">Destination Address</p>
+                                                <p className="text-xs text-gray-500 leading-relaxed font-mono">{order.customer?.address}<br/>{order.customer?.city}, {order.customer?.state} - {order.customer?.pincode}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-serif text-gray-900 mb-1">Contents</p>
+                                                <p className="text-xs text-gray-500 font-mono">{order.items?.length || 1} Timepiece(s)</p>
+                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-3 flex items-center gap-1"><Clock size={10}/> ETA: 3-5 Business Days</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </motion.div>
+                            ))}
                         </div>
-                     </div>
+                    )}
+                </div>
 
-                     {/* Referral Card */}
-                     <div className="bg-[#0A0A0A] border border-white/5 p-8 rounded-[30px] flex flex-col justify-between cursor-pointer hover:border-white/20 transition-all" onClick={()=>setActiveTab('REFERRAL')}>
-                        <div className="flex justify-between items-start mb-6">
-                           <div className="p-3 bg-white/5 rounded-xl text-gray-400"><Gift size={20}/></div>
-                        </div>
-                        <div>
-                           <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-1">Network Invites</p>
-                           <h2 className="text-4xl font-serif text-white font-black">{userData?.referralStats?.sales || 0} Conversions</h2>
-                        </div>
-                     </div>
-                  </div>
-               </motion.div>
-            )}
-
-            {/* ORDERS TAB */}
-            {activeTab === 'ORDERS' && (
-               <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key="orders" className="space-y-8 relative z-10">
-                  <div className="border-b border-white/10 pb-6 mb-6">
-                     <h3 className="text-3xl font-serif italic text-white">Your Requisitions</h3>
-                     <p className="text-[10px] uppercase font-black text-gray-500 tracking-[3px] mt-2">Track your global luxury shipments</p>
-                  </div>
-
-                  <div className="space-y-6">
-                     {!userData?.orders || userData.orders.length === 0 ? (
-                        <div className="bg-[#0A0A0A] border border-white/5 rounded-[30px] p-16 text-center">
-                           <Package size={40} className="mx-auto text-gray-600 mb-4 opacity-50"/>
-                           <p className="font-serif italic text-xl text-gray-500">Your vault is currently empty.</p>
-                           <Link href="/#vault" className="inline-block mt-6 px-8 py-3 border border-[#D4AF37]/50 text-[#D4AF37] text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-[#D4AF37] hover:text-black transition-all">Acquire Assets</Link>
-                        </div>
-                     ) : userData.orders.map((order:any, i:number) => (
-                        <div key={i} className="bg-[#0A0A0A] border border-white/5 p-8 rounded-[30px] flex flex-col lg:flex-row justify-between gap-6 hover:border-[#D4AF37]/30 transition-colors group">
-                           <div className="flex items-center gap-6">
-                              <div className="w-16 h-16 bg-black rounded-2xl border border-white/10 flex items-center justify-center font-mono text-xs font-black text-gray-400 group-hover:text-[#D4AF37] transition-colors">
-                                 #{order.orderId?.slice(-4) || 'ORD'}
-                              </div>
-                              <div>
-                                 <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">{new Date(order.createdAt).toLocaleDateString()}</p>
-                                 <h4 className="text-xl font-serif text-white">{order.items?.length || 1} Asset(s) Secured</h4>
-                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-2 flex items-center gap-2"><MapPin size={12}/> Dispatch to: {order.customer?.city || 'Registered Vault'}</p>
-                              </div>
-                           </div>
-                           <div className="flex items-center justify-between lg:justify-end gap-10">
-                              <div className="text-left lg:text-right">
-                                 <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Total Valuation</p>
-                                 <p className="text-2xl font-serif font-black text-white">₹{order.totalAmount?.toLocaleString('en-IN')}</p>
-                              </div>
-                              <div className="flex flex-col items-end gap-2 w-32">
-                                 <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full border ${order.status === 'DELIVERED' ? 'bg-green-500/10 text-green-500 border-green-500/20' : order.status === 'TRANSIT' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20'}`}>
-                                    {order.status || 'PROCESSING'}
-                                 </span>
-                              </div>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               </motion.div>
-            )}
-
-            {/* WALLET TAB */}
-            {activeTab === 'WALLET' && (
-               <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key="wallet" className="space-y-8 relative z-10">
-                  <div className="border-b border-white/10 pb-6 mb-6">
-                     <h3 className="text-3xl font-serif italic text-white">Empire Wallet</h3>
-                     <p className="text-[10px] uppercase font-black text-gray-500 tracking-[3px] mt-2">Manage your liquidity and cashbacks</p>
-                  </div>
-
-                  <div className="bg-gradient-to-tr from-[#1A1A1A] to-black border border-[#D4AF37]/50 rounded-[40px] p-10 md:p-16 relative overflow-hidden shadow-[0_20px_60px_rgba(212,175,55,0.1)] flex flex-col md:flex-row justify-between items-center gap-10">
-                     <Shield size={250} className="absolute -left-10 -bottom-10 text-[#D4AF37] opacity-5 pointer-events-none"/>
-                     <div className="relative z-10 text-center md:text-left">
-                        <p className="text-[10px] font-black uppercase text-[#D4AF37] tracking-[5px] mb-2">Available Liquidity</p>
-                        <h2 className="text-6xl md:text-8xl font-serif font-black text-white tracking-tighter">₹{userData?.walletBalance?.toLocaleString('en-IN') || 0}</h2>
-                        <p className="text-sm font-serif italic text-gray-400 mt-4 max-w-sm">Funds can be automatically applied to your next asset acquisition during checkout.</p>
-                     </div>
-                     <div className="relative z-10 w-full md:w-auto">
-                        <Link href="/#vault" className="w-full md:w-auto flex items-center justify-center gap-3 px-10 py-5 bg-[#D4AF37] text-black rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-white transition-colors">
-                           Spend Balance <ExternalLink size={14}/>
-                        </Link>
-                     </div>
-                  </div>
-               </motion.div>
-            )}
-
-            {/* REFERRAL TAB */}
-            {activeTab === 'REFERRAL' && (
-               <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key="referral" className="space-y-8 relative z-10">
-                  <div className="border-b border-white/10 pb-6 mb-6">
-                     <h3 className="text-3xl font-serif italic text-white">Invite Protocol</h3>
-                     <p className="text-[10px] uppercase font-black text-gray-500 tracking-[3px] mt-2">Share your network code & earn wallet funds</p>
-                  </div>
-
-                  <div className="bg-[#0A0A0A] border border-white/10 rounded-[40px] p-10 md:p-16 text-center">
-                     <h4 className="text-2xl font-serif italic text-white mb-4">Your Unique VIP Code</h4>
-                     <p className="text-sm text-gray-400 mb-10 max-w-lg mx-auto">Share this tracking link with your network. When they acquire an asset, you receive a 5% commission directly into your Empire Wallet.</p>
-                     
-                     <div className="flex flex-col md:flex-row items-center justify-center gap-4 max-w-xl mx-auto">
-                        <div className="w-full bg-black border border-white/20 p-5 rounded-2xl font-mono text-[#D4AF37] text-sm truncate">
-                           https://yourwebsite.com/?ref={userData?.referralCode || 'VIP'}
-                        </div>
-                        <button onClick={()=>copyToClipboard(`https://yourwebsite.com/?ref=${userData?.referralCode || 'VIP'}`)} className="w-full md:w-auto shrink-0 flex items-center justify-center gap-2 px-8 py-5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-[#D4AF37] transition-colors">
-                           {copied ? <CheckCircle size={16}/> : <Copy size={16}/>} {copied ? 'Copied!' : 'Copy Link'}
-                        </button>
-                     </div>
-
-                     <div className="grid grid-cols-2 gap-6 max-w-xl mx-auto mt-12 border-t border-white/10 pt-12">
-                        <div>
-                           <p className="text-[10px] font-black uppercase text-gray-500 tracking-[3px] mb-2">Total Link Clicks</p>
-                           <p className="text-4xl font-serif text-white">{userData?.referralStats?.clicks || 0}</p>
-                        </div>
-                        <div>
-                           <p className="text-[10px] font-black uppercase text-green-500 tracking-[3px] mb-2">Successful Invites</p>
-                           <p className="text-4xl font-serif text-white">{userData?.referralStats?.sales || 0}</p>
-                        </div>
-                     </div>
-                  </div>
-               </motion.div>
-            )}
-
-         </AnimatePresence>
-      </main>
-    </div>
-  );
+                <div className="mt-12 flex items-center justify-center gap-2 text-gray-400 border-t border-gray-200 pt-8">
+                    <ShieldCheck size={14}/> <p className="text-[10px] uppercase font-bold tracking-[2px]">AES-256 Encrypted Connection</p>
+                </div>
+            </main>
+        </div>
+    );
 }
+
+export default dynamic(() => Promise.resolve(ElegantAccountPage), { ssr: false });
