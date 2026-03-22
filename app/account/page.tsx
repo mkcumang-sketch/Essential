@@ -12,40 +12,48 @@ import {
 import dynamic from 'next/dynamic';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-// 📈 DUMMY PORTFOLIO DATA (For Elite Visuals)
-const portfolioData = [
-  { month: 'Jan', value: 4500000 },
-  { month: 'Feb', value: 4650000 },
-  { month: 'Mar', value: 4600000 },
-  { month: 'Apr', value: 5100000 },
-  { month: 'May', value: 5350000 },
-  { month: 'Jun', value: 5800000 },
-];
-
-const vaultAssets = [
-    { name: "Royal Oak Selfwinding", ref: "15500ST.OO.1220ST.01", date: "12 Mar 2025", value: "₹4,500,000", nft: "0x8F3a...9C12", status: "Secured" },
-    { name: "Cosmograph Daytona", ref: "116500LN", date: "04 Jan 2026", value: "₹2,850,000", nft: "0x4B1f...3A99", status: "Secured" }
-];
-
-const waitlistData = [
-    { name: "Nautilus Travel Time", ref: "5990/1A", position: 3, est: "Q3 2026" }
-];
-
 function AdvancedConciergeProfile() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('PORTFOLIO'); // PORTFOLIO, CONCIERGE, LEDGER
+    const [activeTab, setActiveTab] = useState('PORTFOLIO'); 
 
-    // 🛡️ SECURITY INTERCEPTOR
+    // 🌟 LIVE DATA STATES (Replaces Dummy Data)
+    const [portfolioData, setPortfolioData] = useState<any[]>([]);
+    const [vaultAssets, setVaultAssets] = useState<any[]>([]);
+    const [waitlistData, setWaitlistData] = useState<any[]>([]);
+    const [totalValue, setTotalValue] = useState(0);
+
+    // 🛡️ SECURITY INTERCEPTOR & DATA FETCHER
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push('/login?callbackUrl=/account');
-        } else if (status === "authenticated") {
-            // Simulate data fetching delay for premium feel
-            setTimeout(() => setIsLoading(false), 1200);
+        } else if (status === "authenticated" && session?.user) {
+            
+            // 🚀 FETCH REAL PORTFOLIO DATA
+            const fetchPortfolio = async () => {
+                try {
+                    const email = session.user?.email || '';
+                    const phone = (session.user as any)?.phone || '';
+                    const res = await fetch(`/api/portfolio?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`);
+                    const json = await res.json();
+                    
+                    if (json.success) {
+                        setPortfolioData(json.data.portfolioData);
+                        setVaultAssets(json.data.vaultAssets);
+                        setWaitlistData(json.data.waitlistData);
+                        setTotalValue(json.data.totalValue);
+                    }
+                } catch (err) {
+                    console.error("Failed to load vault", err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            fetchPortfolio();
         }
-    }, [status, router]);
+    }, [status, session, router]);
 
     if (status === "loading" || isLoading) {
         return (
@@ -88,7 +96,7 @@ function AdvancedConciergeProfile() {
                     <div className="text-left md:text-right bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] w-full md:w-auto">
                         <p className="text-[10px] font-medium uppercase tracking-[2px] text-gray-400 mb-2">Total Estimated Asset Value</p>
                         <h3 className="text-4xl font-serif text-gray-900 flex items-center md:justify-end gap-3">
-                            ₹7,350,000 <TrendingUp size={24} className="text-green-500"/>
+                            ₹{totalValue.toLocaleString('en-IN')} <TrendingUp size={24} className="text-green-500"/>
                         </h3>
                     </div>
                 </div>
@@ -121,7 +129,8 @@ function AdvancedConciergeProfile() {
                                         <LineChart data={portfolioData}>
                                             <XAxis dataKey="month" stroke="#e5e7eb" tick={{fill: '#9ca3af', fontSize: 12, fontFamily: 'monospace'}} tickLine={false} axisLine={false} />
                                             <YAxis hide domain={['dataMin - 500000', 'dataMax + 500000']} />
-                                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontFamily: 'serif' }} formatter={(value: number) => `₹${value.toLocaleString()}`} labelStyle={{display: 'none'}} />
+                                            {/* 🔥 FIX: Changed value type to 'any' to satisfy Recharts Strict Typing */}
+                                            <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontFamily: 'serif' }} formatter={(value: any) => `₹${Number(value).toLocaleString()}`} labelStyle={{display: 'none'}} />
                                             <Line type="monotone" dataKey="value" stroke="#111827" strokeWidth={3} dot={{ fill: '#111827', r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
                                         </LineChart>
                                     </ResponsiveContainer>
@@ -134,7 +143,7 @@ function AdvancedConciergeProfile() {
                                 <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-8">Your Waitlist Positions</p>
                                 
                                 <div className="flex-1">
-                                    {waitlistData.map((item, i) => (
+                                    {waitlistData.length > 0 ? waitlistData.map((item, i) => (
                                         <div key={i} className="bg-gray-50 rounded-3xl p-6 border border-gray-100 mb-4">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
@@ -148,7 +157,9 @@ function AdvancedConciergeProfile() {
                                                 <p className="text-[10px] uppercase tracking-widest text-gray-500 font-medium">ETA: {item.est}</p>
                                             </div>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <div className="text-center py-10 text-gray-400 text-sm">No active waitlist positions.</div>
+                                    )}
                                 </div>
                                 <button className="w-full mt-6 py-4 bg-transparent border border-gray-200 text-gray-900 font-medium uppercase tracking-[2px] rounded-full text-[10px] hover:border-gray-900 transition-all">Explore New Allocations</button>
                             </div>
@@ -166,7 +177,7 @@ function AdvancedConciergeProfile() {
                                 <div className="flex items-center gap-2 text-xs text-gray-500"><Hexagon size={14} className="text-green-500"/> Verified on Blockchain</div>
                             </div>
                             
-                            {vaultAssets.map((asset, i) => (
+                            {vaultAssets.length > 0 ? vaultAssets.map((asset, i) => (
                                 <div key={i} className="bg-white rounded-[30px] p-8 border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-6 group hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-6">
                                         <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-200 shrink-0">
@@ -193,7 +204,11 @@ function AdvancedConciergeProfile() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="text-center py-20 bg-white rounded-[30px] border border-gray-100">
+                                    <p className="text-gray-500 font-serif text-lg">Your vault ledger is currently empty.</p>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 
