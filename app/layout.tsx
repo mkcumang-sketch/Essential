@@ -1,29 +1,28 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { NextAuthProvider } from "@/components/NextAuthProvider";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from 'next'
+import './globals.css'
+import { Analytics } from '@vercel/analytics/react'; // <--- 1. Import it here
 
 export const metadata: Metadata = {
-  title: "Essential Rush | Curators of Time",
-  description: "The ultimate horological destination.",
-};
+  title: 'Essential | Fine Horology',
+  description: 'The ultimate vault for luxury timepieces.',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <NextAuthProvider>
-          {/* Yahan humne Global Banner lagaya hai */}
+      <body className="bg-[#FAFAFA] text-gray-900">
         
-          {children}
-        </NextAuthProvider>
+        {/* Your existing providers and children go here */}
+        {children}
+
+        {/* 🌟 2. INJECT THE ANALYTICS TRACKER HERE 🌟 */}
+        <Analytics />
+        
       </body>
     </html>
-  );
+  )
 }
