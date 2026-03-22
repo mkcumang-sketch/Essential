@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
-import { Providers } from './Providers'; // <--- 1. IMPORT THE PROVIDER
-
+import { Providers } from './providers'; // (Agar file small 'p' se hai)
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
   description: 'The ultimate vault for luxury timepieces.',

@@ -4,15 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { 
   ShieldCheck, CreditCard, Wallet, Gift, Users, MapPin, Globe, CheckCircle, Phone, RefreshCcw
 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function PremiumCheckout() {
-  const router = useRouter();
-  const { data: session } = useSession();
-  
+function PremiumCheckout() {
+      const router = useRouter();
+// 🛡️ Safe fallback: Agar build time pe session na mile toh empty object return karega
+const sessionContext = useSession() || { data: null, status: 'unauthenticated' };
+const { data: session, status } = sessionContext;
+
   const [cart, setCart] = useState<any[]>([]);
   const [walletBalance, setWalletBalance] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
@@ -243,3 +246,9 @@ export default function PremiumCheckout() {
     </div>
   );
 }
+// Upar imports mein check karna ki ye line ho:
+
+// ... (Aapka poora component code) ...
+
+// 🌟 VERCEL BUILD OPTIMIZER: Strictly disable Server-Side Rendering (SSR) for Checkout
+export default dynamic(() => Promise.resolve(PremiumCheckout), { ssr: false });
