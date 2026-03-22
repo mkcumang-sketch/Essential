@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
-import { Providers } from './Providers'; // (Agar file small 'p' se hai)
+import { Providers } from './Providers';
+import Navbar from '@/components/Navbar'; // 🌟 1. IMPORT NAVBAR HERE
+
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
   description: 'The ultimate vault for luxury timepieces.',
@@ -14,11 +16,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[#FAFAFA] text-gray-900">
+      <body className="bg-[#FAFAFA] text-gray-900 antialiased">
         
-        {/* 🌟 2. WRAP EVERYTHING INSIDE PROVIDERS 🌟 */}
         <Providers>
-          {children}
+          {/* 🌟 2. INJECT NAVBAR GLOBALLY HERE */}
+          <Navbar /> 
+          
+          {/* Main content goes below the navbar */}
+          <main className="pt-24"> 
+            {children}
+          </main>
+          
           <Analytics />
         </Providers>
 

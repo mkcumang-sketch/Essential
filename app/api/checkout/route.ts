@@ -1,66 +1,44 @@
 import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongoose'; // 🔥 THE SUPERFAST ENGINE
 import mongoose from 'mongoose';
-import { Order } from '@/models/Order';
-import { Agent } from '@/models/Agent';
 
-export const dynamic = 'force-dynamic';
+// 🌟 STRICT SCHEMA (Prevents Vercel Sync Errors)
+const orderSchema = new mongoose.Schema({
+    orderId: { type: String, required: true },
+    items: { type: Array, required: true },
+    totalAmount: { type: Number, required: true },
+    customer: { type: Object, required: true },
+    status: { type: String, default: 'PROCESSING' }
+}, { timestamps: true, strict: false });
 
-const connectDB = async () => {
-  if (mongoose.connections[0].readyState) return;
-  await mongoose.connect(process.env.MONGODB_URI as string);
-};
+// Ensure model is registered securely
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 export async function POST(req: Request) {
-  try {
-    await connectDB();
-    const body = await req.json();
-    const { items, customer, promoCode, useWallet, userEmail, affiliateRef, totalAmount } = body;
+    try {
+        await connectDB(); // ⚡ Connects in Microseconds!
+        
+        const body = await req.json();
+        const { items, totalAmount, customer } = body;
 
-    // 1. Create the Order in Database
-   // 1. Create the Order in Database
-    const newOrder = await Order.create({
-        orderId: 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        customer: {
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            address: customer.address,
-            city: customer.city,
-            zipCode: customer.zipCode, // 🌟 YEH LINE ADD KARNI HAI
-            country: customer.country,
-            source: customer.source || 'Direct'
-        },
-        items: items,
-        totalAmount: totalAmount,
-        status: 'PENDING',
-        promoCode: promoCode || null
-    });
-
-    // 2. Handle Affiliate/Referral Commission
-    if (affiliateRef) {
-        const agent = await Agent.findOne({ code: affiliateRef.toUpperCase() });
-        if (agent) {
-            // Give 5% commission to the referring agent
-            const commission = (totalAmount * (agent.commissionRate || 5)) / 100;
-            agent.sales += 1;
-            agent.revenue += commission;
-            await agent.save();
+        if (!items || !customer) {
+            return NextResponse.json({ success: false, error: "Missing required order details" }, { status: 400 });
         }
-    }
 
-    // 3. Handle Wallet Deduction (If user used wallet balance)
-    if (useWallet && userEmail) {
-        const userProfile = await Agent.findOne({ email: userEmail });
-        if (userProfile && userProfile.revenue > 0) {
-            // Deduct the wallet balance (Simplification: resets to 0 if used fully)
-            userProfile.revenue = 0; 
-            await userProfile.save();
-        }
-    }
+        // Generate an Elite Order ID
+        const orderId = `EST-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    return NextResponse.json({ success: true, orderId: newOrder.orderId });
-  } catch (error) {
-    console.error("Checkout Error:", error);
-    return NextResponse.json({ success: false, error: 'Checkout protocol failed' });
-  }
+        const newOrder = await Order.create({
+            orderId,
+            items,
+            totalAmount,
+            customer,
+            status: 'PROCESSING'
+        });
+
+        return NextResponse.json({ success: true, orderId: newOrder.orderId, message: "Transaction Successful" });
+    } catch (error: any) {
+        console.error("Checkout Engine Error:", error);
+        return NextResponse.json({ success: false, error: "Transaction Failed. Please try again." }, { status: 500 });
+    }
 }

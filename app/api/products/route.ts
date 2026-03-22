@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+// ISKO SABSE UPAR ADD KARNA HAI ✅
+import connectDB from '@/lib/mongoose';
 
 // 🌟 PREMIUM DATABASE SCHEMA: BULLETPROOF ASSET MODEL 🌟
 const productSchema = new mongoose.Schema({
@@ -26,16 +28,7 @@ const productSchema = new mongoose.Schema({
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 
 // ⚡ HIGH-SPEED DB CONNECTION TUNNEL
-const connectDB = async () => {
-    // Agar connection pehle se hai, toh naya mat banao (Saves Vercel RAM)
-    if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(process.env.MONGODB_URI as string);
-        console.log("✅ MongoDB Secured: Vault Engine Online");
-    } catch (error) {
-        console.error("❌ MongoDB Breach (Connection Error):", error);
-    }
-};
+
 
 // 📡 GET: FETCH ALL ASSETS (For Frontend & Godmode)
 export async function GET(req: Request) {

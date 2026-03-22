@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
+
 // 🌟 SECURE ORDER SCHEMA 🌟
 const orderSchema = new mongoose.Schema({
     orderId: { type: String, required: true, unique: true },
