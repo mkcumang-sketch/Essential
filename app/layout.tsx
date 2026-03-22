@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Analytics } from '@vercel/analytics/react'; // <--- 1. Import it here
+import { Analytics } from '@vercel/analytics/react';
+import { Providers } from './Providers'; // <--- 1. IMPORT THE PROVIDER
 
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
@@ -16,12 +17,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-[#FAFAFA] text-gray-900">
         
-        {/* Your existing providers and children go here */}
-        {children}
+        {/* 🌟 2. WRAP EVERYTHING INSIDE PROVIDERS 🌟 */}
+        <Providers>
+          {children}
+          <Analytics />
+        </Providers>
 
-        {/* 🌟 2. INJECT THE ANALYTICS TRACKER HERE 🌟 */}
-        <Analytics />
-        
       </body>
     </html>
   )
