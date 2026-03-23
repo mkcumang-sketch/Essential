@@ -21,6 +21,7 @@ const MODULES = [
   { id: 'CRM', icon: Users, label: 'Customers & CRM' },
   { id: 'MARKETING', icon: Gift, label: 'Coupons & Marketing' },
   { id: 'PAGE_BUILDER', icon: Layout, label: 'Website Builder' },
+  { id: 'AMBASSADORS', icon: Award, label: 'Brand Ambassadors' }, // RESTORED CELEBRITY TAB
   { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Policies' },
   { id: 'REVIEWS', icon: Star, label: 'Customer Reviews' },
   { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliates & Partners' },
@@ -96,6 +97,10 @@ function AdminDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [fullAnalytics, setFullAnalytics] = useState<any>(null);
 
+  // CELEBRITY STATES
+  const [celebs, setCelebs] = useState<any[]>([]);
+  const [newCeleb, setNewCeleb] = useState({ name: '', title: '', imageUrl: '' });
+
   // Page Builder States
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
@@ -104,7 +109,6 @@ function AdminDashboard() {
   const [categories, setCategories] = useState(["Investment Grade", "Rare Vintage", "Modern Complications"]);
   const [newCategory, setNewCategory] = useState("");
   const [faqs, setFaqs] = useState([{ q: 'Are these authentic?', a: 'Yes, 100% verified.' }]);
-  const [visionaries, setVisionaries] = useState([{ name: 'Shahrukh Khan', watch: 'Rolex Daytona', img: '' }]);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', twitter: '', youtube: '', linkedin: '' });
   
   // Legal & Corporate States
@@ -140,7 +144,7 @@ function AdminDashboard() {
     }
     try {
       const ts = new Date().getTime();
-      const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust] = await Promise.all([
+      const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust, resCelebs] = await Promise.all([
         fetch(`/api/admin/analytics?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
         fetch(`/api/cms?t=${ts}`).then(r => r.ok ? r.json() : {data: null}),
         fetch(`/api/products?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
@@ -150,7 +154,8 @@ function AdminDashboard() {
         fetch(`/api/dashboard/full-analytics?t=${ts}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/reviews?admin=true&t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
         fetch(`/api/admin/marketing?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
-        fetch(`/api/admin/users?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]}))
+        fetch(`/api/admin/users?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]})),
+        fetch(`/api/celebrity?t=${ts}`).then(r => r.ok ? r.json() : {data: []}) // FETCH CELEBRITIES
       ]);
       
       if (resLeads.leads) setLeads(resLeads.leads);
@@ -159,6 +164,7 @@ function AdminDashboard() {
       if (resOrders.data) setOrders(resOrders.data);
       if (resRules.data) setPricingRules(resRules.data);
       if (resAnalytics && resAnalytics.success) setFullAnalytics(resAnalytics);
+      if (resCelebs.data) setCelebs(resCelebs.data);
       
       // Smart Sort Reviews (Pending at Top)
       if (resReviews.data) {
@@ -180,7 +186,6 @@ function AdminDashboard() {
         if(resCms.data.uiConfig) setUiConfig(resCms.data.uiConfig);
         if(resCms.data.categories) setCategories(resCms.data.categories);
         if(resCms.data.faqs) setFaqs(resCms.data.faqs);
-        if(resCms.data.visionaries) setVisionaries(resCms.data.visionaries);
         if(resCms.data.socialLinks) setSocialLinks(resCms.data.socialLinks);
         if(resCms.data.corporateInfo) setCorporateInfo(resCms.data.corporateInfo); 
         if(resCms.data.legalPages) setLegalPages(resCms.data.legalPages); 
@@ -233,7 +238,7 @@ function AdminDashboard() {
   const handleSaveCMS = async () => {
     setIsSyncing(true); addLog("Saving website changes...");
     try {
-      await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, uiConfig, categories, faqs, visionaries, socialLinks, corporateInfo, legalPages }) });
+      await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, uiConfig, categories, faqs, socialLinks, corporateInfo, legalPages }) });
       alert("Website Settings Saved Successfully!"); addLog("Website updated successfully.");
     } catch (e) { alert("Failed to save settings."); } finally { setIsSyncing(false); }
   };
@@ -340,6 +345,30 @@ function AdminDashboard() {
           setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchDashboardData();
       } catch (e) { alert("Failed to save coupon."); } finally { setIsSyncing(false); }
   };
+
+  // CELEBRITY HANDLERS
+  const handleAddCelebrity = async () => {
+      if(!newCeleb.name || !newCeleb.imageUrl) return alert("Name and Image are required.");
+      setIsSyncing(true); addLog("Adding Brand Ambassador...");
+      try {
+          const res = await fetch('/api/celebrity', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(newCeleb) });
+          if(res.ok) { 
+              const data = await res.json();
+              setCelebs([data.data, ...celebs]);
+              setNewCeleb({ name: '', title: '', imageUrl: '' }); 
+              alert("Ambassador Added Successfully!"); 
+          }
+      } catch(e) { alert("Failed to add Ambassador"); } finally { setIsSyncing(false); }
+  };
+
+  const handleDeleteCeleb = async (id: string) => {
+      if(!confirm("Remove this ambassador?")) return;
+      try { 
+          await fetch(`/api/celebrity/${id}`, { method: 'DELETE' }); 
+          setCelebs(celebs.filter(c => c._id !== id));
+      } catch(e) { alert("Failed to delete."); }
+  };
+
 
   // Auth & Load States
   if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">LOADING ADMIN...</p></div></div>;
@@ -1075,6 +1104,39 @@ function AdminDashboard() {
                   <button className="px-10 py-5 bg-red-600 text-white text-sm font-bold uppercase rounded-xl hover:bg-red-500 transition-all flex items-center gap-2">
                      <Lock size={18}/> Turn On Maintenance Mode
                   </button>
+               </div>
+            </motion.div>
+          )}
+
+          {/* 🌟 12. AMBASSADORS (CELEBRITIES) 🌟 */}
+          {activeTab === 'AMBASSADORS' && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ambassadors" className="space-y-8">
+               <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 flex flex-col md:flex-row gap-8">
+                  <div className="flex-1 space-y-4">
+                     <h3 className="text-2xl font-serif text-white mb-6 flex items-center gap-3"><Award size={24} className="text-[#D4AF37]"/> Add Brand Ambassador</h3>
+                     <input value={newCeleb.name} onChange={e=>setNewCeleb({...newCeleb, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Celebrity Name"/>
+                     <input value={newCeleb.title} onChange={e=>setNewCeleb({...newCeleb, title: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Title (e.g. Actor / Athlete)"/>
+                     <button onClick={handleAddCelebrity} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4">Save Ambassador</button>
+                  </div>
+                  <div className="flex flex-col gap-4 items-center justify-center border-l border-white/10 pl-8">
+                     <PremiumUploadNode placeholder="Photo" onUploadSuccess={(url:string)=>setNewCeleb({...newCeleb, imageUrl: url})} />
+                     {newCeleb.imageUrl && <div className="h-32 w-32 rounded-xl overflow-hidden border border-white/20"><img src={newCeleb.imageUrl} className="w-full h-full object-cover"/></div>}
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {celebs.map((c) => (
+                      <div key={c._id} className="bg-[#111] rounded-2xl border border-white/10 overflow-hidden relative group shadow-lg hover:border-[#D4AF37]/50 transition-all">
+                          <div className="h-56 relative">
+                              <img src={c.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                              <button onClick={() => handleDeleteCeleb(c._id)} className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                          </div>
+                          <div className="p-5 text-center">
+                              <h4 className="font-bold text-lg text-white mb-1">{c.name}</h4>
+                              <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-wider">{c.title}</p>
+                          </div>
+                      </div>
+                  ))}
                </div>
             </motion.div>
           )}
