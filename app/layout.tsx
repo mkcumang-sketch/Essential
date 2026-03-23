@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
-import { Providers } from './providers';
-import Navbar from '@/components/Navbar'; // 🌟 1. IMPORT NAVBAR HERE
+import Navbar from '@/components/Navbar';
+import { GlobalProvider } from './GlobalProvider'; // 🌟 1. NAYA IMPORT
 
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
@@ -18,17 +18,16 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-[#FAFAFA] text-gray-900 antialiased">
         
-        <Providers>
-          {/* 🌟 2. INJECT NAVBAR GLOBALLY HERE */}
+        {/* 🌟 2. NAYA WRAPPER */}
+        <GlobalProvider>
           <Navbar /> 
           
-          {/* Main content goes below the navbar */}
           <main className="pt-24"> 
             {children}
           </main>
           
           <Analytics />
-        </Providers>
+        </GlobalProvider>
 
       </body>
     </html>
