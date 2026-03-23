@@ -23,7 +23,6 @@ const DEFAULT_GALLERY_IMAGES = [
 
 const Isolated4DHero = ({ config }: { config: any }) => {
   const heroRef = useRef(null);
-  const [honeyPot, setHoneyPot] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
@@ -90,7 +89,6 @@ const FadeUp = ({ children, delay = 0, className = "" }: any) => (
 function FrontPageStore() {
   const router = useRouter();
   
-  // 🌟 NEW FEATURE: Scroll Progress Bar 🌟
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   
@@ -116,12 +114,12 @@ function FrontPageStore() {
   const [corporateInfo, setCorporateInfo] = useState<any>(null);
   const [legalPages, setLegalPages] = useState<any[]>([]);
 
-  // 🌟 REVIEW SYSTEM STATES 🌟
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ userName: '', comment: '', rating: 5 });
   const [reviewMedia, setReviewMedia] = useState<string[]>([]);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [reviewStatus, setReviewStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [honeyPot, setHoneyPot] = useState("");
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -142,10 +140,12 @@ function FrontPageStore() {
     const fetchPersonalizedData = async () => {
       try {
         const ts = new Date().getTime();
-        const [c, ai, rev] = await Promise.all([
+        // 🌟 FIXED: Now fetching celebrities from their correct API endpoint
+        const [c, ai, rev, celebRes] = await Promise.all([
           fetch(`/api/cms?t=${ts}`).catch(()=>null),
           fetch(`/api/products?t=${ts}`).catch(()=>null),
-          fetch(`/api/reviews?t=${ts}`).catch(()=>null)
+          fetch(`/api/reviews?t=${ts}`).catch(()=>null),
+          fetch(`/api/celebrity?t=${ts}`).catch(()=>null)
         ]);
 
         if(c?.ok) { 
@@ -157,10 +157,18 @@ function FrontPageStore() {
             }
             if (res.data?.galleryImages) setGalleryImages(res.data.galleryImages);
             if (res.data?.faqs) setLiveFaqs(res.data.faqs);
-            if (res.data?.visionaries) setLiveCelebrities(res.data.visionaries);
+            if (res.data?.visionaries) setLiveCelebrities(res.data.visionaries); // Fallback
             if (res.data?.socialLinks) setSocialLinks(res.data.socialLinks);
             if (res.data?.corporateInfo) setCorporateInfo(res.data.corporateInfo);
             if (res.data?.legalPages) setLegalPages(res.data.legalPages);
+        }
+        
+        // 🌟 FIXED: Overriding visionaries with actual Database Celebrities
+        if(celebRes?.ok) {
+            const celebData = await celebRes.json();
+            if (celebData.data && celebData.data.length > 0) {
+                setLiveCelebrities(celebData.data);
+            }
         }
         
         if(ai?.ok) { 
@@ -170,16 +178,12 @@ function FrontPageStore() {
 
         if(rev?.ok) {
            const revData = await rev.json();
-           // STRICT PUBLIC FILTER
            let pubRevs = (revData.data || []).filter((r:any) => r.visibility === 'public');
-           
            const myLocalReviews = JSON.parse(localStorage.getItem('my_ghost_reviews') || '[]');
            const globalLocalRevs = myLocalReviews.filter((r:any) => r.product === 'GLOBAL');
-           
            const finalLocal = globalLocalRevs.filter((localRev: any) => 
                !pubRevs.some((pubRev: any) => pubRev.userName === localRev.userName && pubRev.comment === localRev.comment)
            );
-           
            setFlowingReviews([...finalLocal, ...pubRevs]);
         }
 
@@ -222,15 +226,6 @@ function FrontPageStore() {
     localStorage.setItem('luxury_cart', JSON.stringify(newCart));
     router.push('/checkout');
   };
-  // 1. Is component ko function ke bahar ya andar kahin bhi rakh sakte ho
-const PhantomGuard = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => (
-    <div style={{ position: 'absolute', opacity: 0, zIndex: -1, height: 0, overflow: 'hidden' }} aria-hidden="true">
-        <input type="text" name="b_name_fake" value={value} onChange={(e) => onChange(e.target.value)} tabIndex={-1} autoComplete="off" />
-    </div>
-);
-
-// 2. FrontPageStore function ke andar yeh state add karo
-const [honeyPot, setHoneyPot] = useState("");
 
   const handleCustomerMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -251,11 +246,8 @@ const [honeyPot, setHoneyPot] = useState("");
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 🛡️ SECURITY CHECK: Agar bot ne hidden field bhari, toh chup-chaap return kar jao
     if (honeyPot.length > 0) {
-        console.log("Bot detected and neutralized.");
-        setReviewStatus('success'); // Bot ko lagega wo kamyab ho gaya
+        setReviewStatus('success'); 
         return;
     }
 
@@ -270,7 +262,7 @@ const [honeyPot, setHoneyPot] = useState("");
             media: reviewMedia, 
             product: 'GLOBAL', 
             visibility: 'pending',
-            honeyPot: honeyPot // Backend ko bhi bhej rahe hain validation ke liye
+            honeyPot: honeyPot 
         };
         
         const res = await fetch('/api/reviews', {
@@ -280,7 +272,6 @@ const [honeyPot, setHoneyPot] = useState("");
         });
         
         if (res.ok) {
-            // 👻 GHOST LOGIC: User ko turant dikhao par DB mein pending rakho
             const localReview = { ...payload, isGhost: true };
             setFlowingReviews(prev => [localReview, ...prev]);
             const existingLocal = JSON.parse(localStorage.getItem('my_ghost_reviews') || '[]');
@@ -304,10 +295,8 @@ const [honeyPot, setHoneyPot] = useState("");
   return (
     <div className="bg-[#FAFAFA] text-[#050505] font-sans selection:bg-[var(--theme-primary)] selection:text-white overflow-x-hidden">
 
-      {/* 🌟 NEW: SCROLL PROGRESS BAR 🌟 */}
       <motion.div className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--theme-primary)] origin-left z-[500] drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]" style={{ scaleX }} />
 
-      {/* 🌟 USER REVIEW MODAL WITH BOT PROTECTION 🌟 */}
 <AnimatePresence>
   {isReviewModalOpen && (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[300] bg-black/80 flex items-center justify-center p-4 md:p-6 backdrop-blur-sm overflow-y-auto">
@@ -325,8 +314,7 @@ const [honeyPot, setHoneyPot] = useState("");
                  <h3 className="text-3xl font-serif font-bold text-black mb-8 italic">Contribute Experience</h3>
                  
                  <div className="space-y-6">
-                     {/* 🛡️ THE TRAP: Invisible to humans, bait for bots */}
-                     <PhantomGuard value={honeyPot} onChange={setHoneyPot} />
+                     {PhantomGuard && <PhantomGuard value={honeyPot} onChange={setHoneyPot} />}
 
                      <div>
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[3px] mb-2 block">Identity</label>
@@ -349,7 +337,6 @@ const [honeyPot, setHoneyPot] = useState("");
                          <textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black custom-scrollbar transition-all" placeholder="Describe the mechanical soul of your asset..."/>
                      </div>
                      
-                     {/* MEDIA UPLOAD SECTION */}
                      <div className="border-t border-gray-100 pt-6">
                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-[3px] mb-4 flex items-center gap-2"><Camera size={14} className="text-black"/> Visual Evidence</label>
                          <div className="flex flex-wrap gap-4">
@@ -625,10 +612,12 @@ const [honeyPot, setHoneyPot] = useState("");
             ) : liveCelebrities.map((celeb: any, i: number) => (
               <FadeUp key={celeb._id || i} delay={i * 0.1}>
                 <div className="group relative aspect-[3/4] rounded-[50px] overflow-hidden bg-[#050505] shadow-xl">
-                  {celeb.img && <img src={celeb.img} className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />}
+                  {/* 🌟 FIXED CELEBRITY IMAGE PROPERTY */}
+                  {(celeb.imageUrl || celeb.img) && <img src={celeb.imageUrl || celeb.img} className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-90 p-10 flex flex-col justify-end translate-y-6 group-hover:translate-y-0 transition-transform duration-500">
                       <h4 className="text-white text-3xl font-serif mb-2 tracking-tighter">{celeb.name}</h4>
-                      <span className="text-[10px] uppercase font-black tracking-[3px] text-[var(--theme-primary)]">{celeb.watch}</span>
+                      {/* 🌟 FIXED CELEBRITY TITLE PROPERTY */}
+                      <span className="text-[10px] uppercase font-black tracking-[3px] text-[var(--theme-primary)]">{celeb.title || celeb.watch}</span>
                   </div>
                 </div>
               </FadeUp>
