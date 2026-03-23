@@ -53,13 +53,13 @@ export default function Navbar() {
                                 <div className="w-4 h-4 rounded-full border-[2px] border-gray-200 border-t-gray-900 animate-spin"></div>
                             ) : status === 'authenticated' ? (
                                 <Link href="/account" className="flex items-center gap-2 text-gray-900 hover:text-gray-500 transition-colors group">
-                                    <ShieldCheck size={20} strokeWidth={1.5} className="text-green-600 group-hover:text-gray-500 transition-colors" />
-                                    <span className="hidden md:block text-[10px] uppercase tracking-[2px] font-bold">Vault</span>
+                                    <User size={20} strokeWidth={1.5} className="text-green-600 group-hover:text-gray-500 transition-colors" />
+                                    <span className="hidden md:block text-[10px] uppercase tracking-[2px] font-bold">My Account</span>
                                 </Link>
                             ) : (
                                 <Link href="/login" className="flex items-center gap-2 text-gray-900 hover:text-gray-500 transition-colors">
                                     <User size={20} strokeWidth={1.5} />
-                                    <span className="hidden md:block text-[10px] uppercase tracking-[2px] font-medium">Sign In</span>
+                                    <span className="hidden md:block text-[10px] uppercase tracking-[2px] font-bold">Login</span>
                                 </Link>
                             )}
                         </div>

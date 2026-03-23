@@ -15,17 +15,17 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
 
 const MODULES = [
-  { id: 'FULL_DASHBOARD', icon: Radar, label: 'Command Center' },
-  { id: 'INVENTORY', icon: Box, label: 'Asset Vault' },
-  { id: 'ORDER_TRACKER', icon: Network, label: 'Global Logistics' },
-  { id: 'CRM', icon: Fingerprint, label: 'Client Identity' },
-  { id: 'MARKETING', icon: Zap, label: 'Growth & Campaigns' },
-  { id: 'PAGE_BUILDER', icon: Layout, label: 'UI Architecture' },
-  { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Protocols' },
-  { id: 'REVIEWS', icon: Star, label: 'Sentiment Analysis' },
-  { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliate Nodes' },
-  { id: 'AI_ENGINE', icon: Cpu, label: 'Neural Pricing Engine' },
-  { id: 'SECURITY', icon: ShieldAlert, label: 'System Security' }
+  { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
+  { id: 'INVENTORY', icon: Package, label: 'Products & Inventory' },
+  { id: 'ORDER_TRACKER', icon: Truck, label: 'Manage Orders' },
+  { id: 'CRM', icon: Users, label: 'Customers & CRM' },
+  { id: 'MARKETING', icon: Gift, label: 'Coupons & Marketing' },
+  { id: 'PAGE_BUILDER', icon: Layout, label: 'Website Builder' },
+  { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Policies' },
+  { id: 'REVIEWS', icon: Star, label: 'Customer Reviews' },
+  { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliates & Partners' },
+  { id: 'AI_ENGINE', icon: Zap, label: 'Smart Pricing AI' },
+  { id: 'SECURITY', icon: ShieldAlert, label: 'Security & Maintenance' }
 ];
 
 const DEFAULT_GALLERY = [
@@ -37,7 +37,7 @@ const DEFAULT_GALLERY = [
   "https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1000"
 ];
 
-const PremiumUploadNode = ({ onUploadSuccess, placeholder="Media" }: any) => {
+const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) => {
     const [dragging, setDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState("");
@@ -71,7 +71,7 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Media" }: any) => {
                  preview ? (preview.match(/\.(mp4|webm|mov)$/i) ? <video src={preview} className="w-full h-full object-cover rounded-xl shadow-lg" autoPlay muted loop/> : <img src={preview} className="w-full h-full object-cover rounded-xl shadow-lg" />) :
                  <>
                     <UploadCloud size={16} className="text-gray-500 group-hover:text-[#D4AF37] mb-1.5 transition-colors"/>
-                    <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest leading-tight group-hover:text-[#D4AF37] transition-colors">{dragging ? "Drop Media" : `Add ${placeholder}`}</span>
+                    <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest leading-tight group-hover:text-[#D4AF37] transition-colors">{dragging ? "Drop File" : `Upload ${placeholder}`}</span>
                  </>
                 }
             </label>
@@ -79,13 +79,13 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Media" }: any) => {
     );
 };
 
-function ImperialGodmodeOS() {
+function AdminDashboard() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState('FULL_DASHBOARD');
   const [dashboardView, setDashboardView] = useState<'orders' | 'abandoned'>('orders');
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const [systemLogs, setSystemLogs] = useState<string[]>(["[SYS] OS Boot sequence initiated...", "[NET] Connected to secure global nodes."]);
+  const [systemLogs, setSystemLogs] = useState<string[]>(["System starting...", "Connected to database successfully."]);
 
   const [leads, setLeads] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -97,7 +97,7 @@ function ImperialGodmodeOS() {
   const [fullAnalytics, setFullAnalytics] = useState<any>(null);
 
   // Page Builder States
-  const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Time is Gold' }]);
+  const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
   const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
   const [uiConfig, setUiConfig] = useState({ primaryColor: '#D4AF37', bgColor: '#050505', fontFamily: 'serif', buttonRadius: 'full' });
@@ -126,17 +126,17 @@ function ImperialGodmodeOS() {
   // Marketing & Affiliates State
   const [couponForm, setCouponForm] = useState({ code: '', discountValue: '', minOrder: '', validUntil: '' });
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
-  const [agentForm, setAgentForm] = useState({ name: '', email: '', code: '', tier: 'Imperial Agent', commissionRate: 5 });
+  const [agentForm, setAgentForm] = useState({ name: '', email: '', code: '', tier: 'Sales Partner', commissionRate: 5 });
   const [pricingRules, setPricingRules] = useState({ isAiPricingActive: true, maxMarkupPercent: 15, maxDiscountPercent: 10, lowStockThreshold: 3, trendingThreshold: 10 });
 
   const addLog = (msg: string) => {
       setSystemLogs(prev => [msg, ...prev].slice(0, 8)); 
   };
 
-  const fetchSystemIntelligence = async (silent = false) => {
+  const fetchDashboardData = async (silent = false) => {
     if (!silent) {
         setIsSyncing(true);
-        addLog("[API] Requesting global data sync...");
+        addLog("Loading latest dashboard data...");
     }
     try {
       const ts = new Date().getTime();
@@ -185,32 +185,32 @@ function ImperialGodmodeOS() {
         if(resCms.data.corporateInfo) setCorporateInfo(resCms.data.corporateInfo); 
         if(resCms.data.legalPages) setLegalPages(resCms.data.legalPages); 
       }
-      if (!silent) addLog("[API] Sync complete. 100% Data Integrity.");
+      if (!silent) addLog("Data load complete.");
     } catch (e) { 
-        if (!silent) addLog("[ERR] Sync failed. Network disruption detected."); 
+        if (!silent) addLog("Error: Could not connect to server."); 
     } finally { 
         if (!silent) setIsSyncing(false); 
     }
   };
 
   useEffect(() => { 
-      if (session?.user?.role === 'SUPER_ADMIN') fetchSystemIntelligence(); 
+      if (session?.user?.role === 'SUPER_ADMIN') fetchDashboardData(); 
   }, [session]);
 
-  // Silent Background Radar Sync
+  // Silent Background Sync
   useEffect(() => {
       if (session?.user?.role !== 'SUPER_ADMIN') return;
-      const interval = setInterval(() => fetchSystemIntelligence(true), 15000);
+      const interval = setInterval(() => fetchDashboardData(true), 15000);
       return () => clearInterval(interval);
   }, [session]);
 
   useEffect(() => {
       const interval = setInterval(() => {
           const fakeEvents = [
-              "[SEC] Neural firewall actively monitoring traffic.",
-              "[NET] Pinging European delivery nodes... OK.",
-              "[SYS] Encrypted backup snapshot taken.",
-              "[AI] Adjusting predictive pricing models..."
+              "Security monitor active.",
+              "Checking delivery partners...",
+              "Website backup saved.",
+              "Updating analytics..."
           ];
           addLog(fakeEvents[Math.floor(Math.random() * fakeEvents.length)]);
       }, 20000);
@@ -228,50 +228,50 @@ function ImperialGodmodeOS() {
   };
 
   // UI & Content Deployment
-  const handleAddHeroSlide = () => setHeroSlides([...heroSlides, { id: Date.now(), type: 'video', url: '', heading: 'New Slide' }]);
+  const handleAddHeroSlide = () => setHeroSlides([...heroSlides, { id: Date.now(), type: 'video', url: '', heading: 'New Banner' }]);
   const handleRemoveHeroSlide = (id: number) => setHeroSlides(heroSlides.filter(s => s.id !== id));
-  const handleDeployCMS = async () => {
-    setIsSyncing(true); addLog("[SYS] Deploying UI configurations globally...");
+  const handleSaveCMS = async () => {
+    setIsSyncing(true); addLog("Saving website changes...");
     try {
       await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, uiConfig, categories, faqs, visionaries, socialLinks, corporateInfo, legalPages }) });
-      alert("Website Settings Saved Successfully!"); addLog("[SYS] Global deployment successful.");
+      alert("Website Settings Saved Successfully!"); addLog("Website updated successfully.");
     } catch (e) { alert("Failed to save settings."); } finally { setIsSyncing(false); }
   };
 
   // AI Pricing Rules
   const handleSaveAIRules = async () => {
-    setIsSyncing(true); addLog("[AI] Compiling new neural pricing rules...");
+    setIsSyncing(true); addLog("Saving pricing rules...");
     try {
       await fetch('/api/ai/rules', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pricingRules) });
-      alert("Pricing Rules Updated Successfully!"); addLog("[AI] Matrix updated.");
+      alert("Pricing Rules Updated Successfully!"); addLog("Pricing rules saved.");
     } catch (e) { alert("Failed to save pricing rules."); } finally { setIsSyncing(false); }
   };
 
   // Synthetic Review Injection
-  const handleInjectFakeReview = async () => {
-    if (!fakeReview.userName || !fakeReview.comment) return alert("Please fill name and review content.");
-    setIsSyncing(true); addLog(`[REV] Injecting verified testimonial for ${fakeReview.userName}...`);
+  const handleAddFakeReview = async () => {
+    if (!fakeReview.userName || !fakeReview.comment) return alert("Please fill name and review comment.");
+    setIsSyncing(true); addLog(`Adding review for ${fakeReview.userName}...`);
     try {
       await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fakeReview) });
       setFakeReview({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
-      fetchSystemIntelligence();
-      alert("Custom Review Added Successfully!");
+      fetchDashboardData();
+      alert("Review Added Successfully!");
     } catch (e) { alert("Failed to add review."); } finally { setIsSyncing(false); }
   };
 
   // Asset Injection (Inventory)
-  const handlePublishAsset = async () => {
+  const handleSaveProduct = async () => {
     if (!watchForm.name.trim() || !watchForm.price.toString().trim() || !watchForm.imageUrl.trim()) {
-        return alert("⚠️ Missing Fields! Designation (Name), Base Price, and Main Asset URL are mandatory.");
+        return alert("⚠️ Missing Fields! Product Name, Base Price, and Main Image URL are mandatory.");
     }
-    setIsSyncing(true); addLog("[VAULT] Processing new asset injection...");
+    setIsSyncing(true); addLog("Saving new product to database...");
     try {
       const validAmazonDetails = watchForm.amazonDetails.filter(d => d.key.trim() !== '' && d.value.trim() !== '');
       const tagsArray = watchForm.seoTags.split(',').map(s=>s.trim()).filter(s=>s);
       const additionalImages = watchForm.images.filter(img => typeof img === 'string' && img.trim() !== "");
 
       const generatedSlug = watchForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
-      const generatedSku = `ASSET-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+      const generatedSku = `PRD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
 
       const finalProduct = { 
           name: watchForm.name, slug: generatedSlug, sku: generatedSku, brand: watchForm.brand, category: watchForm.category,
@@ -284,117 +284,117 @@ function ImperialGodmodeOS() {
       const data = await res.json();
 
       if (res.ok && data.success) { 
-          alert("Product Saved Successfully!"); addLog("[VAULT] Asset secured in global registry.");
+          alert("Product Saved Successfully!"); addLog("Product added to website inventory.");
           setWatchForm({ name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }] });
-          fetchSystemIntelligence(); 
+          fetchDashboardData(); 
       } else {
-          alert(`Backend Rejected: ${data.error || 'Check fields and try again'}`); addLog(`[ERR] Asset injection failed: ${data.error || 'Server error'}`);
+          alert(`Error saving product: ${data.error || 'Check fields and try again'}`); addLog(`Error: ${data.error || 'Server error'}`);
       }
-    } catch (e) { alert("Network Error!"); addLog("[ERR] Asset injection failed: Network error"); } 
+    } catch (e) { alert("Network Error!"); addLog("Error: Network connection failed"); } 
     finally { setIsSyncing(false); }
   };
 
-  const handleDeleteAsset = async (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if(!confirm("Are you sure you want to delete this product?")) return;
-    addLog(`[VAULT] Purging asset ID: ${id.slice(-6)}...`);
+    addLog(`Deleting product...`);
     setLiveWatches(prev => prev.filter(w => w._id !== id));
     try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   // Order & Review Modifiers
   const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
-    setIsSyncing(true); addLog(`[LOGISTICS] Order ${id.slice(-4)} status shifted to ${newStatus}`);
+    setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
     try {
         const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: newStatus }) });
-        if(res.ok) fetchSystemIntelligence();
+        if(res.ok) fetchDashboardData();
     } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
   };
 
-  const handleReviewAction = async (reviewId: string, visibility: string) => {
-      setIsSyncing(true); addLog(`[REV] Modifying visibility protocol for review ${reviewId.slice(-4)}`);
+  const handleUpdateReviewStatus = async (reviewId: string, visibility: string) => {
+      setIsSyncing(true); addLog(`Updating review visibility...`);
       try {
           await fetch('/api/reviews', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reviewId, visibility }) });
-          fetchSystemIntelligence();
+          fetchDashboardData();
       } catch (e) { alert("Failed to update review."); } finally { setIsSyncing(false); }
   };
 
   // Affiliates & Marketing
-  const handleRecruitAgent = async () => {
+  const handleAddAffiliate = async () => {
     if (!agentForm.name || !agentForm.email) return alert("Name and Email are required.");
-    setIsSyncing(true); addLog("[NET] Generating new affiliate tracking node...");
+    setIsSyncing(true); addLog("Creating new affiliate partner...");
     try {
       const res = await fetch('/api/agents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(agentForm) });
       const data = await res.json();
       if (res.ok && data.success) {
         alert(`Affiliate Partner Added Successfully!`); setAgentForm({ name: '', email: '', code: '', tier: 'Partner', commissionRate: 5 });
-        setIsAgentModalOpen(false); fetchSystemIntelligence();
+        setIsAgentModalOpen(false); fetchDashboardData();
       }
     } catch (error) { alert("Network Error."); } finally { setIsSyncing(false); }
   };
 
   const handleCreateCoupon = async () => {
       if(!couponForm.code || !couponForm.discountValue) return alert("Code and Discount Value are required.");
-      setIsSyncing(true); addLog(`[MKT] Deploying campaign protocol ${couponForm.code}...`);
+      setIsSyncing(true); addLog(`Saving coupon ${couponForm.code}...`);
       try {
           await fetch('/api/admin/marketing', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(couponForm)});
-          setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchSystemIntelligence();
-      } catch (e) { alert("Failed to generate coupon."); } finally { setIsSyncing(false); }
+          setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchDashboardData();
+      } catch (e) { alert("Failed to save coupon."); } finally { setIsSyncing(false); }
   };
 
   // Auth & Load States
-  if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[10px] text-xs">BOOTING OS...</p></div></div>;
-  if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-black tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Authenticate Admin Access</button></div>;
+  if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">LOADING ADMIN...</p></div></div>;
+  if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Login to Admin Panel</button></div>;
 
   return (
     <div className="flex h-screen bg-[#050505] text-white overflow-hidden selection:bg-[#D4AF37] selection:text-black relative font-sans">
       
-      {/* 🌟 TECH GRID BACKGROUND 🌟 */}
+      {/* BACKGROUND */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[#D4AF37]/[0.05] blur-[150px] rounded-full pointer-events-none z-0"></div>
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#00F0FF]/[0.03] blur-[120px] rounded-full pointer-events-none z-0"></div>
 
-      {/* RECRUITMENT MODAL */}
+      {/* AFFILIATE MODAL */}
       <AnimatePresence>
         {isAgentModalOpen && (
           <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
-            <motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="bg-black/60 border border-[#D4AF37]/50 p-12 rounded-[40px] w-full max-w-xl relative shadow-[0_0_50px_rgba(212,175,55,0.15)] backdrop-blur-2xl">
-               <button onClick={() => setIsAgentModalOpen(false)} className="absolute top-8 right-8 text-gray-500 hover:text-white transition-colors"><X size={24}/></button>
-               <h3 className="text-3xl font-serif italic mb-2 text-[#D4AF37]">Deploy Affiliate Node</h3>
-               <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500 mb-10 flex items-center gap-2"><Network size={12}/> Secure connection established</p>
-               <div className="space-y-5">
-                 <input value={agentForm.name} onChange={(e) => setAgentForm({...agentForm, name: e.target.value})} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] font-mono text-gray-300" placeholder="Partner Identity (Name)"/>
-                 <input value={agentForm.email} onChange={(e) => setAgentForm({...agentForm, email: e.target.value})} type="email" className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] font-mono text-gray-300" placeholder="Transmission Link (Email)"/>
+            <motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="bg-black/80 border border-[#D4AF37]/50 p-10 rounded-[30px] w-full max-w-xl relative shadow-2xl backdrop-blur-2xl">
+               <button onClick={() => setIsAgentModalOpen(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"><X size={24}/></button>
+               <h3 className="text-2xl font-bold mb-2 text-[#D4AF37]">Add Affiliate Partner</h3>
+               <p className="text-xs uppercase tracking-widest text-gray-500 mb-8">Create a new partner to track sales.</p>
+               <div className="space-y-4">
+                 <input value={agentForm.name} onChange={(e) => setAgentForm({...agentForm, name: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Partner Name"/>
+                 <input value={agentForm.email} onChange={(e) => setAgentForm({...agentForm, email: e.target.value})} type="email" className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Partner Email Address"/>
                  <div className="grid grid-cols-2 gap-4">
-                   <input value={agentForm.code} onChange={(e) => setAgentForm({...agentForm, code: e.target.value})} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] uppercase font-mono text-[#D4AF37]" placeholder="Unique Tracker Code"/>
-                   <input value={agentForm.commissionRate} onChange={(e) => setAgentForm({...agentForm, commissionRate: Number(e.target.value)})} type="number" className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm outline-none focus:border-[#D4AF37] font-mono text-green-400" placeholder="Yield %"/>
+                   <input value={agentForm.code} onChange={(e) => setAgentForm({...agentForm, code: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] uppercase text-[#D4AF37]" placeholder="Unique Code (e.g. VIP10)"/>
+                   <input value={agentForm.commissionRate} onChange={(e) => setAgentForm({...agentForm, commissionRate: Number(e.target.value)})} type="number" className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-green-400" placeholder="Commission %"/>
                  </div>
-                 <select value={agentForm.tier} onChange={(e) => setAgentForm({...agentForm, tier: e.target.value})} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 outline-none focus:border-[#D4AF37] appearance-none">
-                    <option className="bg-black">Partner</option><option className="bg-black">Premium Agent</option><option className="bg-black">Ambassador</option>
+                 <select value={agentForm.tier} onChange={(e) => setAgentForm({...agentForm, tier: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-400 outline-none focus:border-[#D4AF37] appearance-none">
+                    <option className="bg-black">Partner</option><option className="bg-black">Premium Agent</option><option className="bg-black">Brand Ambassador</option>
                  </select>
-                 <button onClick={handleRecruitAgent} className="w-full py-6 bg-[#D4AF37] text-black font-black uppercase rounded-3xl text-[11px] tracking-[4px] hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] mt-6 flex justify-center items-center gap-3"><Zap size={16}/> Initialize Protocol</button>
+                 <button onClick={handleAddAffiliate} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-xs tracking-widest hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Zap size={16}/> Save Partner</button>
                </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 🌟 HIGH-TECH SIDEBAR 🌟 */}
-      <aside className="w-[320px] bg-black/40 backdrop-blur-2xl border-r border-white/10 flex flex-col z-50 relative">
-        <div className="p-8 border-b border-white/5 flex items-center gap-5">
-          <div className="w-12 h-12 rounded-[16px] bg-gradient-to-br from-[#D4AF37]/20 to-transparent border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-             <Fingerprint size={20}/>
+      {/* SIDEBAR */}
+      <aside className="w-[300px] bg-black/60 backdrop-blur-2xl border-r border-white/10 flex flex-col z-50 relative">
+        <div className="p-8 border-b border-white/10 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37]">
+             <ShieldCheck size={20}/>
           </div>
           <div className="overflow-hidden">
-             <p className="text-[9px] text-[#00F0FF] font-mono uppercase tracking-widest mb-1 flex items-center gap-1"><Activity size={10} className="animate-pulse"/> Master Access</p>
+             <p className="text-[9px] text-[#00F0FF] font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><Activity size={10} className="animate-pulse"/> Admin Active</p>
              <h1 className="text-sm font-bold text-white truncate">{session.user?.name}</h1>
           </div>
         </div>
         
-        <nav className="flex-1 p-6 space-y-2 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
           {MODULES.map(m => (
-            <button key={m.id} onClick={() => setActiveTab(m.id)} className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all group ${activeTab === m.id ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.2)]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
-              <div className="flex items-center gap-4">
-                 <m.icon size={18} className={activeTab === m.id ? 'text-black' : 'group-hover:text-[#D4AF37] transition-colors'}/> 
+            <button key={m.id} onClick={() => setActiveTab(m.id)} className={`w-full flex items-center justify-between px-4 py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all group ${activeTab === m.id ? 'bg-[#D4AF37] text-black' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}>
+              <div className="flex items-center gap-3">
+                 <m.icon size={16} className={activeTab === m.id ? 'text-black' : 'group-hover:text-[#D4AF37] transition-colors'}/> 
                  {m.label}
               </div>
               {activeTab === m.id && <ChevronRight size={14} />}
@@ -402,37 +402,27 @@ function ImperialGodmodeOS() {
           ))}
         </nav>
 
-        <div className="p-6 border-t border-white/5 bg-black/20">
-            <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/20 p-4 rounded-2xl mb-4 flex items-center gap-3">
-                <div className="w-2 h-2 bg-[#00F0FF] rounded-full animate-ping"></div>
-                <div>
-                   <p className="text-[9px] font-black uppercase text-[#00F0FF] tracking-widest">Network Status</p>
-                   <p className="text-[8px] font-mono text-gray-400 mt-1">Latency: 14ms | Encrypted</p>
-                </div>
-            </div>
-            <button onClick={() => signOut()} className="w-full py-4 text-red-500 text-[10px] font-black uppercase tracking-widest bg-red-500/5 border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-3"><Lock size={14}/> Terminate Session</button>
+        <div className="p-6 border-t border-white/10 bg-black/40">
+            <button onClick={() => signOut()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Logout</button>
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 overflow-y-auto p-10 lg:p-14 relative custom-scrollbar z-10">
+      <main className="flex-1 overflow-y-auto p-8 lg:p-12 relative custom-scrollbar z-10">
 
-        <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 border-b border-white/10 pb-8 gap-6">
-          <div className="space-y-3">
-             <div className="flex items-center gap-3">
-                <span className="bg-white/5 border border-white/10 text-gray-400 px-3 py-1 rounded-md text-[9px] font-mono uppercase tracking-widest flex items-center gap-2"><Cpu size={12}/> OS v4.2.0</span>
-             </div>
-             <motion.h2 key={activeTab} initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} className="text-4xl md:text-5xl lg:text-6xl font-serif italic text-white tracking-tighter">
+        <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 border-b border-white/10 pb-6 gap-6">
+          <div>
+             <h2 className="text-3xl lg:text-4xl font-serif text-white">
                {MODULES.find(m => m.id === activeTab)?.label}
-             </motion.h2>
+             </h2>
           </div>
           <div className="flex gap-4">
-             <div className="relative group">
-                <button className="p-5 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl hover:border-[#D4AF37] transition-colors"><BellRing size={20} className="text-gray-400 group-hover:text-[#D4AF37]"/></button>
-                {leads.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-[0_0_10px_rgba(239,68,68,0.5)] border-2 border-black">{leads.length}</span>}
-             </div>
-             <button onClick={() => fetchSystemIntelligence(false)} className="px-6 py-5 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-2xl hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest hover:scale-105">
-                <RefreshCcw size={16} className={isSyncing ? "animate-spin" : ""}/> Sync Nodes
+             <button className="p-4 bg-black border border-white/20 rounded-xl hover:border-[#D4AF37] transition-colors relative">
+               <BellRing size={18} className="text-gray-400"/>
+               {leads.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">{leads.length}</span>}
+             </button>
+             <button onClick={() => fetchDashboardData(false)} className="px-5 py-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                <RefreshCcw size={16} className={isSyncing ? "animate-spin" : ""}/> Refresh Data
              </button>
           </div>
         </header>
@@ -441,110 +431,94 @@ function ImperialGodmodeOS() {
           
           {/* ================= 1. COMMAND CENTER (DASHBOARD) ================= */}
           {activeTab === 'FULL_DASHBOARD' && fullAnalytics && (
-             <motion.div initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} key="dash" className="space-y-8">
+             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="dash" className="space-y-8">
                
                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                 <div className="lg:col-span-2 bg-black/40 backdrop-blur-xl border border-white/10 p-10 rounded-[35px] relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
-                   <div className="absolute -right-10 -top-10 text-[#D4AF37] opacity-5 group-hover:opacity-10 transition-opacity"><BarChart3 size={250}/></div>
-                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-[4px] mb-4 flex items-center gap-2"><Wallet size={14}/> Total Capital Inflow</p>
-                   <p className="text-5xl md:text-6xl font-black text-white font-serif tracking-tighter">₹{(fullAnalytics.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
-                   <div className="mt-8 flex items-center gap-4">
-                      <span className="bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] px-3 py-1 rounded-md font-mono flex items-center gap-1"><TrendingUp size={10}/> Active</span>
-                      <span className="text-[10px] text-gray-500 font-mono tracking-widest">Real-time ledger tracking</span>
-                   </div>
+                 <div className="lg:col-span-2 bg-[#111] border border-white/10 p-8 rounded-[30px] relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
+                   <div className="absolute -right-10 -top-10 text-[#D4AF37] opacity-5 group-hover:opacity-10 transition-opacity"><BarChart3 size={200}/></div>
+                   <p className="text-gray-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"><Wallet size={16}/> Total Revenue</p>
+                   <p className="text-4xl md:text-5xl font-bold text-white">₹{(fullAnalytics.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
                  </div>
 
-                 <div onClick={() => setDashboardView('orders')} className={`bg-black/40 backdrop-blur-xl border p-8 rounded-[35px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'orders' ? 'border-[#00F0FF]/50 shadow-[0_0_30px_rgba(0,240,255,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
-                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-[4px] flex items-center gap-2"><Package size={14}/> Confirmed Orders</p>
+                 <div onClick={() => setDashboardView('orders')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'orders' ? 'border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
+                   <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><Package size={16}/> Total Orders</p>
                    <div>
-                     <p className="text-5xl font-black text-[#00F0FF] font-mono tracking-tighter">{fullAnalytics.metrics?.totalOrders || 0}</p>
-                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-2 flex items-center gap-1">Click to expand <ChevronRight size={10}/></p>
+                     <p className="text-4xl font-bold text-[#00F0FF]">{fullAnalytics.metrics?.totalOrders || 0}</p>
+                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
                    </div>
                  </div>
                  
-                 <div onClick={() => setDashboardView('abandoned')} className={`bg-black/40 backdrop-blur-xl border p-8 rounded-[35px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'abandoned' ? 'border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
-                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-[4px] flex items-center gap-2"><AlertTriangle size={14} className={leads.length > 0 ? "text-red-500 animate-pulse" : ""}/> Lost Requisitions</p>
+                 <div onClick={() => setDashboardView('abandoned')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'abandoned' ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
+                   <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><AlertTriangle size={16} className={leads.length > 0 ? "text-red-500 animate-pulse" : ""}/> Abandoned Carts</p>
                    <div>
-                     <p className="text-5xl font-black text-red-500 font-mono tracking-tighter">{leads.length}</p>
-                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-2 flex items-center gap-1">Click to analyze <ChevronRight size={10}/></p>
+                     <p className="text-4xl font-bold text-red-500">{leads.length}</p>
+                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
                    </div>
                  </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Dynamic List Viewer */}
-                  <div className="lg:col-span-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-[35px] p-8 md:p-10 min-h-[450px]">
-                     <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-6">
-                        <h3 className="text-xl font-serif text-white tracking-wide">
-                           {dashboardView === 'orders' ? 'Latest Secured Transmissions (Orders)' : 'Unrecovered Assets (Abandoned Carts)'}
-                        </h3>
-                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${dashboardView === 'orders' ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-red-500/10 text-red-500'}`}>
-                           {dashboardView === 'orders' ? `${orders.length} Total` : `${leads.length} Pending Recovery`}
-                        </span>
-                     </div>
+                 <div className="lg:col-span-2 bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
+                       <h3 className="text-xl font-bold text-white">
+                          {dashboardView === 'orders' ? 'Recent Orders' : 'Customers Who Did Not Buy (Abandoned)'}
+                       </h3>
+                    </div>
 
-                     <div className="space-y-3">
-                        {dashboardView === 'orders' && (
-                           orders.length === 0 ? <p className="text-gray-600 font-mono text-sm">No positive transmissions found.</p> :
-                           orders.slice(0, 8).map((o: any, i: number) => (
-                              <motion.div initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} transition={{delay: i*0.05}} key={i} className="flex justify-between items-center p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                                 <div className="flex items-center gap-5">
-                                    <div className="w-10 h-10 bg-[#00F0FF]/10 text-[#00F0FF] rounded-xl flex items-center justify-center font-mono text-xs border border-[#00F0FF]/20">
-                                       {o.orderId?.slice(-4) || 'UKN'}
-                                    </div>
-                                    <div>
-                                       <p className="font-bold text-white text-sm">{o.customer?.name || 'Guest Identity'}</p>
-                                       <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest mt-1">{o.customer?.email || o.customer?.phone}</p>
-                                    </div>
-                                 </div>
-                                 <div className="text-right">
-                                    <p className="text-lg font-mono font-bold text-green-400">₹{(o.totalAmount || 0).toLocaleString()}</p>
-                                    <span className="inline-block mt-1 px-2 py-0.5 bg-white/10 rounded text-[8px] font-black uppercase text-gray-300">{o.status}</span>
-                                 </div>
-                              </motion.div>
-                           ))
-                        )}
+                    <div className="space-y-4">
+                       {dashboardView === 'orders' && (
+                          orders.length === 0 ? <p className="text-gray-500">No recent orders found.</p> :
+                          orders.slice(0, 8).map((o: any, i: number) => (
+                             <div key={i} className="flex justify-between items-center p-4 bg-black border border-white/10 rounded-xl hover:border-[#D4AF37]/50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-10 h-10 bg-[#00F0FF]/10 text-[#00F0FF] rounded-lg flex items-center justify-center text-xs font-bold">
+                                      #{o.orderId?.slice(-4) || 'UKN'}
+                                   </div>
+                                   <div>
+                                      <p className="font-bold text-white text-sm">{o.customer?.name || 'Guest User'}</p>
+                                      <p className="text-xs text-gray-500">{o.customer?.email || o.customer?.phone}</p>
+                                   </div>
+                                </div>
+                                <div className="text-right">
+                                   <p className="text-lg font-bold text-green-400">₹{(o.totalAmount || 0).toLocaleString()}</p>
+                                   <span className="text-[10px] uppercase text-gray-400">{o.status}</span>
+                                </div>
+                             </div>
+                          ))
+                       )}
 
-                        {dashboardView === 'abandoned' && (
-                           leads.length === 0 ? <p className="text-gray-600 font-mono text-sm">0 Data drops. Network secure.</p> :
-                           leads.map((lead: any, i: number) => (
-                              <motion.div initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} transition={{delay: i*0.05}} key={i} className="flex justify-between items-center p-5 bg-red-500/5 border border-red-500/10 rounded-2xl hover:border-red-500/30 transition-colors group">
-                                 <div className="flex items-center gap-5">
-                                    <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center"><AlertTriangle size={16} /></div>
-                                    <div>
-                                       <p className="font-bold text-white text-sm font-mono flex items-center gap-2">
-                                          {lead.phone || lead.email || 'Encrypted User'} 
-                                          <span className="bg-red-500 text-white text-[8px] px-2 py-0.5 rounded uppercase font-black tracking-widest">Lost Sale</span>
-                                       </p>
-                                       <p className="text-[9px] text-red-400/70 font-mono uppercase tracking-widest mt-1">Pending Value: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
-                                    </div>
-                                 </div>
-                                 <div className="flex gap-2">
-                                    {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20in%20your%20cart...`} target="_blank" className="px-3 py-2 bg-green-500/10 text-green-500 text-[9px] font-black uppercase rounded-lg border border-green-500/20 hover:bg-green-500 hover:text-black transition-colors">Ping WA</a>}
-                                    {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Purchase`} className="px-3 py-2 bg-white/5 text-gray-300 text-[9px] font-black uppercase rounded-lg border border-white/10 hover:bg-white hover:text-black transition-colors">Ping Mail</a>}
-                                 </div>
-                              </motion.div>
-                           ))
-                        )}
-                     </div>
-                  </div>
+                       {dashboardView === 'abandoned' && (
+                          leads.length === 0 ? <p className="text-gray-500">No abandoned carts found.</p> :
+                          leads.map((lead: any, i: number) => (
+                             <div key={i} className="flex justify-between items-center p-4 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><AlertTriangle size={16} /></div>
+                                   <div>
+                                      <p className="font-bold text-white text-sm">{lead.phone || lead.email || 'Guest'}</p>
+                                      <p className="text-xs text-red-400">Cart Value: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
+                                   </div>
+                                </div>
+                                <div className="flex gap-2">
+                                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20in%20your%20cart...`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-xs font-bold rounded-lg hover:bg-green-500 hover:text-black">WhatsApp</a>}
+                                   {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Purchase`} className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-lg hover:bg-white hover:text-black">Email</a>}
+                                </div>
+                             </div>
+                          ))
+                       )}
+                    </div>
+                 </div>
 
-                  {/* TERMINAL LOG WINDOW */}
-                  <div className="bg-black/80 backdrop-blur-3xl border border-white/10 rounded-[35px] p-8 flex flex-col shadow-2xl relative overflow-hidden">
-                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-50"></div>
-                     <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-4">
-                         <Terminal size={16} className="text-[#D4AF37]"/>
-                         <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400">Live Network Feed</h3>
-                     </div>
-                     <div className="flex-1 overflow-hidden flex flex-col justify-end space-y-2">
-                         {systemLogs.map((log, i) => (
-                             <motion.div initial={{opacity:0, x:-10}} animate={{opacity:1, x:0}} key={i} className="text-[10px] font-mono leading-relaxed">
-                                 <span className="text-[#D4AF37] mr-2">[{new Date().toLocaleTimeString()}]</span>
-                                 <span className={log.includes('[ERR]') ? 'text-red-400' : log.includes('[SEC]') ? 'text-green-400' : 'text-gray-300'}>{log}</span>
-                             </motion.div>
-                         ))}
-                     </div>
-                  </div>
+                 {/* SYSTEM LOGS */}
+                 <div className="bg-[#111] border border-white/10 rounded-[30px] p-8 flex flex-col">
+                    <h3 className="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2"><Terminal size={16}/> System Logs</h3>
+                    <div className="flex-1 overflow-hidden flex flex-col justify-end space-y-2">
+                        {systemLogs.map((log, i) => (
+                            <div key={i} className="text-xs text-gray-500">
+                                <span className="text-[#D4AF37] mr-2">[{new Date().toLocaleTimeString()}]</span> {log}
+                            </div>
+                        ))}
+                    </div>
+                 </div>
               </div>
              </motion.div>
           )}
@@ -553,135 +527,120 @@ function ImperialGodmodeOS() {
           {activeTab === 'INVENTORY' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="inv" className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                <div className="xl:col-span-5 space-y-8 h-max sticky top-0">
-                  <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[35px] border border-white/10 shadow-lg">
-                     <h3 className="text-white text-lg font-serif mb-5 flex items-center gap-2"><Layout size={18} className="text-[#D4AF37]"/> Tag Classification</h3>
-                     <div className="flex gap-3 mb-5">
-                        <input value={newCategory} onChange={e=>setNewCategory(e.target.value)} className="flex-1 bg-black/50 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-[#D4AF37] font-mono text-white" placeholder="New sector..." />
-                        <button onClick={() => { if(newCategory){ setCategories([...categories, newCategory]); setNewCategory(""); } }} className="px-6 bg-[#D4AF37] text-black font-black uppercase text-[9px] tracking-widest rounded-xl hover:bg-white transition-all">Add</button>
+                  
+                  {/* CATEGORIES */}
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
+                     <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2"><Layout size={18} className="text-[#D4AF37]"/> Manage Categories</h3>
+                     <div className="flex gap-3 mb-4">
+                        <input value={newCategory} onChange={e=>setNewCategory(e.target.value)} className="flex-1 bg-black border border-white/20 p-3 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Add new category..." />
+                        <button onClick={() => { if(newCategory){ setCategories([...categories, newCategory]); setNewCategory(""); } }} className="px-6 bg-[#D4AF37] text-black font-bold text-xs rounded-xl hover:bg-white transition-all">Add</button>
                      </div>
                      <div className="flex flex-wrap gap-2">
                         {categories.map((cat, i) => (
-                           <div key={i} className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                              <span className="text-[10px] font-mono text-gray-300 uppercase tracking-widest">{cat}</span>
-                              <button onClick={()=>setCategories(categories.filter(c=>c!==cat))} className="text-red-400 hover:text-red-500"><X size={12}/></button>
+                           <div key={i} className="flex items-center gap-2 bg-black px-4 py-2 rounded-lg border border-white/20">
+                              <span className="text-xs text-gray-300">{cat}</span>
+                              <button onClick={()=>setCategories(categories.filter(c=>c!==cat))} className="text-red-400 hover:text-red-500"><X size={14}/></button>
                            </div>
                         ))}
                      </div>
                   </div>
 
-                  <div className="bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden">
-                     <div className="flex justify-between items-center mb-8 relative z-10 border-b border-white/10 pb-6">
-                        <div>
-                           <h3 className="text-2xl font-serif text-white">Inject New Asset</h3>
-                           <p className="text-[9px] text-[#D4AF37] font-mono uppercase tracking-widest mt-1">Manual URI mapping active</p>
-                        </div>
-                        <Package size={30} className="text-[#D4AF37]/50"/>
-                     </div>
-                     
-                     <div className="space-y-6 relative z-10">
-                        <div className="space-y-4">
-                           <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-sm font-serif italic outline-none focus:border-[#D4AF37] text-white" placeholder="Designation (e.g. Royal Oak)"/>
-                           <div className="grid grid-cols-2 gap-4">
-                             <input value={watchForm.brand} onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-mono uppercase tracking-widest outline-none focus:border-[#D4AF37] text-white" placeholder="Creator Brand"/>
-                             <div className="relative">
-                                 <input list="category-options" value={watchForm.category} onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-[10px] font-mono uppercase tracking-widest text-white outline-none focus:border-[#D4AF37]" placeholder="Type Category..." />
-                                 <datalist id="category-options">{categories.map((c, i) => <option key={i} value={c} />)}</datalist>
-                             </div>
-                           </div>
+                  {/* ADD PRODUCT FORM */}
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10 shadow-lg relative overflow-hidden">
+                     <h3 className="text-2xl font-bold text-white mb-6">Add New Product</h3>
+                     <div className="space-y-5 relative z-10">
+                        <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <input value={watchForm.brand} onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Brand Name"/>
+                          <select value={watchForm.category} onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]">
+                             {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                          </select>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                           <div>
-                               <label className="text-[8px] font-mono uppercase text-[#D4AF37] tracking-widest mb-1 block">Z-Index (Priority)</label>
-                               <input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full bg-[#D4AF37]/5 border border-[#D4AF37]/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-[#D4AF37]" placeholder="100" />
-                           </div>
-                           <div>
-                               <label className="text-[8px] font-mono uppercase text-gray-500 tracking-widest mb-1 block">Visual Badge</label>
-                               <input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-xs outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Rare Edition" />
-                           </div>
+                           <div><label className="text-xs text-gray-500 mb-1 block">Display Order (Higher = Top)</label><input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="100" /></div>
+                           <div><label className="text-xs text-gray-500 mb-1 block">Product Tag/Badge</label><input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Best Seller" /></div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4 border-y border-white/10 py-5">
-                            <div><label className="text-[8px] font-mono uppercase text-gray-500 tracking-widest mb-1 block">Base Price</label><input value={watchForm.price} onChange={(e) => setWatchForm({...watchForm, price: e.target.value})} type="number" className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white" /></div>
-                            <div><label className="text-[8px] font-mono uppercase text-[#00F0FF] tracking-widest mb-1 block">Market Price</label><input value={watchForm.offerPrice} onChange={(e) => setWatchForm({...watchForm, offerPrice: e.target.value})} type="number" className="w-full bg-[#00F0FF]/5 border border-[#00F0FF]/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#00F0FF] text-[#00F0FF]" /></div>
-                            <div><label className="text-[8px] font-mono uppercase text-gray-500 tracking-widest mb-1 block">Units Stored</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white" /></div>
+                            <div><label className="text-xs text-gray-500 mb-1 block">Regular Price (₹)</label><input value={watchForm.price} onChange={(e) => setWatchForm({...watchForm, price: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
+                            <div><label className="text-xs text-[#00F0FF] mb-1 block">Sale Price (₹)</label><input value={watchForm.offerPrice} onChange={(e) => setWatchForm({...watchForm, offerPrice: e.target.value})} type="number" className="w-full bg-black border border-[#00F0FF]/30 p-3 rounded-lg text-sm outline-none focus:border-[#00F0FF] text-white" /></div>
+                            <div><label className="text-xs text-gray-500 mb-1 block">Total Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
                         </div>
 
                         <div className="space-y-4">
                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                               <label className="text-[10px] font-mono uppercase text-gray-400 tracking-widest flex items-center gap-2"><ImageIcon size={14}/> Asset Render URLs</label>
-                               <span className="text-[9px] font-mono text-[#D4AF37]">{watchForm.images.filter(x => typeof x === 'string' && x.trim() !== '').length}/8 Slots</span>
+                               <label className="text-sm font-bold text-white flex items-center gap-2"><ImageIcon size={16}/> Product Images</label>
                            </div>
-                           <input value={watchForm.imageUrl} onChange={e=>setWatchForm({...watchForm, imageUrl: e.target.value})} className="w-full bg-[#D4AF37]/5 border border-[#D4AF37]/20 p-3 rounded-lg text-xs font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="Primary Thumbnail URI"/>
+                           <input value={watchForm.imageUrl} onChange={e=>setWatchForm({...watchForm, imageUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Main Image URL (Required)"/>
                            <div className="flex flex-wrap gap-3 items-center">
                               {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').map((img, i) => (
                                 <div key={i} className="w-16 h-16 rounded-lg overflow-hidden group relative border border-white/20">
                                     <img src={img} className="w-full h-full object-cover" />
-                                    <button onClick={()=>setWatchForm({...watchForm, images: watchForm.images.filter(x => x !== img)})} className="absolute top-1 right-1 p-1 bg-black/80 backdrop-blur rounded-md text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={10}/></button>
+                                    <button onClick={()=>setWatchForm({...watchForm, images: watchForm.images.filter(x => x !== img)})} className="absolute top-1 right-1 p-1 bg-red-500 rounded-md text-white opacity-0 group-hover:opacity-100"><X size={10}/></button>
                                 </div>
                               ))}
                               {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').length < 8 && (
                                   <div className="scale-75 origin-left">
-                                      <PremiumUploadNode placeholder="IMG" onUploadSuccess={(url: string)=>setWatchForm({...watchForm, images: [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== ''), url]})} />
+                                      <PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>setWatchForm({...watchForm, images: [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== ''), url]})} />
                                   </div>
                               )}
                            </div>
                            <div className="grid grid-cols-2 gap-4 pt-2">
-                               <div><label className="text-[8px] font-mono uppercase text-gray-500 tracking-widest mb-1 flex items-center gap-1"><Video size={10}/> MP4 URI</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-[10px] font-mono outline-none focus:border-white text-white" placeholder="Video Link"/></div>
-                               <div><label className="text-[8px] font-mono uppercase text-[#D4AF37] tracking-widest mb-1 flex items-center gap-1"><Box size={10}/> Spline URI</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black/50 border border-[#D4AF37]/20 p-3 rounded-lg text-[10px] font-mono outline-none focus:border-[#D4AF37] text-[#D4AF37]" placeholder="3D Model Link"/></div>
+                               <div><label className="text-xs text-gray-500 mb-1 block">Video Link (Optional)</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="Video URL"/></div>
+                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="3D File URL"/></div>
                            </div>
                         </div>
 
                         <div className="space-y-4 pt-4 border-t border-white/10">
                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                               <label className="text-[10px] font-mono uppercase text-gray-400 tracking-widest flex items-center gap-2"><AlignJustify size={14}/> Specs Array</label>
-                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] text-[9px] font-black uppercase tracking-widest hover:text-white">+ Row</button>
+                               <label className="text-sm font-bold text-white flex items-center gap-2"><AlignJustify size={16}/> Specifications</label>
+                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] text-xs font-bold hover:text-white">+ Add Row</button>
                            </div>
                            <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
                                {watchForm.amazonDetails.map((detail, i) => (
                                    <div key={i} className="flex gap-2 items-center">
-                                       <input value={detail.key} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="w-1/3 bg-black/50 border border-white/10 p-2 rounded text-[10px] font-mono outline-none focus:border-[#D4AF37] text-gray-400" placeholder="e.g. Dial"/>
-                                       <input value={detail.value} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="flex-1 bg-black/50 border border-white/10 p-2 rounded text-[10px] font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Onyx Black"/>
-                                       <button onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} className="text-red-500 p-1 hover:bg-red-500/20 rounded"><X size={12}/></button>
+                                       <input value={detail.key} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="w-1/3 bg-black border border-white/20 p-2 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Dial Color"/>
+                                       <input value={detail.value} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="flex-1 bg-black border border-white/20 p-2 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Black"/>
+                                       <button onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} className="text-red-500 p-2 hover:bg-red-500/20 rounded"><X size={14}/></button>
                                    </div>
                                ))}
                            </div>
-                           <div className="bg-[#00F0FF]/5 border border-[#00F0FF]/20 p-4 rounded-xl">
-                              <p className="text-[8px] font-mono text-[#00F0FF] uppercase tracking-widest flex items-center gap-2 mb-2"><Search size={10}/> Neural Tags (SEO)</p>
-                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-transparent border-b border-[#00F0FF]/30 p-1 text-[10px] font-mono outline-none text-white placeholder-gray-600" placeholder="Tags (csv)..." />
+                           <div className="pt-2">
+                              <label className="text-xs text-gray-500 mb-1 block">SEO Tags (comma separated)</label>
+                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="luxury, watch, men..." />
                            </div>
-                           <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={3} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm font-serif italic outline-none focus:border-[#D4AF37] text-white custom-scrollbar" placeholder="Lore / Story..."/>
+                           <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={3} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar" placeholder="Product Description..."/>
                         </div>
 
-                        <button onClick={handlePublishAsset} className="w-full py-6 bg-[#D4AF37] text-black font-black uppercase rounded-2xl text-[10px] tracking-[6px] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.3)] mt-6 flex justify-center items-center gap-3 hover:scale-[1.02]"><Save size={16}/> Inject to Matrix</button>
+                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product</button>
                      </div>
                   </div>
                </div>
 
+               {/* PRODUCT LIST */}
                <div className="xl:col-span-7">
-                  <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                     <h3 className="text-xl font-serif text-white">Live Vault Matrix</h3>
-                     <span className="text-[9px] font-mono uppercase tracking-widest text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded border border-[#D4AF37]/20">{liveWatches.length} Nodes Active</span>
+                  <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                     <h3 className="text-2xl font-serif text-white">Live Products List</h3>
+                     <span className="text-xs font-bold bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg">{liveWatches.length} Products Active</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
                      {liveWatches.map((watch, idx) => (
-                       <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} transition={{delay: idx*0.05}} key={watch._id || idx} className="bg-black/40 backdrop-blur-md p-6 rounded-[30px] border border-white/10 flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all duration-500 shadow-xl relative overflow-hidden hover:-translate-y-2">
+                       <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} transition={{delay: idx*0.05}} key={watch._id || idx} className="bg-[#111] p-6 rounded-[20px] border border-white/10 flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all shadow-lg relative overflow-hidden">
                           <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
-                             {watch.badge && <span className="bg-[#D4AF37] text-black text-[7px] font-black px-2 py-1 rounded uppercase tracking-widest">{watch.badge}</span>}
-                             {watch.stock < 3 && <span className="bg-red-500 text-white text-[7px] font-black px-2 py-1 rounded uppercase tracking-widest animate-pulse">Low Stk: {watch.stock}</span>}
+                             {watch.badge && <span className="bg-[#D4AF37] text-black text-[10px] font-bold px-2 py-1 rounded uppercase">{watch.badge}</span>}
+                             {watch.stock < 3 && <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Low Stock: {watch.stock}</span>}
                           </div>
-                          <div className="absolute top-4 left-4 z-20 bg-black/80 px-2 py-0.5 rounded border border-white/20 text-[7px] font-mono text-gray-400">Z: {watch.priority || 0}</div>
-                          <div className="h-40 bg-black/60 rounded-2xl flex items-center justify-center p-4 relative overflow-hidden mb-5 border border-white/5 group-hover:border-white/10 transition-colors">
-                             <img src={watch.imageUrl || (watch.images && watch.images[0])} className="h-full object-contain mix-blend-screen transition-transform group-hover:scale-110 duration-700 relative z-10" />
-                             {watch.model3DUrl && <Box size={16} className="absolute bottom-3 right-3 text-[#D4AF37] z-20"/>}
-                             {watch.videoUrl && <Video size={16} className="absolute bottom-3 left-3 text-white/50 z-20"/>}
+                          <div className="h-48 bg-black rounded-xl flex items-center justify-center p-4 relative mb-4 border border-white/10">
+                             <img src={watch.imageUrl || (watch.images && watch.images[0])} className="h-full object-contain transition-transform group-hover:scale-105 duration-500" />
                           </div>
                           <div className="flex-1 flex flex-col">
-                             <p className="text-[8px] font-mono text-[#D4AF37] uppercase tracking-[3px] mb-1">{watch.brand}</p>
-                             <h4 className="text-lg font-serif text-white leading-tight mb-3 line-clamp-1">{watch.name || watch.title}</h4>
+                             <p className="text-xs text-[#D4AF37] font-bold uppercase mb-1">{watch.brand}</p>
+                             <h4 className="text-lg font-bold text-white mb-2 line-clamp-1">{watch.name}</h4>
                              <div className="flex justify-between items-end border-t border-white/10 pt-4 mt-auto">
-                                <div><p className="text-[7px] font-mono text-gray-500 uppercase tracking-widest mb-1">Market Val</p><p className="text-lg font-bold font-mono text-white tracking-tighter">₹{Number(watch.offerPrice || watch.price || watch.basePrice).toLocaleString('en-IN')}</p></div>
-                                <button onClick={() => handleDeleteAsset(watch._id)} className="p-2.5 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors border border-red-500/20"><Trash2 size={14}/></button>
+                                <div><p className="text-xs text-gray-500 mb-1">Price</p><p className="text-xl font-bold text-green-400">₹{Number(watch.offerPrice || watch.price).toLocaleString('en-IN')}</p></div>
+                                <button onClick={() => handleDeleteProduct(watch._id)} className="p-3 bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors"><Trash2 size={16}/></button>
                              </div>
                           </div>
                        </motion.div>
@@ -691,192 +650,199 @@ function ImperialGodmodeOS() {
             </motion.div>
           )}
 
-          {/* ================= 3. ORDER TRACKER ================= */}
+          {/* ================= 3. MANAGE ORDERS ================= */}
           {activeTab === 'ORDER_TRACKER' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="orders" className="space-y-8">
-               <div className="bg-gradient-to-r from-blue-900/20 to-black p-10 rounded-[40px] border border-blue-500/30 flex justify-between items-center shadow-[0_0_50px_rgba(59,130,246,0.1)]">
-                  <div className="flex items-center gap-6">
-                     <div className="p-5 bg-blue-500/10 rounded-2xl text-blue-400 border border-blue-500/20"><Network size={30}/></div>
-                     <div>
-                        <h3 className="text-3xl font-serif italic text-white mb-1">Global Dispatch Network</h3>
-                        <p className="text-[10px] text-blue-300/70 font-mono uppercase tracking-[4px]">Logistics Control Matrix</p>
-                     </div>
+               <div className="bg-[#111] p-10 rounded-[30px] border border-blue-500/30 flex items-center gap-6">
+                  <div className="p-5 bg-blue-500/20 rounded-2xl text-blue-400"><Truck size={30}/></div>
+                  <div>
+                     <h3 className="text-3xl font-bold text-white mb-1">Order Logistics</h3>
+                     <p className="text-sm text-gray-400">Manage and track customer shipments.</p>
                   </div>
                </div>
                
                <div className="space-y-4">
-                 {orders.length === 0 ? <p className="text-center py-20 text-gray-600 font-mono text-sm">No logistics tasks in queue.</p> : orders.map((o: any, i: number) => (
-                    <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: i*0.05}} key={i} className="p-8 bg-black/40 backdrop-blur-md border border-white/10 rounded-[30px] flex flex-col md:flex-row items-center justify-between group hover:border-blue-500/50 transition-colors shadow-lg hover:-translate-y-1">
+                 {orders.length === 0 ? <p className="text-center py-20 text-gray-500">No orders found.</p> : orders.map((o: any, i: number) => (
+                    <div key={i} className="p-6 bg-[#111] border border-white/10 rounded-[20px] flex flex-col md:flex-row items-center justify-between hover:border-blue-500/50 transition-colors shadow-lg">
                        <div className="flex items-center gap-6 mb-6 md:mb-0 w-full md:w-auto">
-                          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-mono text-xs font-black shadow-inner">#{o.orderId?.slice(-4) || 'UKN'}</div>
+                          <div className="w-16 h-16 rounded-xl bg-black border border-white/20 flex items-center justify-center text-white font-bold text-sm">#{o.orderId?.slice(-4) || 'UKN'}</div>
                           <div>
                              <h4 className="font-bold text-xl text-white mb-1">{o.customer?.name || 'Guest User'}</h4>
-                             <p className="text-[9px] text-gray-400 font-mono uppercase tracking-[3px] flex items-center gap-2"><MapPin size={10}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-1 text-white/20">|</span> <Package size={10}/> {o.items?.length || 1} Asset(s)</p>
+                             <p className="text-xs text-gray-400 flex items-center gap-2"><MapPin size={12}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-2 text-white/20">|</span> <Package size={12}/> {o.items?.length || 1} Item(s)</p>
                           </div>
                        </div>
-                       <div className="flex flex-wrap md:flex-nowrap items-center gap-12 w-full lg:w-auto justify-between lg:justify-end">
+                       <div className="flex flex-wrap md:flex-nowrap items-center gap-8 w-full md:w-auto justify-between md:justify-end">
                           <div className="text-left md:text-right">
-                            <p className="text-[8px] text-gray-500 font-mono uppercase tracking-widest mb-1">Transferred Capital</p>
-                            <p className="font-bold text-white text-2xl font-mono tracking-tighter">₹{(o.totalAmount || 0).toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                            <p className="font-bold text-green-400 text-2xl">₹{(o.totalAmount || 0).toLocaleString()}</p>
                           </div>
-                          <div className="h-10 w-px bg-white/10 hidden md:block"></div>
-                          <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-40 bg-black border border-white/20 text-[#D4AF37] font-mono text-[10px] uppercase tracking-widest outline-none rounded-xl p-3 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center focus:shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-                            <option className="bg-black" value="PENDING">PENDING</option><option className="bg-black" value="PROCESSING">PROCESSING</option>
-                            <option className="bg-black" value="DISPATCHED">DISPATCHED</option><option className="bg-black" value="TRANSIT">IN TRANSIT</option>
-                            <option className="bg-black text-green-500" value="DELIVERED">DELIVERED</option><option className="bg-black text-red-500" value="CANCELLED">CANCELLED</option>
+                          <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-48 bg-black border border-white/30 text-white font-bold uppercase rounded-xl p-4 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center">
+                            <option value="PENDING">Pending</option>
+                            <option value="PROCESSING">Processing</option>
+                            <option value="DISPATCHED">Dispatched</option>
+                            <option value="TRANSIT">In Transit</option>
+                            <option className="text-green-500" value="DELIVERED">Delivered</option>
+                            <option className="text-red-500" value="CANCELLED">Cancelled</option>
                           </select>
                        </div>
-                    </motion.div>
+                    </div>
                  ))}
                </div>
             </motion.div>
           )}
 
-          {/* ================= 4. CRM ================= */}
+          {/* ================= 4. CUSTOMERS & CRM ================= */}
           {activeTab === 'CRM' && (
-             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="crm" className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[40px] overflow-hidden shadow-2xl">
-                <div className="p-8 md:p-10 border-b border-white/10 flex justify-between items-center">
-                   <h3 className="text-2xl font-serif text-white">Client Identity Matrix</h3>
-                   <span className="bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest font-mono">{leads.length} Identities Found</span>
+             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="crm" className="bg-[#111] border border-white/10 rounded-[30px] overflow-hidden shadow-2xl">
+                <div className="p-8 border-b border-white/10 flex justify-between items-center">
+                   <h3 className="text-2xl font-bold text-white">Customer Details</h3>
+                   <span className="bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg text-xs font-bold">{leads.length} Customers</span>
                 </div>
                 <div className="overflow-x-auto">
                    <table className="w-full text-left">
-                     <thead className="bg-black/60 text-[9px] font-black uppercase tracking-[5px] text-gray-500 border-b border-white/10">
+                     <thead className="bg-black/50 text-xs font-bold uppercase text-gray-400 border-b border-white/10">
                         <tr>
-                          <th className="p-6 md:p-8 pl-10 whitespace-nowrap">Client Vector</th>
-                          <th className="p-6 md:p-8 text-center whitespace-nowrap">Referral Origin</th>
-                          <th className="p-6 md:p-8 text-center whitespace-nowrap">Wallet Funds</th>
-                          <th className="p-6 md:p-8 text-right pr-10 whitespace-nowrap">Capital Acquired</th>
+                          <th className="p-6 pl-10">Customer Info</th>
+                          <th className="p-6 text-center">Referral Source</th>
+                          <th className="p-6 text-center">Wallet Balance</th>
+                          <th className="p-6 text-right pr-10">Total Value</th>
                         </tr>
                      </thead>
                      <tbody>
-                        {leads.length === 0 && customers.length === 0 ? <tr><td colSpan={4} className="p-20 text-center text-gray-500 font-mono text-sm">No client signatures detected.</td></tr> : leads.slice(0,15).map((c:any, i:number) => (
-                           <motion.tr initial={{opacity:0, x:-10}} animate={{opacity:1, x:0}} transition={{delay: i*0.05}} key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors group cursor-pointer">
-                              <td className="p-6 md:p-8 pl-10">
-                                 <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center font-mono text-xs uppercase text-white shadow-lg group-hover:border-[#00F0FF]/50 transition-colors">{c.phone?.slice(-2) || 'XX'}</div>
+                        {leads.length === 0 && customers.length === 0 ? <tr><td colSpan={4} className="p-20 text-center text-gray-500">No customers found.</td></tr> : leads.slice(0,15).map((c:any, i:number) => (
+                           <tr key={i} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                              <td className="p-6 pl-10">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-black border border-white/20 flex items-center justify-center text-sm font-bold text-white">{c.phone?.slice(-2) || 'XX'}</div>
                                     <div>
-                                       <p className="font-bold text-sm md:text-base text-white font-mono">{c.phone || 'Encrypted User'}</p>
-                                       <p className="text-[10px] text-gray-500 font-mono tracking-widest mt-1 opacity-70 group-hover:opacity-100 group-hover:text-[#00F0FF] transition-colors">{c.email || `ID: ${c._id?.slice(-8)}`}</p>
+                                       <p className="font-bold text-white">{c.phone || 'Guest'}</p>
+                                       <p className="text-xs text-gray-500 mt-1">{c.email || `ID: ${c._id?.slice(-8)}`}</p>
                                     </div>
                                  </div>
                               </td>
-                              <td className="p-6 md:p-8 text-center">
-                                 <span className="px-3 py-1 rounded bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/20 text-[9px] font-mono tracking-widest">{c.referralCode || 'DIRECT_LINK'}</span>
-                              </td>
-                              <td className="p-6 md:p-8 text-center font-mono text-[#D4AF37] font-bold text-lg">₹{c.walletBalance || 0}</td>
-                              <td className="p-6 md:p-8 text-right pr-10"><p className="font-mono font-bold text-xl text-white">₹{(c.cartTotal || 0).toLocaleString()}</p></td>
-                           </motion.tr>
+                              <td className="p-6 text-center text-sm text-gray-300">{c.referralCode || 'Direct'}</td>
+                              <td className="p-6 text-center text-[#D4AF37] font-bold text-lg">₹{c.walletBalance || 0}</td>
+                              <td className="p-6 text-right pr-10"><p className="font-bold text-xl text-green-400">₹{(c.cartTotal || 0).toLocaleString()}</p></td>
+                           </tr>
                         ))}
                      </tbody>
                    </table>
                 </div>
              </motion.div>
           )}
-          {/* ================= 5. MARKETING ================= */}
+
+          {/* ================= 5. COUPONS & MARKETING ================= */}
           {activeTab === 'MARKETING' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="marketing" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                <div className="lg:col-span-5">
-                  <div className="bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.1)]">
-                     <h3 className="text-2xl font-serif text-white mb-8 flex items-center gap-3"><Gift size={24} className="text-[#D4AF37]"/> Campaign Configurator</h3>
+                  <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
+                     <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><Gift size={24} className="text-[#D4AF37]"/> Create Coupon Code</h3>
                      <div className="space-y-5">
                         <div>
-                           <label className="text-[9px] uppercase font-mono tracking-widest text-gray-400 block mb-2">Access Code (Coupon)</label>
-                           <input value={couponForm.code} onChange={e=>setCouponForm({...couponForm, code: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-sm uppercase font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. VIP2026"/>
+                           <label className="text-xs text-gray-400 block mb-2">Coupon Code Name</label>
+                           <input value={couponForm.code} onChange={e=>setCouponForm({...couponForm, code: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm uppercase outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. SUMMER20"/>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                            <div>
-                              <label className="text-[9px] uppercase font-mono tracking-widest text-gray-400 block mb-2">Discount Cut (%)</label>
-                              <input value={couponForm.discountValue} onChange={e=>setCouponForm({...couponForm, discountValue: e.target.value})} type="number" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="15"/>
+                              <label className="text-xs text-gray-400 block mb-2">Discount (%)</label>
+                              <input value={couponForm.discountValue} onChange={e=>setCouponForm({...couponForm, discountValue: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="15"/>
                            </div>
                            <div>
-                              <label className="text-[9px] uppercase font-mono tracking-widest text-gray-400 block mb-2">Min. Capital (₹)</label>
-                              <input value={couponForm.minOrder} onChange={e=>setCouponForm({...couponForm, minOrder: e.target.value})} type="number" className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="50000"/>
+                              <label className="text-xs text-gray-400 block mb-2">Minimum Order (₹)</label>
+                              <input value={couponForm.minOrder} onChange={e=>setCouponForm({...couponForm, minOrder: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="5000"/>
                            </div>
                         </div>
-                        <button onClick={handleCreateCoupon} className="w-full py-5 bg-[#D4AF37] text-black font-black uppercase rounded-2xl text-[10px] tracking-[4px] hover:bg-white transition-all shadow-[0_10px_30px_rgba(212,175,55,0.3)] mt-4 flex justify-center items-center gap-2 hover:scale-[1.02]"><Zap size={14}/> Deploy Protocol</button>
+                        <button onClick={handleCreateCoupon} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4">Save Coupon</button>
                      </div>
                   </div>
                </div>
 
-               <div className="lg:col-span-7 bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/10">
-                  <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-6">
-                     <h4 className="text-white font-serif text-xl">Active Campaign Nodes</h4>
-                  </div>
+               <div className="lg:col-span-7 bg-[#111] p-10 rounded-[30px] border border-white/10">
+                  <h4 className="text-white font-bold text-xl mb-6 border-b border-white/10 pb-4">Active Coupons</h4>
                   <div className="space-y-4">
-                     {coupons.length === 0 ? <p className="text-center py-20 text-gray-600 font-mono text-sm">No promotional nodes running.</p> : coupons.map((c, i) => (
-                        <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: i*0.05}} key={i} className="p-6 bg-white/5 border border-white/5 rounded-[25px] flex justify-between items-center group hover:border-[#D4AF37]/50 transition-colors">
+                     {coupons.length === 0 ? <p className="text-center py-20 text-gray-500">No active coupons.</p> : coupons.map((c, i) => (
+                        <div key={i} className="p-6 bg-black border border-white/20 rounded-2xl flex justify-between items-center group hover:border-[#D4AF37] transition-colors">
                            <div className="flex items-center gap-6">
-                              <div className="w-16 h-16 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center text-[#D4AF37] font-mono text-xl border border-[#D4AF37]/20 shadow-inner">{c.discountValue}%</div>
+                              <div className="w-16 h-16 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center text-[#D4AF37] font-bold text-2xl">{c.discountValue}%</div>
                               <div>
-                                 <p className="font-mono font-bold text-2xl text-white tracking-widest mb-1">{c.code}</p>
-                                 <div className="flex gap-4">
-                                    <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Executions: {c.usedCount || 0}</p>
-                                    <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Floor: ₹{c.minOrderValue?.toLocaleString() || 0}</p>
-                                 </div>
+                                 <p className="font-bold text-2xl text-white mb-1">{c.code}</p>
+                                 <p className="text-xs text-gray-400">Used: {c.usedCount || 0} times | Min Order: ₹{c.minOrderValue?.toLocaleString() || 0}</p>
                               </div>
                            </div>
-                           <button className="p-3 bg-red-500/10 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
-                        </motion.div>
+                           <button className="p-3 bg-red-500/20 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={20}/></button>
+                        </div>
                      ))}
                   </div>
                </div>
             </motion.div>
           )}
 
-          {/* ================= 6. PAGE BUILDER ================= */}
+          {/* ================= 6. WEBSITE BUILDER ================= */}
           {activeTab === 'PAGE_BUILDER' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="builder" className="grid grid-cols-1 xl:grid-cols-2 gap-10 pb-20">
-               <div className="bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/10 shadow-2xl h-max space-y-10">
-                  <h3 className="text-[#D4AF37] text-sm font-serif italic mb-2 border-b border-white/10 pb-6"><Layout size={18} className="inline mr-2"/> User Interface Matrix</h3>
+               
+               <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 space-y-10">
+                  <h3 className="text-[#D4AF37] text-lg font-bold mb-4 border-b border-white/10 pb-4 flex items-center gap-2"><Layout size={20}/> Website Design Settings</h3>
+                  
                   <div className="grid grid-cols-2 gap-8">
-                    <div><label className="text-[9px] font-mono uppercase text-gray-500 tracking-[3px] block mb-3">Primary Aura</label><div className="flex gap-3"><input type="color" value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-xl bg-black border border-white/10 p-1 cursor-pointer shrink-0"/><input value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs font-mono text-white outline-none focus:border-[#D4AF37]"/></div></div>
-                    <div><label className="text-[9px] font-mono uppercase text-gray-500 tracking-[3px] block mb-3">Void Space</label><div className="flex gap-3"><input type="color" value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-12 h-12 rounded-xl bg-black border border-white/10 p-1 cursor-pointer shrink-0"/><input value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs font-mono text-white outline-none focus:border-[#D4AF37]"/></div></div>
+                    <div>
+                        <label className="text-xs text-gray-400 block mb-2">Primary Color</label>
+                        <div className="flex gap-3"><input type="color" value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1 cursor-pointer shrink-0"/><input value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div>
+                    </div>
+                    <div>
+                        <label className="text-xs text-gray-400 block mb-2">Background Color</label>
+                        <div className="flex gap-3"><input type="color" value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1 cursor-pointer shrink-0"/><input value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div>
+                    </div>
                   </div>
-                  <div className="space-y-5 pt-8 border-t border-white/5">
-                      <label className="text-[9px] font-mono uppercase text-gray-500 tracking-[3px] block"><Globe size={12} className="inline mr-2"/> Social Links</label>
+                  
+                  <div className="space-y-4 pt-6 border-t border-white/10">
+                      <label className="text-sm font-bold text-white block mb-4">Social Media Links</label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="flex items-center bg-black/50 border border-white/10 rounded-xl p-2 px-4 focus-within:border-[#D4AF37]"><Instagram size={14} className="text-gray-500 mr-3" /><input value={socialLinks.instagram} onChange={e=>setSocialLinks({...socialLinks, instagram: e.target.value})} className="bg-transparent border-none outline-none text-[10px] font-mono text-white w-full py-1" placeholder="Instagram URL" /></div>
-                         <div className="flex items-center bg-black/50 border border-white/10 rounded-xl p-2 px-4 focus-within:border-[#D4AF37]"><Facebook size={14} className="text-gray-500 mr-3" /><input value={socialLinks.facebook} onChange={e=>setSocialLinks({...socialLinks, facebook: e.target.value})} className="bg-transparent border-none outline-none text-[10px] font-mono text-white w-full py-1" placeholder="Facebook URL" /></div>
-                         <div className="flex items-center bg-black/50 border border-white/10 rounded-xl p-2 px-4 focus-within:border-[#D4AF37]"><Youtube size={14} className="text-gray-500 mr-3" /><input value={socialLinks.youtube} onChange={e=>setSocialLinks({...socialLinks, youtube: e.target.value})} className="bg-transparent border-none outline-none text-[10px] font-mono text-white w-full py-1" placeholder="YouTube URL" /></div>
-                         <div className="flex items-center bg-black/50 border border-white/10 rounded-xl p-2 px-4 focus-within:border-[#D4AF37]"><Linkedin size={14} className="text-gray-500 mr-3" /><input value={socialLinks.linkedin} onChange={e=>setSocialLinks({...socialLinks, linkedin: e.target.value})} className="bg-transparent border-none outline-none text-[10px] font-mono text-white w-full py-1" placeholder="LinkedIn URL" /></div>
+                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Instagram size={18} className="text-gray-500 mr-3" /><input value={socialLinks.instagram} onChange={e=>setSocialLinks({...socialLinks, instagram: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Instagram URL" /></div>
+                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Facebook size={18} className="text-gray-500 mr-3" /><input value={socialLinks.facebook} onChange={e=>setSocialLinks({...socialLinks, facebook: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Facebook URL" /></div>
+                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Youtube size={18} className="text-gray-500 mr-3" /><input value={socialLinks.youtube} onChange={e=>setSocialLinks({...socialLinks, youtube: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="YouTube URL" /></div>
+                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Linkedin size={18} className="text-gray-500 mr-3" /><input value={socialLinks.linkedin} onChange={e=>setSocialLinks({...socialLinks, linkedin: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="LinkedIn URL" /></div>
                       </div>
                   </div>
-                  <div className="space-y-6 pt-10 border-t border-white/5">
-                      <div className="flex justify-between items-center mb-6 relative"><div><h3 className="text-[#D4AF37] text-sm font-black uppercase tracking-[5px]">Homepage Image Gallery</h3></div></div>
-                      <div className="grid grid-cols-3 gap-6">
+
+                  <div className="space-y-6 pt-8 border-t border-white/10">
+                      <h3 className="text-[#D4AF37] text-sm font-bold uppercase">Image Gallery (Home Page)</h3>
+                      <div className="grid grid-cols-3 gap-4">
                         {[1, 2, 3, 4, 5, 6].map((slot, i) => (
-                            <div key={slot} className="p-4 bg-black border border-white/10 rounded-3xl relative group flex flex-col items-center">
-                                <span className={`absolute top-3 left-3 px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-full z-20 ${galleryImages[i] ? 'bg-black text-white' : 'bg-[#D4AF37] text-black shadow-[0_0_10px_rgba(212,175,55,0.5)]'}`}>Slot #{slot}</span>
+                            <div key={slot} className="p-4 bg-black border border-white/20 rounded-xl relative group flex flex-col items-center">
+                                <span className="absolute top-2 left-2 text-[10px] text-gray-500 font-bold z-20">Slot {slot}</span>
                                 {galleryImages[i] ? (
-                                    <div className="w-full h-28 rounded-2xl overflow-hidden relative border border-white/10 mb-2 mt-4"><img src={galleryImages[i]} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /><button onClick={()=>setGalleryImages(galleryImages.filter((_,idx)=>idx!==i))} className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12}/></button></div>
-                                ) : ( <div className="mt-4"><PremiumUploadNode placeholder={`Img ${slot}`} onUploadSuccess={(url: string)=>{ const newGallery = [...galleryImages]; newGallery[i] = url; setGalleryImages(newGallery); }} /></div> )}
+                                    <div className="w-full h-24 rounded-lg overflow-hidden relative mt-4"><img src={galleryImages[i]} className="w-full h-full object-cover" /><button onClick={()=>setGalleryImages(galleryImages.filter((_,idx)=>idx!==i))} className="absolute top-1 right-1 p-1.5 bg-red-500 rounded text-white opacity-0 group-hover:opacity-100"><Trash2 size={12}/></button></div>
+                                ) : ( <div className="mt-4"><PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>{ const newGallery = [...galleryImages]; newGallery[i] = url; setGalleryImages(newGallery); }} /></div> )}
                             </div>
                         ))}
                       </div>
                   </div>
-                  <button onClick={handleDeployCMS} className="w-full py-6 bg-[#D4AF37] text-black font-black uppercase rounded-2xl text-[10px] tracking-[4px] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.3)] mt-8 flex justify-center items-center gap-2 hover:scale-[1.02]"><Save size={14}/> Compile UI Changes</button>
+                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6"><Save size={18} className="inline mr-2"/> Save Website Settings</button>
                </div>
 
-               <div className="space-y-10">
-                 <div className="bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/10">
-                    <h3 className="text-[#D4AF37] text-sm font-serif italic mb-6 border-b border-white/10 pb-4">Brand Lore Engine</h3>
+               <div className="space-y-8">
+                 <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
+                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">About Us Section</h3>
                     <div className="space-y-5">
-                       <div className="flex justify-between items-center"><label className="text-[9px] font-mono uppercase text-gray-500 tracking-[3px]">Text Alignment</label><div className="flex gap-2">{['left', 'center', 'right'].map(a => (<button key={a} onClick={() => setAboutConfig({...aboutConfig, alignment: a})} className={`px-3 py-1.5 rounded border text-[8px] font-black uppercase tracking-widest transition-all ${aboutConfig.alignment === a ? 'bg-[#D4AF37] text-black border-[#D4AF37]' : 'bg-black border-white/10 text-gray-500 hover:text-white'}`}>{a}</button>))}</div></div>
-                       <textarea value={aboutConfig.content} onChange={(e) => setAboutConfig({...aboutConfig, content: e.target.value})} rows={4} className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-sm font-serif italic leading-relaxed outline-none focus:border-[#D4AF37] text-gray-300 custom-scrollbar" placeholder="Establish the brand genesis..."/>
-                       <input value={aboutConfig.boldWords} onChange={(e) => setAboutConfig({...aboutConfig, boldWords: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-[10px] font-mono outline-none focus:border-[#D4AF37] text-[#00F0FF]" placeholder="Highlight Keywords (csv)"/>
+                       <textarea value={aboutConfig.content} onChange={(e) => setAboutConfig({...aboutConfig, content: e.target.value})} rows={5} className="w-full bg-black border border-white/20 p-5 rounded-xl text-sm outline-none text-white custom-scrollbar" placeholder="Write about your brand here..."/>
+                       <div>
+                          <label className="text-xs text-gray-400 mb-2 block">Highlight Words (comma separated)</label>
+                          <input value={aboutConfig.boldWords} onChange={(e) => setAboutConfig({...aboutConfig, boldWords: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none text-[#00F0FF]" placeholder="e.g. luxury, authentic, premium"/>
+                       </div>
                     </div>
                  </div>
-                 <div className="bg-black/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/10">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4"><h3 className="text-[#D4AF37] text-sm font-serif italic">Hero Holograms</h3><button onClick={handleAddHeroSlide} className="text-[#00F0FF] hover:scale-110 transition-transform"><PlusCircle size={18}/></button></div>
-                    <div className="space-y-4 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                 
+                 <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
+                    <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4"><h3 className="text-[#D4AF37] text-lg font-bold">Home Page Banners</h3><button onClick={handleAddHeroSlide} className="text-white bg-black border border-white/20 px-3 py-1 rounded-lg text-sm">+ Add Banner</button></div>
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                        {heroSlides.map((slide, i) => (
-                          <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} key={slide.id || i} className="p-5 bg-black/50 border border-white/10 rounded-2xl space-y-3 relative group hover:border-[#D4AF37]/50 transition-colors">
-                             <div className="flex justify-between items-center"><span className="text-[8px] font-mono text-[#D4AF37] uppercase tracking-widest bg-[#D4AF37]/10 px-2 py-0.5 rounded">Holo 0{i+1}</span><button onClick={() => handleRemoveHeroSlide(slide.id)} className="text-red-500 hover:bg-red-500/20 p-1.5 rounded transition-colors"><Trash2 size={12}/></button></div>
-                             <select value={slide.type} onChange={(e) => { const n = [...heroSlides]; n[i].type = e.target.value; setHeroSlides(n); }} className="w-full bg-transparent border-b border-white/10 pb-1 text-[9px] font-mono uppercase tracking-widest text-gray-400 outline-none focus:border-white"><option className="bg-black" value="video">MP4 Sequence</option><option className="bg-black" value="image">Static Render</option></select>
-                             <input value={slide.url} onChange={(e) => { const n = [...heroSlides]; n[i].url = e.target.value; setHeroSlides(n); }} className="w-full bg-transparent border-b border-white/10 pb-1 text-[10px] font-mono outline-none focus:border-white text-blue-300" placeholder="CDN URI"/>
-                             <input value={slide.heading} onChange={(e) => { const n = [...heroSlides]; n[i].heading = e.target.value; setHeroSlides(n); }} className="w-full bg-transparent border-b border-white/10 pb-1 text-xs font-serif italic outline-none focus:border-white text-white" placeholder="Display Text"/>
-                          </motion.div>
+                          <div key={slide.id || i} className="p-6 bg-black border border-white/20 rounded-2xl space-y-4 relative">
+                             <div className="flex justify-between items-center"><span className="text-xs font-bold text-gray-500">Banner {i+1}</span><button onClick={() => handleRemoveHeroSlide(slide.id)} className="text-red-500 text-xs font-bold">Remove</button></div>
+                             <select value={slide.type} onChange={(e) => { const n = [...heroSlides]; n[i].type = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white"><option value="video">Video Banner</option><option value="image">Image Banner</option></select>
+                             <input value={slide.url} onChange={(e) => { const n = [...heroSlides]; n[i].url = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-blue-400" placeholder="Image/Video URL"/>
+                             <input value={slide.heading} onChange={(e) => { const n = [...heroSlides]; n[i].heading = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Banner Text (e.g. Welcome)"/>
+                          </div>
                        ))}
                     </div>
                  </div>
@@ -884,181 +850,174 @@ function ImperialGodmodeOS() {
             </motion.div>
           )}
 
-          {/* ================= 7. LEGAL & POLICIES BUILDER ================= */}
+          {/* ================= 7. LEGAL POLICIES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-10 pb-32">
-               <div className="lg:col-span-4 space-y-8">
-                  <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[40px] border border-white/10 shadow-2xl">
+             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
+                <div className="lg:col-span-4 space-y-8">
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                        <h3 className="text-[#D4AF37] text-sm font-serif italic flex items-center gap-3">Active Documents</h3>
-                        <button onClick={() => setLegalPages([...legalPages, { id: Date.now().toString(), title: 'New Doc', slug: 'new-doc', content: '' }])} className="text-[#D4AF37] hover:scale-125 transition-transform"><PlusCircle size={18}/></button>
+                        <h3 className="text-lg font-bold text-white">Pages</h3>
+                        <button onClick={() => setLegalPages([...legalPages, { id: Date.now().toString(), title: 'New Policy', slug: 'new-policy', content: '' }])} className="text-[#D4AF37] text-sm font-bold bg-[#D4AF37]/20 px-3 py-1 rounded">+ Add Page</button>
                      </div>
-                     <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                     <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {legalPages.map((page) => (
-                           <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center group hover:scale-[1.02] ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/10 border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'bg-black/50 border-white/5 hover:border-white/20'}`}>
+                           <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/20 border-[#D4AF37]' : 'bg-black border-white/20 hover:border-gray-500'}`}>
                               <div>
-                                 <h4 className={`font-bold text-xs ${activeLegalPageId === page.id ? 'text-[#D4AF37]' : 'text-gray-300'}`}>{page.title}</h4>
-                                 <p className="text-[8px] font-mono text-gray-500 mt-1">/{page.slug}</p>
+                                 <h4 className={`font-bold text-sm ${activeLegalPageId === page.id ? 'text-[#D4AF37]' : 'text-white'}`}>{page.title}</h4>
+                                 <p className="text-xs text-gray-500 mt-1">/policies/{page.slug}</p>
                               </div>
-                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/20 p-2 rounded transition-all"><Trash2 size={12}/></button>
+                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="text-red-500 p-2"><Trash2 size={16}/></button>
                            </div>
                         ))}
                      </div>
                   </div>
 
-                  <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[40px] border border-white/10 shadow-2xl">
-                     <h3 className="text-[#D4AF37] text-sm font-serif italic mb-6 border-b border-white/10 pb-4">Corporate Origin</h3>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
+                     <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Company Contact Info</h3>
                      <div className="space-y-4">
-                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-xs font-mono text-white outline-none focus:border-[#D4AF37]" placeholder="Legal Entity Name" />
-                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-xs font-mono text-white outline-none focus:border-[#D4AF37]" placeholder="Physical Origin" />
-                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-xs font-mono text-white outline-none focus:border-[#D4AF37]" placeholder="Comms Line 1" />
-                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black/50 border border-white/10 p-3 rounded-lg text-xs font-mono text-white outline-none focus:border-[#D4AF37]" placeholder="Support Vector (Email)" />
+                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Company Name" />
+                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Address" />
+                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Phone Number" />
+                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Email Address" />
                      </div>
                   </div>
-               </div>
+                </div>
 
-               <div className="lg:col-span-8">
-                  {activeLegalPageId ? (
-                     <div className="bg-black/40 backdrop-blur-xl p-10 rounded-[50px] border border-white/10 shadow-2xl flex flex-col h-full min-h-[700px]">
-                        <div className="flex gap-6 mb-8">
-                           <div className="flex-1 space-y-2">
-                              <label className="text-[9px] font-mono uppercase tracking-[3px] text-gray-500">Document Title</label>
-                              <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-lg font-serif text-white outline-none focus:border-[#D4AF37]" placeholder="Title"/>
-                           </div>
-                           <div className="flex-1 space-y-2">
-                              <label className="text-[9px] font-mono uppercase tracking-[3px] text-gray-500">URI Path</label>
-                              <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 focus-within:border-[#D4AF37] transition-colors">
-                                 <span className="text-gray-600 font-mono text-xs">/policies/</span>
-                                 <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="bg-transparent border-none outline-none text-xs text-[#00F0FF] w-full py-4 font-mono" placeholder="slug"/>
-                              </div>
-                           </div>
-                        </div>
-                        <div className="flex-1 flex flex-col space-y-3">
-                           <label className="text-[9px] font-mono uppercase tracking-[3px] text-gray-500 flex justify-between items-center">
-                              <span>Body Data (HTML Valid)</span>
-                           </label>
-                           <textarea value={legalPages.find(p=>p.id===activeLegalPageId)?.content || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].content=e.target.value; setLegalPages(n); }} className="flex-1 w-full bg-black/50 border border-white/10 p-6 rounded-2xl text-sm font-serif leading-relaxed outline-none focus:border-[#D4AF37] text-gray-300 custom-scrollbar" placeholder="Enter terms..."/>
-                        </div>
-                        <button onClick={handleDeployCMS} className="w-full py-6 bg-[#D4AF37] text-black font-black uppercase rounded-[20px] text-[10px] tracking-[5px] hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.2)] mt-8 flex items-center justify-center gap-2 hover:scale-[1.02]"><Save size={16}/> Compile Document</button>
-                     </div>
-                  ) : (
-                     <div className="bg-black/40 backdrop-blur-xl p-12 rounded-[50px] border border-white/10 h-full flex items-center justify-center flex-col text-center opacity-50">
-                        <FileText size={60} className="text-gray-600 mb-6"/>
-                        <p className="font-mono text-sm uppercase tracking-widest text-gray-500">Select a document to edit.</p>
-                     </div>
-                  )}
-               </div>
-            </motion.div>
+                <div className="lg:col-span-8 bg-[#111] p-10 rounded-[30px] border border-white/10">
+                   {activeLegalPageId ? (
+                      <div className="space-y-6 flex flex-col h-full">
+                         <div className="grid grid-cols-2 gap-6">
+                            <div>
+                               <label className="text-xs text-gray-400 mb-2 block">Page Title</label>
+                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-lg text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Privacy Policy"/>
+                            </div>
+                            <div>
+                               <label className="text-xs text-gray-400 mb-2 block">URL Link (Slug)</label>
+                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#00F0FF] outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-policy"/>
+                            </div>
+                         </div>
+                         <div className="flex-1">
+                            <label className="text-xs text-gray-400 mb-2 block">Page Content (HTML allowed)</label>
+                            <textarea value={legalPages.find(p=>p.id===activeLegalPageId)?.content || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].content=e.target.value; setLegalPages(n); }} rows={15} className="w-full h-full bg-black border border-white/20 p-6 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#D4AF37] custom-scrollbar" placeholder="Write policy text here..."/>
+                         </div>
+                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-4"><Save size={18} className="inline mr-2"/> Save Legal Page</button>
+                      </div>
+                   ) : (
+                      <div className="h-full flex items-center justify-center flex-col text-gray-500 py-32">
+                         <FileText size={60} className="mb-4 opacity-50"/>
+                         <p>Select a page from the list to edit.</p>
+                      </div>
+                   )}
+                </div>
+             </motion.div>
           )}
 
-          {/* ================= 8. REVIEWS (SENTIMENT ANALYSIS) ================= */}
+          {/* ================= 8. REVIEWS ================= */}
           {activeTab === 'REVIEWS' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="rev" className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="rev" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                <div className="lg:col-span-4 space-y-8">
-                   <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[40px] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.1)]">
-                      <h3 className="text-xl font-serif text-white mb-6 border-b border-white/10 pb-4">Inject Synthetic Testimonial</h3>
+                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
+                      <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Add Customer Review</h3>
                       <div className="space-y-4">
-                         <input value={fakeReview.userName} onChange={e=>setFakeReview({...fakeReview, userName: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-xs outline-none focus:border-[#D4AF37] font-mono text-white" placeholder="Identity Name" />
-                         <select value={fakeReview.rating} onChange={e=>setFakeReview({...fakeReview, rating: Number(e.target.value)})} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-mono text-[#D4AF37] outline-none focus:border-[#D4AF37] appearance-none"><option className="bg-black" value={5}>5.0 - Optimal</option><option className="bg-black" value={4}>4.0 - Acceptable</option></select>
-                         <textarea value={fakeReview.comment} onChange={e=>setFakeReview({...fakeReview, comment: e.target.value})} rows={4} className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-xs font-serif italic outline-none focus:border-[#D4AF37] text-gray-300" placeholder="Synthetic feedback text..." />
+                         <input value={fakeReview.userName} onChange={e=>setFakeReview({...fakeReview, userName: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white" placeholder="Customer Name" />
+                         <select value={fakeReview.rating} onChange={e=>setFakeReview({...fakeReview, rating: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#D4AF37]"><option value={5}>5 Stars - Excellent</option><option value={4}>4 Stars - Good</option></select>
+                         <textarea value={fakeReview.comment} onChange={e=>setFakeReview({...fakeReview, comment: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white" placeholder="Write the review here..." />
                          
-                         <div className="pt-2">
-                             <label className="text-[9px] font-mono uppercase text-gray-500 tracking-[3px] block mb-2">Media Injection</label>
+                         <div>
+                             <label className="text-xs text-gray-400 block mb-2">Upload Review Image</label>
                              <div className="flex gap-2 items-center">
                                  {fakeReview.media && fakeReview.media.map((url, idx) => (
-                                     <div key={idx} className="relative w-12 h-12 rounded overflow-hidden"><img src={url} className="w-full h-full object-cover"/><button onClick={()=>setFakeReview({...fakeReview, media: fakeReview.media.filter(x => x !== url)})} className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-0.5"><X size={8}/></button></div>
+                                     <div key={idx} className="relative w-16 h-16 rounded overflow-hidden"><img src={url} className="w-full h-full object-cover"/><button onClick={()=>setFakeReview({...fakeReview, media: fakeReview.media.filter(x => x !== url)})} className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-1"><X size={10}/></button></div>
                                  ))}
-                                 <div className="scale-75 origin-left"><PremiumUploadNode placeholder="IMG" onUploadSuccess={(url: string)=>setFakeReview({...fakeReview, media: [...(fakeReview.media || []), url]})} /></div>
+                                 <PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>setFakeReview({...fakeReview, media: [...(fakeReview.media || []), url]})} />
                              </div>
                          </div>
-                         <button onClick={handleInjectFakeReview} className="w-full py-5 bg-[#D4AF37] text-black font-black uppercase rounded-xl text-[9px] tracking-widest hover:bg-white transition-all hover:shadow-[0_0_15px_rgba(212,175,55,0.4)]">Execute Injection</button>
+                         <button onClick={handleAddFakeReview} className="w-full py-4 bg-[#D4AF37] text-black font-bold rounded-xl mt-4">Save Review</button>
                       </div>
                    </div>
 
-                   <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[40px] border border-white/10 shadow-lg">
-                        <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4"><h3 className="text-[#D4AF37] text-sm font-serif italic flex items-center gap-2"><MessageSquare size={16}/> FAQ Nodes</h3><button onClick={() => setFaqs([...faqs, {q:'', a:''}])} className="text-[#00F0FF] hover:scale-110 transition-transform"><PlusCircle size={16}/></button></div>
+                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
+                        <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4"><h3 className="text-lg font-bold text-white">FAQs</h3><button onClick={() => setFaqs([...faqs, {q:'', a:''}])} className="text-[#00F0FF] text-sm">+ Add FAQ</button></div>
                         <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                            {faqs.map((faq, i) => (
-                              <div key={i} className="p-4 bg-black/50 border border-white/10 rounded-xl relative group space-y-2">
-                                 <input value={faq.q} onChange={e => { const n=[...faqs]; n[i].q=e.target.value; setFaqs(n); }} className="w-full bg-transparent border-b border-white/10 p-1 text-[10px] font-bold text-white outline-none focus:border-white" placeholder="Q:" />
-                                 <textarea value={faq.a} onChange={e => { const n=[...faqs]; n[i].a=e.target.value; setFaqs(n); }} rows={2} className="w-full bg-transparent p-1 text-[10px] text-gray-400 outline-none focus:border-white border-b border-transparent custom-scrollbar" placeholder="A:" />
-                                 <button onClick={()=>setFaqs(faqs.filter((_,idx)=>idx!==i))} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 p-1 bg-black rounded transition-all"><Trash2 size={12}/></button>
+                              <div key={i} className="p-4 bg-black border border-white/20 rounded-xl relative group space-y-2">
+                                 <input value={faq.q} onChange={e => { const n=[...faqs]; n[i].q=e.target.value; setFaqs(n); }} className="w-full bg-transparent border-b border-white/10 p-2 text-sm font-bold text-white outline-none" placeholder="Question" />
+                                 <textarea value={faq.a} onChange={e => { const n=[...faqs]; n[i].a=e.target.value; setFaqs(n); }} rows={2} className="w-full bg-transparent p-2 text-xs text-gray-400 outline-none custom-scrollbar" placeholder="Answer" />
+                                 <button onClick={()=>setFaqs(faqs.filter((_,idx)=>idx!==i))} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 p-2 bg-black rounded"><Trash2 size={14}/></button>
                               </div>
                            ))}
                         </div>
                    </div>
                </div>
                
-               <div className="lg:col-span-8 bg-black/40 backdrop-blur-xl p-10 rounded-[50px] border border-white/10">
+               <div className="lg:col-span-8 bg-[#111] p-10 rounded-[30px] border border-white/10">
                   <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
-                    <div><h3 className="text-2xl font-serif text-white mb-1">Reputation Engine</h3><p className="text-[9px] text-[#00F0FF] font-mono uppercase tracking-widest">Shadowban filter active. Pending reviews stay at the top.</p></div>
+                    <h3 className="text-2xl font-bold text-white">Manage Reviews</h3>
                   </div>
                   
-                  <div className="space-y-6 max-h-[700px] overflow-y-auto custom-scrollbar pr-4">
-                     {allReviews.map((rev:any, i:number) => (
-                       <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: i*0.05}} key={i} className={`bg-black/60 border p-6 rounded-[30px] flex flex-col md:flex-row justify-between gap-6 transition-all group hover:-translate-y-1 ${rev.visibility === 'pending' ? 'border-[#00F0FF]/50 shadow-[0_0_20px_rgba(0,240,255,0.1)]' : 'border-white/5 hover:border-white/20'}`}>
+                  <div className="space-y-4 max-h-[700px] overflow-y-auto custom-scrollbar pr-4">
+                     {allReviews.length === 0 ? <p className="text-gray-500">No reviews yet.</p> : allReviews.map((rev:any, i:number) => (
+                       <div key={i} className={`bg-black border p-6 rounded-2xl flex flex-col md:flex-row justify-between gap-6 transition-all ${rev.visibility === 'pending' ? 'border-[#00F0FF]' : 'border-white/10'}`}>
                           <div className="flex-1">
                              <div className="flex items-center gap-3 mb-2">
-                                <h4 className="font-bold text-base text-white flex items-center gap-2">{rev.userName} {rev.isAdminGenerated && <ShieldCheck size={12} className="text-[#D4AF37]"/>}</h4>
-                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border tracking-widest ${rev.visibility === 'public' ? 'bg-green-500/10 text-green-500 border-green-500/20' : rev.visibility === 'pending' ? 'bg-[#00F0FF]/10 text-[#00F0FF] border-[#00F0FF]/50 animate-pulse' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>{rev.visibility === 'rejected' ? 'SHADOWBANNED' : rev.visibility || 'PENDING'}</span>
+                                <h4 className="font-bold text-white text-lg">{rev.userName}</h4>
+                                <span className={`text-xs font-bold px-2 py-1 rounded border ${rev.visibility === 'public' ? 'bg-green-500/20 text-green-500' : rev.visibility === 'pending' ? 'bg-[#00F0FF]/20 text-[#00F0FF]' : 'bg-red-500/20 text-red-500'}`}>{rev.visibility || 'PENDING'}</span>
                              </div>
-                             <div className="flex gap-1 text-[#D4AF37] mb-3">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={12} fill="currentColor"/>)}</div>
-                             <p className="text-gray-400 text-xs font-serif italic mb-3">"{rev.comment}"</p>
+                             <div className="flex gap-1 text-[#D4AF37] mb-3">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={14} fill="currentColor"/>)}</div>
+                             <p className="text-gray-400 text-sm mb-3">"{rev.comment}"</p>
                              {rev.media && rev.media.length > 0 && (
                                 <div className="flex gap-2 mt-2">
-                                   {rev.media.map((m:string, idx:number) => m.match(/\.(mp4|webm|mov)$/i) ? <video key={idx} src={m} className="w-12 h-12 object-cover rounded-lg border border-white/10" controls/> : <img key={idx} src={m} className="w-12 h-12 object-cover rounded-lg border border-white/10 hover:scale-110 transition-transform"/>)}
+                                   {rev.media.map((m:string, idx:number) => m.match(/\.(mp4|webm|mov)$/i) ? <video key={idx} src={m} className="w-16 h-16 object-cover rounded-lg border border-white/20" controls/> : <img key={idx} src={m} className="w-16 h-16 object-cover rounded-lg border border-white/20"/>)}
                                 </div>
                              )}
-                             <p className="text-[8px] text-gray-600 font-mono mt-3">Target ID: {rev.product?.slice(-6) || 'GLOBAL'}</p>
                           </div>
-                          <div className={`flex md:flex-col gap-3 justify-center md:min-w-[140px] transition-opacity ${rev.visibility === 'pending' ? 'opacity-100' : 'opacity-20 group-hover:opacity-100'}`}>
-                             <button onClick={()=>handleReviewAction(rev._id, 'public')} className="flex-1 py-2 bg-green-500/10 border border-green-500/20 text-green-500 hover:bg-green-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Approve</button>
-                             <button onClick={()=>handleReviewAction(rev._id, 'rejected')} className="flex-1 py-2 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Ghost/Hide</button>
+                          <div className={`flex md:flex-col gap-3 justify-center min-w-[120px]`}>
+                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'public')} className="w-full py-2 bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white rounded-lg text-xs font-bold transition-all">Approve</button>
+                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'rejected')} className="w-full py-2 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-lg text-xs font-bold transition-all">Hide</button>
                           </div>
-                       </motion.div>
+                       </div>
                      ))}
                   </div>
                </div>
             </motion.div>
           )}
 
-          {/* ================= 9. SALES FORCE ================= */}
+          {/* ================= 9. AFFILIATES ================= */}
           {activeTab === 'SALES_FORCE' && (
-            <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} key="salesforce" className="space-y-12">
-               <div className="bg-gradient-to-br from-[#0A0A0A] to-[#00150F] p-16 rounded-[60px] border border-[#D4AF37]/30 flex flex-col md:flex-row justify-between items-center shadow-[0_20px_50px_rgba(212,175,55,0.1)] relative overflow-hidden gap-10">
-                  <div className="absolute right-0 top-0 opacity-10 pointer-events-none translate-x-1/4"><LinkIcon size={300}/></div>
-                  <div className="relative z-10 max-w-2xl"><h3 className="text-5xl md:text-6xl font-serif italic mb-6 text-white leading-tight">Affiliate Protocol</h3><p className="text-gray-400 text-sm font-mono tracking-widest">Network traffic and commission monitor.</p></div>
-                  <button onClick={() => setIsAgentModalOpen(true)} className="relative z-10 bg-[#D4AF37] text-black px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[4px] hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center gap-3 shrink-0 hover:scale-105"><PlusCircle size={16}/> Create Tracking Node</button>
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="salesforce" className="space-y-8">
+               <div className="bg-[#111] p-10 rounded-[40px] border border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div><h3 className="text-3xl font-bold text-white mb-2">Affiliate Partners</h3><p className="text-gray-400 text-sm">Manage sales partners and their tracking codes.</p></div>
+                  <button onClick={() => setIsAgentModalOpen(true)} className="bg-[#D4AF37] text-black px-8 py-4 rounded-xl font-bold hover:bg-white transition-all flex items-center gap-2"><PlusCircle size={18}/> Add Partner</button>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[35px] border border-white/10 hover:border-white/30 transition-colors"><p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2"><Users size={12}/> Network Size</p><h2 className="text-5xl font-black font-mono text-white">{agents.length}</h2></div>
-                  <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[35px] border border-[#00F0FF]/20 shadow-[0_0_20px_rgba(0,240,255,0.05)] hover:border-[#00F0FF]/50 transition-colors"><p className="text-[10px] font-mono text-[#00F0FF] uppercase tracking-widest mb-2 flex items-center gap-2"><Activity size={12}/> Global Hits</p><h2 className="text-5xl font-black font-mono text-white">{agents.reduce((acc, a) => acc + (a.clicks || 0), 0).toLocaleString()}</h2></div>
-                  <div className="bg-black/40 backdrop-blur-xl p-8 rounded-[35px] border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)] hover:border-green-500/50 transition-colors"><p className="text-[10px] font-mono text-green-500 uppercase tracking-widest mb-2 flex items-center gap-2"><Wallet size={12}/> Total Capital Raised</p><h2 className="text-5xl font-black font-mono text-white">₹{agents.reduce((acc, a) => acc + (a.revenue || 0), 0).toLocaleString()}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-gray-400 text-xs font-bold uppercase mb-2">Total Partners</p><h2 className="text-4xl font-bold text-white">{agents.length}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-[#00F0FF] text-xs font-bold uppercase mb-2">Total Clicks/Visits</p><h2 className="text-4xl font-bold text-white">{agents.reduce((acc, a) => acc + (a.clicks || 0), 0).toLocaleString()}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-green-500 text-xs font-bold uppercase mb-2">Revenue Generated</p><h2 className="text-4xl font-bold text-white">₹{agents.reduce((acc, a) => acc + (a.revenue || 0), 0).toLocaleString()}</h2></div>
                </div>
 
-               <div className="bg-black/40 backdrop-blur-xl rounded-[40px] border border-white/10 overflow-hidden shadow-2xl">
-                  <div className="p-8 border-b border-white/10"><h4 className="text-[11px] font-mono uppercase tracking-[5px] text-gray-400">Node Ledger</h4></div>
+               <div className="bg-[#111] rounded-[30px] border border-white/10 overflow-hidden">
+                  <div className="p-8 border-b border-white/10"><h4 className="text-lg font-bold text-white">Partner List</h4></div>
                   <div className="overflow-x-auto">
                       <table className="w-full text-left">
-                         <thead className="bg-white/5 text-[9px] font-black uppercase tracking-[5px] text-gray-500 border-b border-white/10">
-                            <tr><th className="p-6 pl-10">Agent Code</th><th className="p-6 text-center">Hits</th><th className="p-6 text-center">Conversions</th><th className="p-6 text-right pr-10">Yield Generated</th></tr>
+                         <thead className="bg-black/50 text-xs font-bold uppercase text-gray-500 border-b border-white/10">
+                            <tr><th className="p-6 pl-8">Partner Name</th><th className="p-6 text-center">Clicks</th><th className="p-6 text-center">Orders</th><th className="p-6 text-right pr-8">Revenue</th></tr>
                          </thead>
                          <tbody>
                             {agents.length === 0 ? (
-                                <tr><td colSpan={4} className="p-20 text-center font-mono text-gray-500 text-sm">No agents deployed.</td></tr>
+                                <tr><td colSpan={4} className="p-16 text-center text-gray-500">No partners added yet.</td></tr>
                             ) : agents.map((agent, i) => (
-                               <motion.tr initial={{opacity:0, x:-10}} animate={{opacity:1, x:0}} transition={{delay: i*0.05}} key={agent._id || `agt-${i}`} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                  <td className="p-6 pl-10">
+                               <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                  <td className="p-6 pl-8">
                                      <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 rounded-xl flex items-center justify-center font-mono text-xs">{agent.name?.split(' ').map((n:any)=>n[0]).join('').substring(0,2) || 'A'}</div>
-                                        <div><p className="font-bold text-sm text-white mb-0.5">{agent.name}</p><p className="text-[8px] text-[#00F0FF] font-mono tracking-widest uppercase">?ref={agent.code}</p></div>
+                                        <div className="w-12 h-12 bg-black border border-white/20 rounded-full flex items-center justify-center text-white font-bold">{agent.name?.charAt(0) || 'P'}</div>
+                                        <div><p className="font-bold text-white">{agent.name}</p><p className="text-xs text-[#00F0FF] font-mono mt-1">Code: {agent.code}</p></div>
                                      </div>
                                   </td>
-                                  <td className="p-6 text-center text-gray-300 font-mono text-lg">{agent.clicks || 0}</td>
-                                  <td className="p-6 text-center font-bold text-green-400 text-lg">{agent.sales || 0}</td>
-                                  <td className="p-6 text-right pr-10"><p className="font-bold text-xl text-white font-mono">₹{(agent.revenue || 0).toLocaleString()}</p></td>
-                               </motion.tr>
+                                  <td className="p-6 text-center text-white font-bold">{agent.clicks || 0}</td>
+                                  <td className="p-6 text-center font-bold text-green-400">{agent.sales || 0}</td>
+                                  <td className="p-6 text-right pr-8 font-bold text-white">₹{(agent.revenue || 0).toLocaleString()}</td>
+                               </tr>
                             ))}
                          </tbody>
                       </table>
@@ -1067,44 +1026,40 @@ function ImperialGodmodeOS() {
             </motion.div>
           )}
 
-          {/* ================= 10. AI NEURAL CORE ================= */}
+          {/* ================= 10. AI PRICING ================= */}
           {activeTab === 'AI_ENGINE' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ai" className="max-w-4xl mx-auto space-y-10">
-               <div className="text-center mb-12">
-                   <Cpu size={60} className="text-[#00F0FF] mx-auto mb-6 animate-pulse opacity-50"/>
-                   <h2 className="text-4xl font-serif italic text-white mb-2">Neural Pricing Protocol</h2>
-                   <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">Autonomous dynamic valuation engine.</p>
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ai" className="max-w-3xl mx-auto space-y-10">
+               <div className="text-center mb-10">
+                   <Zap size={50} className="text-[#00F0FF] mx-auto mb-4"/>
+                   <h2 className="text-3xl font-bold text-white mb-2">Smart Pricing Rules</h2>
+                   <p className="text-gray-400 text-sm">Automatically adjust prices based on demand.</p>
                </div>
 
-               <div className="bg-black/40 backdrop-blur-xl p-12 rounded-[40px] border border-[#00F0FF]/30 shadow-[0_0_50px_rgba(0,240,255,0.05)] space-y-12 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00F0FF] to-transparent"></div>
-                  
-                  <div className="flex justify-between items-center border-b border-white/10 pb-8">
+               <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30 space-y-8">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
                      <div>
-                        <h4 className="text-xl font-serif text-white mb-1">Engine Status</h4>
-                        <p className="text-[9px] font-mono uppercase tracking-[3px] text-gray-500">Allow AI to manipulate prices</p>
+                        <h4 className="text-lg font-bold text-white">Enable Auto-Pricing</h4>
+                        <p className="text-xs text-gray-500 mt-1">Let the system change prices slightly for high-demand items.</p>
                      </div>
-                     <div className="flex items-center gap-4 bg-black border border-white/10 p-2 rounded-full">
-                        <span className={`text-[9px] uppercase font-black tracking-widest px-4 ${pricingRules.isAiPricingActive ? 'text-[#00F0FF]' : 'text-gray-600'}`}>{pricingRules.isAiPricingActive ? 'ONLINE' : 'OFFLINE'}</span>
-                        <button onClick={() => setPricingRules({...pricingRules, isAiPricingActive: !pricingRules.isAiPricingActive})} className={`w-16 h-8 rounded-full p-1 transition-colors ${pricingRules.isAiPricingActive ? 'bg-[#00F0FF]' : 'bg-gray-800'}`}>
-                           <div className={`w-6 h-6 bg-black rounded-full transition-transform shadow-md ${pricingRules.isAiPricingActive ? 'translate-x-8' : 'translate-x-0'}`}></div>
+                     <div className="flex items-center gap-3">
+                        <span className={`text-xs font-bold uppercase ${pricingRules.isAiPricingActive ? 'text-[#00F0FF]' : 'text-gray-500'}`}>{pricingRules.isAiPricingActive ? 'ON' : 'OFF'}</span>
+                        <button onClick={() => setPricingRules({...pricingRules, isAiPricingActive: !pricingRules.isAiPricingActive})} className={`w-14 h-8 rounded-full p-1 transition-colors ${pricingRules.isAiPricingActive ? 'bg-[#00F0FF]' : 'bg-gray-700'}`}>
+                           <div className={`w-6 h-6 bg-white rounded-full transition-transform ${pricingRules.isAiPricingActive ? 'translate-x-6' : 'translate-x-0'}`}></div>
                         </button>
                      </div>
                   </div>
 
-                  <div className="space-y-10">
-                     <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-                        <div className="flex justify-between items-end mb-4">
-                           <label className="text-[10px] font-mono uppercase text-gray-400 tracking-[3px] flex items-center gap-2"><TrendingUp size={14} className="text-green-500"/> Surge Cap (Max Increase)</label>
-                           <span className="text-2xl font-mono text-white">{pricingRules.maxMarkupPercent}%</span>
-                        </div>
-                        <input type="range" min="0" max="50" value={pricingRules.maxMarkupPercent} onChange={(e) => setPricingRules({...pricingRules, maxMarkupPercent: Number(e.target.value)})} className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer" style={{accentColor: '#00F0FF'}} />
-                        <p className="text-[8px] text-gray-500 font-mono mt-3 text-right">Upper limit for high-demand assets.</p>
+                  <div>
+                     <div className="flex justify-between items-end mb-4">
+                        <label className="text-sm font-bold text-white">Max Price Increase Limit</label>
+                        <span className="text-xl font-bold text-[#00F0FF]">{pricingRules.maxMarkupPercent}%</span>
                      </div>
+                     <input type="range" min="0" max="50" value={pricingRules.maxMarkupPercent} onChange={(e) => setPricingRules({...pricingRules, maxMarkupPercent: Number(e.target.value)})} className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer" style={{accentColor: '#00F0FF'}} />
+                     <p className="text-xs text-gray-500 mt-3">The maximum percentage the price can go up automatically.</p>
                   </div>
 
-                  <button onClick={handleSaveAIRules} className="w-full py-6 bg-[#00F0FF] text-black font-black uppercase rounded-2xl text-[10px] tracking-[4px] hover:bg-white transition-all shadow-[0_0_30px_rgba(0,240,255,0.3)] mt-8 flex items-center justify-center gap-3 hover:scale-105">
-                     <Save size={16}/> Compile Logic Matrix
+                  <button onClick={handleSaveAIRules} className="w-full py-5 bg-[#00F0FF] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6">
+                     Save Pricing Rules
                   </button>
                </div>
             </motion.div>
@@ -1112,16 +1067,13 @@ function ImperialGodmodeOS() {
 
           {/* ================= 11. SECURITY ================= */}
           {activeTab === 'SECURITY' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} className="max-w-3xl mx-auto mt-20">
-               <div className="bg-gradient-to-r from-red-900/30 to-black border border-red-500/30 p-12 rounded-[50px] flex flex-col items-center text-center shadow-[0_0_80px_rgba(239,68,68,0.15)] relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#ef444405_10px,#ef444405_20px)] pointer-events-none group-hover:bg-[#ef44440a] transition-colors"></div>
-                  
-                  <div className="p-6 bg-red-500/10 rounded-[30px] text-red-500 mb-8 border border-red-500/20 relative z-10"><ShieldAlert size={60} className="animate-pulse" /></div>
-                  <h3 className="text-4xl font-serif italic text-white mb-2 relative z-10">Global Lockdown</h3>
-                  <p className="text-[10px] text-red-400 font-mono uppercase tracking-[4px] mb-10 relative z-10">System is currently secure. AES-256 Active.</p>
-                  
-                  <button className="px-14 py-6 bg-red-600 text-white text-[12px] font-black uppercase tracking-[6px] rounded-2xl shadow-[0_0_40px_rgba(239,68,68,0.4)] hover:bg-red-500 hover:scale-105 transition-all flex items-center gap-3 relative z-10">
-                     <Lock size={18}/> Initiate Defcon 1 (Maintenance)
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} className="max-w-2xl mx-auto mt-20">
+               <div className="bg-[#111] border border-red-500/30 p-12 rounded-[40px] flex flex-col items-center text-center">
+                  <ShieldAlert size={60} className="text-red-500 mb-6" />
+                  <h3 className="text-3xl font-bold text-white mb-4">Website Security</h3>
+                  <p className="text-gray-400 text-sm mb-10">Your database and admin panel are fully secured.</p>
+                  <button className="px-10 py-5 bg-red-600 text-white text-sm font-bold uppercase rounded-xl hover:bg-red-500 transition-all flex items-center gap-2">
+                     <Lock size={18}/> Turn On Maintenance Mode
                   </button>
                </div>
             </motion.div>
@@ -1133,5 +1085,4 @@ function ImperialGodmodeOS() {
   );
 }
 
-// 🌟 VERCEL SSR BYPASS 🌟
-export default dynamic(() => Promise.resolve(ImperialGodmodeOS), { ssr: false });
+export default dynamic(() => Promise.resolve(AdminDashboard), { ssr: false });
