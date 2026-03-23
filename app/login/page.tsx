@@ -1,176 +1,222 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Smartphone, KeyRound, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Mail, Lock, User, Phone, ShieldCheck, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// 🌟 THE AUTHENTICATION ENGINE 🌟
-function AuthenticationContent() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+export default function LoginPortal() {
+    const [isLogin, setIsLogin] = useState(true); // true = Login, false = Sign Up
+    const [isLoading, setIsLoading] = useState(false);
     
-    // SMART REDIRECT: Catches where the user came from (e.g., /account) or defaults to Home
-    const callbackUrl = searchParams.get('callbackUrl') || '/';
+    // Form States
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
 
-    const [isLogin, setIsLogin] = useState(true);
-    const [loading, setIsLoading] = useState(false);
-    
-    // Forms Data
-    const [phone, setPhone] = useState("");
-    const [password, setPassword] = useState("");
-    const [name, setName] = useState("");
-
-    const handleGoogleSignIn = () => {
-        // Send user back to their original destination after Google Auth
-        signIn('google', { callbackUrl: callbackUrl });
+    // Handle Google One-Click Login
+    const handleGoogleLogin = () => {
+        setIsLoading(true);
+        signIn('google', { callbackUrl: '/account' });
     };
 
-    const handleCredentialsAuth = async (e: React.FormEvent) => {
+    // Handle Manual Sign Up
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!name || !phone || !password) return alert("Please fill all details.");
+        
         setIsLoading(true);
-
-        if (isLogin) {
-            // 🔓 LOGIN FLOW
-            const res = await signIn('credentials', {
-                redirect: false,
-                phone,
-                password,
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone, password })
             });
+            const data = await res.json();
             
-            if (res?.error) {
-                alert(res.error);
-                setIsLoading(false);
+            if (res.ok && data.success) {
+                alert("Account Created! You can now log in.");
+                setIsLogin(true); // Switch to login screen
             } else {
-                // Success! Redirect to the vault or home
-                router.push(callbackUrl);
+                alert(data.error || "Failed to create account.");
             }
+        } catch (error) {
+            alert("Network error. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle Manual Login
+    const handleManualLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!phone || !password) return alert("Please enter phone and password.");
+        
+        setIsLoading(true);
+        // Using NextAuth credentials provider
+        const res = await signIn('credentials', {
+            redirect: false,
+            phone,
+            password,
+        });
+
+        if (res?.error) {
+            alert("Invalid details. Please try again.");
+            setIsLoading(false);
         } else {
-            // 📝 SIGNUP FLOW
-            try {
-                const res = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone, password })
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                    alert("Identity Created! You can now access the vault.");
-                    setIsLogin(true);
-                } else {
-                    alert(data.error || "Registration failed. Please check your details.");
-                }
-            } catch (err) {
-                alert("Network error. Please try again.");
-            } finally {
-                setIsLoading(false);
-            }
+            window.location.href = '/account'; // Redirect to Vault on success
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] flex flex-col md:flex-row font-sans selection:bg-gray-200 selection:text-black">
+        <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-gray-200">
             
-            {/* LEFT SIDE: Visual/Brand Side (Vogue Aesthetic) */}
-            <div className="hidden md:flex w-1/2 bg-gray-50 relative overflow-hidden items-center justify-center border-r border-gray-200">
-                <img src="https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1200" className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-90" alt="Luxury Assets" />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent"></div>
-                
-                <div className="relative z-10 text-center p-12">
-                    <h1 className="text-5xl lg:text-7xl font-serif text-white mb-6 drop-shadow-md tracking-tight">Essential</h1>
-                    <p className="text-white/90 font-serif text-lg max-w-sm mx-auto">Access the vault. Manage your acquisitions and exclusive concierge services.</p>
-                </div>
-            </div>
-
-            {/* RIGHT SIDE: The Minimalist Form */}
-            <div className="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24 py-12 relative bg-white">
-                <Link href="/" className="absolute top-8 left-8 md:left-12 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[2px] text-gray-500 hover:text-gray-900 transition-colors">
-                    <ArrowLeft size={16}/> Return to Store
+            {/* Top Navigation */}
+            <header className="p-6 md:p-12 w-full absolute top-0 left-0 z-10">
+                <Link href="/" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-black transition-colors w-max">
+                    <ArrowLeft size={16}/> Back to Store
                 </Link>
+            </header>
 
-                <div className="max-w-md w-full mx-auto mt-12 md:mt-0">
-                    <div className="mb-10 text-center md:text-left">
-                        <h2 className="text-3xl md:text-4xl font-serif text-gray-900 mb-3">{isLogin ? 'Welcome Back' : 'Create Identity'}</h2>
-                        <p className="text-gray-500 text-sm font-serif">
-                            {isLogin ? 'Enter your credentials to securely access your portfolio.' : 'Join our exclusive global client list.'}
+            {/* Main Content */}
+            <main className="flex-1 flex items-center justify-center p-6 mt-16">
+                <div className="w-full max-w-md bg-white p-8 md:p-12 rounded-[40px] shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-100">
+                    
+                    {/* Header Texts */}
+                    <div className="text-center mb-8">
+                        <ShieldCheck size={40} className="mx-auto text-black mb-4" strokeWidth={1}/>
+                        <h1 className="text-3xl font-serif mb-2">
+                            {isLogin ? 'Welcome Back' : 'Join Essential'}
+                        </h1>
+                        <p className="text-sm text-gray-500">
+                            {isLogin ? 'Access your private horology vault.' : 'Create your luxury account today.'}
                         </p>
                     </div>
 
-                    {/* Elite Google Auth Button */}
-                    <button onClick={handleGoogleSignIn} className="w-full py-4 bg-white border border-gray-200 rounded-xl flex items-center justify-center gap-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all mb-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                        <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 41.939 C -8.804 40.009 -11.514 38.989 -14.754 38.989 C -19.444 38.989 -23.494 41.689 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
-                        Continue with Google
+                    {/* Toggle Switch */}
+                    <div className="flex bg-gray-50 p-1 rounded-2xl mb-8 border border-gray-100">
+                        <button 
+                            onClick={() => setIsLogin(true)}
+                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${isLogin ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}
+                        >
+                            Log In
+                        </button>
+                        <button 
+                            onClick={() => setIsLogin(false)}
+                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${!isLogin ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}
+                        >
+                            Create Account
+                        </button>
+                    </div>
+
+                    {/* Google Login (Highly Recommended) */}
+                    <button 
+                        onClick={handleGoogleLogin} 
+                        disabled={isLoading}
+                        className="w-full mb-6 py-4 px-6 border border-gray-200 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                        <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                            <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238598)">
+                                <path fill="#4285F4" d="M -3.264,51.509 C -3.264,50.719 -3.334,49.969 -3.454,49.239 L -14.754,49.239 L -14.754,53.749 L -8.284,53.749 C -8.574,55.229 -9.424,56.479 -10.684,57.329 L -10.684,60.329 L -6.824,60.329 C -4.564,58.239 -3.264,55.159 -3.264,51.509 z"/>
+                                <path fill="#34A853" d="M -14.754,63.239 C -11.514,63.239 -8.804,62.159 -6.824,60.329 L -10.684,57.329 C -11.764,58.049 -13.134,58.489 -14.754,58.489 C -17.884,58.489 -20.534,56.379 -21.484,53.529 L -25.464,53.529 L -25.464,56.619 C -23.494,60.539 -19.444,63.239 -14.754,63.239 z"/>
+                                <path fill="#FBBC05" d="M -21.484,53.529 C -21.734,52.809 -21.864,52.039 -21.864,51.239 C -21.864,50.439 -21.724,49.669 -21.484,48.949 L -21.484,45.859 L -25.464,45.859 C -26.284,47.479 -26.754,49.299 -26.754,51.239 C -26.754,53.179 -26.284,54.999 -25.464,56.619 L -21.484,53.529 z"/>
+                                <path fill="#EA4335" d="M -14.754,43.989 C -12.984,43.989 -11.404,44.599 -10.154,45.789 L -6.734,41.939 C -8.804,40.009 -11.514,38.989 -14.754,38.989 C -19.444,38.989 -23.494,41.689 -25.464,45.859 L -21.484,48.949 C -20.534,46.099 -17.884,43.989 -14.754,43.989 z"/>
+                            </g>
+                        </svg>
+                        <span className="text-sm font-bold text-gray-700">Continue with Google</span>
                     </button>
 
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="flex-1 h-px bg-gray-100"></div>
-                        <span className="text-[10px] uppercase font-medium tracking-widest text-gray-400">Or use phone</span>
-                        <div className="flex-1 h-px bg-gray-100"></div>
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="h-px bg-gray-100 flex-1"></div>
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">OR</span>
+                        <div className="h-px bg-gray-100 flex-1"></div>
                     </div>
 
-                    {/* Standard Form */}
-                    <form onSubmit={handleCredentialsAuth} className="space-y-5">
-                        <AnimatePresence>
+                    {/* Dynamic Forms */}
+                    <AnimatePresence mode="wait">
+                        <motion.form 
+                            key={isLogin ? 'login' : 'register'}
+                            initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+                            transition={{ duration: 0.2 }}
+                            onSubmit={isLogin ? handleManualLogin : handleRegister}
+                            className="space-y-4"
+                        >
                             {!isLogin && (
-                                <motion.div initial={{height:0, opacity:0}} animate={{height:'auto', opacity:1}} exit={{height:0, opacity:0}} className="relative overflow-hidden">
-                                    <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2 block">Full Name</label>
-                                    <div className="relative">
-                                        <UserIcon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"/>
-                                        <input required={!isLogin} value={name} onChange={e=>setName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-gray-900 transition-colors" placeholder="James Bond" />
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                        <User size={18} />
                                     </div>
-                                </motion.div>
+                                    <input 
+                                        type="text" 
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-colors" 
+                                        placeholder="Full Name" 
+                                    />
+                                </div>
                             )}
-                        </AnimatePresence>
 
-                        <div>
-                            <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2 block">Mobile Number</label>
                             <div className="relative">
-                                <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"/>
-                                <input required type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-gray-900 transition-colors" placeholder="9876543210" />
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                    <Phone size={18} />
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-colors" 
+                                    placeholder="Phone Number (e.g. 9876543210)" 
+                                />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-2 block">Password</label>
                             <div className="relative">
-                                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"/>
-                                <input required type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-gray-900 transition-colors" placeholder="••••••••" />
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                    <Lock size={18} />
+                                </div>
+                                <input 
+                                    type="password" 
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-colors" 
+                                    placeholder="Password" 
+                                />
                             </div>
-                        </div>
 
-                        <button type="submit" disabled={loading} className="w-full py-4 bg-gray-900 text-white font-medium uppercase tracking-[2px] rounded-xl hover:bg-black transition-all text-xs shadow-[0_4px_15px_rgba(0,0,0,0.1)] mt-4 disabled:opacity-70">
-                            {loading ? 'Processing...' : (isLogin ? 'Access Vault' : 'Create Identity')}
-                        </button>
-                    </form>
+                            {isLogin && (
+                                <div className="text-right">
+                                    <button type="button" className="text-xs text-gray-500 hover:text-black font-bold">
+                                        Forgot Password?
+                                    </button>
+                                </div>
+                            )}
 
-                    <div className="mt-8 text-center">
-                        <button onClick={() => setIsLogin(!isLogin)} className="text-xs text-gray-500 hover:text-gray-900 transition-colors font-medium border-b border-transparent hover:border-gray-900 pb-0.5">
-                            {isLogin ? "Don't have an account? Create one." : "Already have an identity? Sign in."}
-                        </button>
-                    </div>
+                            <button 
+                                type="submit" 
+                                disabled={isLoading}
+                                className="w-full py-4 mt-2 bg-black text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-gray-800 transition-all flex justify-center items-center gap-2 disabled:opacity-70 group"
+                            >
+                                {isLoading ? (
+                                    <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                                ) : (
+                                    <>
+                                        {isLogin ? 'Log In Securely' : 'Create Account'}
+                                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/>
+                                    </>
+                                )}
+                            </button>
+                        </motion.form>
+                    </AnimatePresence>
 
-                    <div className="mt-12 flex justify-center items-center gap-2 text-gray-400">
-                        <Lock size={12}/> <span className="text-[9px] uppercase font-bold tracking-widest">Encrypted AES-256 Connection</span>
-                    </div>
+                    <p className="text-[10px] text-gray-400 text-center mt-8 px-4 leading-relaxed">
+                        By continuing, you agree to Essential's <br/>
+                        <Link href="/policies/terms" className="underline hover:text-black">Terms of Service</Link> and <Link href="/policies/privacy" className="underline hover:text-black">Privacy Policy</Link>.
+                    </p>
+
                 </div>
-            </div>
+            </main>
         </div>
-    );
-}
-
-// 🌟 VERCEL BUILD OPTIMIZER: Wrapping search params in Suspense 🌟
-export default function ElegantLoginPortal() {
-    return (
-        <Suspense fallback={
-            <div className="h-screen bg-[#FAFAFA] flex flex-col items-center justify-center">
-                <div className="w-10 h-10 border-2 border-gray-900 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-[10px] font-medium uppercase tracking-[2px] text-gray-500">Securing Connection...</p>
-            </div>
-        }>
-            <AuthenticationContent />
-        </Suspense>
     );
 }
