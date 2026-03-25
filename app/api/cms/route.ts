@@ -1,26 +1,31 @@
 import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongoose';
 import mongoose from 'mongoose';
 
-// 🌟 THE MASTER CMS SCHEMA
+// 🌟 THE VERCEL CACHE-BUSTER: Forces Vercel to always fetch and save FRESH data 🌟
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// 🌟 THE MASTER CMS SCHEMA 🌟
 const cmsSchema = new mongoose.Schema({
     heroSlides: { type: Array, default: [] },
     aboutConfig: { type: Object, default: {} },
     galleryImages: { type: Array, default: [] },
+    
+    // 🌟 THE NEW UPGRADE: Storage for the 5 Cinematic Video Breaks 🌟
+    promotionalVideos: { type: Array, default: [] }, 
+    
     uiConfig: { type: Object, default: {} },
     categories: { type: Array, default: [] },
     faqs: { type: Array, default: [] },
-    visionaries: { type: Array, default: [] },
+    visionaries: { type: Array, default: [] }, // Legacy, moving towards Celebrity DB
     socialLinks: { type: Object, default: {} },
     corporateInfo: { type: Object, default: {} },
     legalPages: { type: Array, default: [] }
 }, { timestamps: true });
 
+// Bind Model
 const CmsConfig = mongoose.models.CmsConfig || mongoose.model('CmsConfig', cmsSchema);
-
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (e) { console.error(e); }
-};
 
 // 💎 THE PREMIUM DEFAULT DATA (Vogue/Apple Style English)
 const LUXURY_DEFAULT_DATA = {
@@ -42,6 +47,16 @@ const LUXURY_DEFAULT_DATA = {
         { q: "Do you accept returns or exchanges?", a: "We accept returns within 14 days of delivery, provided the timepiece remains unworn, in its original pristine condition, with all factory seals and documentation entirely intact." }
     ],
     categories: ["Investment Grade", "Rare Vintage", "Modern Complications", "Classic Dress"],
+    
+    // 🌟 DEFAULT VIDEOS FOR THE FRONTEND BREAKS 🌟
+    promotionalVideos: [
+        "https://cdn.pixabay.com/video/2020/05/24/40092-424840899_large.mp4", 
+        "https://cdn.pixabay.com/video/2021/08/11/84687-587289569_large.mp4", 
+        "https://cdn.pixabay.com/video/2020/02/21/32616-393246231_large.mp4", 
+        "", 
+        ""
+    ],
+    
     legalPages: [
         {
             id: "privacy-2026",
@@ -78,6 +93,7 @@ export async function GET() {
         
         return NextResponse.json({ success: true, data: config });
     } catch (error) {
+        console.error("CMS GET Error:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch matrix configuration" }, { status: 500 });
     }
 }
@@ -93,6 +109,7 @@ export async function POST(req: Request) {
         
         return NextResponse.json({ success: true, data: config });
     } catch (error) {
+        console.error("CMS POST Error:", error);
         return NextResponse.json({ success: false, error: "Failed to compile UI changes" }, { status: 500 });
     }
 }
