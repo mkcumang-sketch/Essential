@@ -29,32 +29,33 @@ const DEFAULT_PROMO_VIDEOS = [
     ""  
 ];
 
-// 🌟 THE CINEMATIC VIDEO BREAK COMPONENT (ADMIN CONTROLLED) 🌟
+// 🌟 VIDEO BREAK
 const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string }) => {
     if (!videoUrl || videoUrl.trim() === '') return null;
     return (
         <section className="relative w-full h-[50vh] md:h-[70vh] bg-black overflow-hidden border-t border-b border-gray-100 will-change-transform">
-            <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-60 scale-105" />
+            <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-70 scale-105 transition-transform duration-[10s]" />
             {title && (
                 <div className="absolute inset-0 flex items-center justify-center text-center px-4 z-20">
                     <motion.h2 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-white text-3xl md:text-5xl font-serif tracking-[10px] uppercase drop-shadow-2xl"
+                        className="text-white text-4xl md:text-7xl font-serif tracking-[5px] uppercase drop-shadow-2xl font-bold"
                     >
                         {title}
                     </motion.h2>
                 </div>
             )}
+            <div className="absolute inset-0 bg-black/20 z-10"></div>
         </section>
     );
 };
 
+// 🌟 HERO BANNER
 const Isolated4DHero = ({ config }: { config: any }) => {
   const heroRef = useRef(null);
   const router = useRouter();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
   const rawSlides = config?.heroSlides || [];
@@ -67,42 +68,52 @@ const Isolated4DHero = ({ config }: { config: any }) => {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const smoothScroll = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.5 });
 
-  const textScale = useTransform(smoothScroll, [0, 0.8], [1, 1.5]); 
+  const textScale = useTransform(smoothScroll, [0, 0.8], [1, 1.3]); 
   const textOpacity = useTransform(smoothScroll, [0, 0.6], [1, 0]);
-  const textY = useTransform(smoothScroll, [0, 0.8], ["0%", "-30%"]);
-  const videoScale = useTransform(smoothScroll, [0, 1], [1.05, 0.9]);
-  const videoY = useTransform(smoothScroll, [0, 1], ["0%", "5%"]);
+  const videoScale = useTransform(smoothScroll, [0, 1], [1, 1.1]);
 
   useEffect(() => {
     if (!currentSlide) return;
-    const timer = setInterval(() => { setCurrentSlideIndex((prev) => (prev + 1) % slides.length); }, 6000); 
+    const timer = setInterval(() => { 
+        setCurrentSlideIndex((prev) => (prev + 1) % slides.length); 
+    }, 6000); 
     return () => clearInterval(timer);
   }, [slides.length]);
 
   return (
     <section 
         ref={heroRef} 
-        onClick={() => router.push('/shop')}
-        className="relative h-[100vh] md:h-[120vh] w-full bg-[var(--theme-bg)] cursor-pointer will-change-transform"
+        onClick={() => router.push('/shop')} 
+        className="relative h-[100vh] md:h-[120vh] w-full bg-black cursor-pointer will-change-transform overflow-hidden"
     >
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center">
         <AnimatePresence mode="wait">
-          <motion.div key={currentSlideIndex} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.8 }} style={{ scale: textScale, opacity: textOpacity, y: textY }} className="absolute z-30 text-center pointer-events-none w-full will-change-transform px-4">
-            <p className="text-[var(--theme-primary)] text-[10px] md:text-xs font-bold uppercase tracking-[15px] md:tracking-[20px] mb-4 drop-shadow-md">ESSENTIAL</p>
-            <h2 className="text-5xl md:text-[120px] lg:text-[150px] font-serif leading-none tracking-tighter text-white italic font-bold max-w-[95vw] mx-auto drop-shadow-xl">
-              {currentSlide?.heading || 'PREMIUM WATCHES'}
+          <motion.div 
+            key={currentSlideIndex} 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 1.05 }} 
+            transition={{ duration: 1 }} 
+            style={{ scale: textScale, opacity: textOpacity }} 
+            className="absolute z-30 text-center pointer-events-none w-full px-4"
+          >
+            <p className="text-white text-[10px] md:text-xs font-bold uppercase tracking-[15px] md:tracking-[20px] mb-6 drop-shadow-md">ESSENTIAL</p>
+            <h2 className="text-5xl md:text-[130px] lg:text-[160px] font-serif leading-none tracking-tighter text-white font-bold max-w-[95vw] mx-auto drop-shadow-2xl">
+              {currentSlide?.heading || 'Premium Watches'}
             </h2>
-            <motion.p animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 2 }} className="text-white/60 text-[8px] uppercase tracking-[6px] mt-8">Click to Shop Now</motion.p>
+            <div className="mt-12">
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-[6px] animate-pulse">Click Here to Shop</p>
+            </div>
           </motion.div>
         </AnimatePresence>
         
-        <motion.div style={{ scale: videoScale, y: videoY }} className="absolute inset-0 w-full h-full z-10 overflow-hidden bg-black pointer-events-none">
+        <motion.div style={{ scale: videoScale }} className="absolute inset-0 w-full h-full z-10 overflow-hidden bg-black pointer-events-none">
           <AnimatePresence mode="wait">
-            <motion.div key={currentSlideIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="absolute inset-0 w-full h-full">
+            <motion.div key={currentSlideIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
               {currentSlide?.type === 'image' ? (
-                 <img src={currentSlide.url} className="w-full h-full object-cover opacity-70" alt="Hero Banner"/>
+                 <img src={currentSlide.url} className="w-full h-full object-cover opacity-70" alt="Banner"/>
               ) : (
-                 <video ref={videoRef} autoPlay muted loop playsInline className="w-full h-full object-cover opacity-70">
+                 <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-70">
                    <source src={currentSlide?.url} type="video/mp4" />
                  </video>
               )}
@@ -112,9 +123,13 @@ const Isolated4DHero = ({ config }: { config: any }) => {
         </motion.div>
 
         {slides.length > 1 && (
-            <div className="absolute bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-40 flex gap-4 bg-black/30 px-6 py-3 rounded-full backdrop-blur-sm border border-white/10" onClick={(e)=>e.stopPropagation()}>
+            <div className="absolute bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-40 flex gap-4 bg-white/10 px-6 py-3 rounded-full backdrop-blur-md" onClick={(e)=>e.stopPropagation()}>
                 {slides.map((_: any, i: number) => (
-                    <button key={i} onClick={() => setCurrentSlideIndex(i)} className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${i === currentSlideIndex ? 'bg-[#D4AF37] scale-125 shadow-[0_0_10px_rgba(212,175,55,0.8)]' : 'bg-white/40 hover:bg-white'}`} />
+                    <button 
+                        key={i} 
+                        onClick={() => setCurrentSlideIndex(i)} 
+                        className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${i === currentSlideIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/80'}`} 
+                    />
                 ))}
             </div>
         )}
@@ -124,15 +139,15 @@ const Isolated4DHero = ({ config }: { config: any }) => {
 };
 
 const FadeUp = ({ children, delay = 0, className = "" }: any) => (
-  <motion.div initial={{ y: 40, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay }} viewport={{ once: true, margin: "-50px" }} className={className}>{children}</motion.div>
+  <motion.div initial={{ y: 30, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, delay, ease: "easeOut" }} viewport={{ once: true, margin: "-50px" }} className={className}>{children}</motion.div>
 );
 
 function FrontPageStore() {
   const router = useRouter();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, 80]);
 
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [cart, setCart] = useState<any[]>([]);
@@ -161,7 +176,7 @@ function FrontPageStore() {
   const [honeyPot, setHoneyPot] = useState("");
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => setIsScrolled(window.scrollY > 40);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -181,7 +196,7 @@ function FrontPageStore() {
             const res = await c.json(); 
             setConfig(res.data || {}); 
             if (res.data?.uiConfig) {
-                document.documentElement.style.setProperty('--theme-primary', res.data.uiConfig.primaryColor || '#D4AF37');
+                document.documentElement.style.setProperty('--theme-primary', '#000000');
                 document.documentElement.style.setProperty('--theme-bg', '#FAFAFA');
             }
             if (res.data?.galleryImages) setGalleryImages(res.data.galleryImages);
@@ -191,17 +206,14 @@ function FrontPageStore() {
             if (res.data?.corporateInfo) setCorporateInfo(res.data.corporateInfo);
             if (res.data?.legalPages) setLegalPages(res.data.legalPages);
         }
-        
         if(celebRes?.ok) {
             const celebData = await celebRes.json();
-            if (celebData.data && celebData.data.length > 0) setLiveCelebrities(celebData.data);
+            if (celebData.data) setLiveCelebrities(celebData.data);
         }
-        
         if(ai?.ok) { 
            const res = await ai.json(); 
            setLiveWatches((res.data || []).sort((a:any, b:any) => (b.priority || 0) - (a.priority || 0)));
         }
-
         if(rev?.ok) {
            const revData = await rev.json();
            let pubRevs = (revData.data || []).filter((r:any) => r.visibility === 'public');
@@ -212,7 +224,6 @@ function FrontPageStore() {
            );
            setFlowingReviews([...finalLocal, ...pubRevs]);
         }
-
         setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
         setIsDataLoading(false);
       } catch (e) { setIsDataLoading(false); }
@@ -229,9 +240,10 @@ function FrontPageStore() {
   const latestWatches = liveWatches.slice(0, 8); 
 
   const categories = useMemo(() => {
+    const fetchedCats = config?.categories || [];
     const aiCats = liveWatches.map(w => w.category).filter(c => c);
-    return ["ALL", ...Array.from(new Set(aiCats))];
-  }, [liveWatches]);
+    return ["ALL", ...Array.from(new Set([...fetchedCats, ...aiCats]))];
+  }, [liveWatches, config]);
 
   const filteredWatches = useMemo(() => {
     return liveWatches.filter(w => {
@@ -288,39 +300,59 @@ function FrontPageStore() {
   if (isDataLoading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white overflow-x-hidden">
+    <div className="bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white overflow-x-hidden scroll-smooth">
 
-      <motion.div className="fixed top-0 left-0 right-0 h-1.5 bg-[var(--theme-primary)] origin-left z-[1000]" style={{ scaleX }} />
+      <motion.div className="fixed top-0 left-0 right-0 h-1 bg-black origin-left z-[1000]" style={{ scaleX }} />
+
+      {/* 🌟 FULL SCREEN MENU 🌟 */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[1100] bg-white/98 backdrop-blur-2xl flex flex-col p-8 md:p-24 overflow-hidden">
+            <div className="flex justify-end"><button onClick={()=>setIsMenuOpen(false)} className="p-4 bg-gray-100 rounded-full text-black hover:rotate-90 transition-all duration-500"><X size={35} /></button></div>
+            <nav className="flex-1 flex flex-col justify-center space-y-8 md:space-y-12">
+                {["Home", "Shop Watches", "About Us", "My Account"].map((m, i) => (
+                    <motion.div key={m} initial={{x: -50, opacity: 0}} animate={{x: 0, opacity: 1}} transition={{delay: i * 0.1}}>
+                        <Link href={m === "Home" ? "/" : m === "Shop Watches" ? "/shop" : m === "My Account" ? "/account" : "#ourstory"} onClick={()=>setIsMenuOpen(false)} className="text-black text-5xl md:text-8xl font-serif font-bold hover:text-gray-500 transition-all tracking-tight block">{m}</Link>
+                    </motion.div>
+                ))}
+            </nav>
+            <div className="mt-auto border-t border-gray-200 pt-8 flex justify-between items-center">
+                <div className="flex gap-8"><Instagram className="text-gray-400 hover:text-black cursor-pointer"/><Facebook className="text-gray-400 hover:text-black cursor-pointer"/></div>
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[5px]">Essential Rush</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 🌟 REVIEW MODAL 🌟 */}
       <AnimatePresence>
         {isReviewModalOpen && (
-          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[1200] bg-black/80 flex items-center justify-center p-4 md:p-6 backdrop-blur-sm overflow-y-auto">
-            <motion.div initial={{scale:0.95}} animate={{scale:1}} className="bg-white p-6 md:p-12 rounded-[30px] w-full max-w-lg relative shadow-2xl">
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[1200] bg-black/60 flex items-center justify-center p-4 backdrop-blur-md overflow-y-auto">
+            <motion.div initial={{scale:0.95}} animate={{scale:1}} className="bg-white p-8 md:p-12 rounded-[30px] w-full max-w-lg relative shadow-2xl">
                <button onClick={() => setIsReviewModalOpen(false)} className="absolute top-4 right-4 bg-gray-100 text-gray-500 rounded-full p-2 hover:bg-black hover:text-white transition-all"><X size={20}/></button>
                {reviewStatus === 'success' ? (
-                   <div className="text-center py-10"><CheckCircle size={60} className="text-green-500 mx-auto mb-4" /><h3 className="text-2xl font-serif text-black mb-2">Review Submitted!</h3><p className="text-gray-500 text-sm">Thank you for your feedback.</p></div>
+                   <div className="text-center py-10"><CheckCircle size={60} className="text-green-500 mx-auto mb-4" /><h3 className="text-2xl font-serif text-black mb-2 font-bold">Review Sent!</h3><p className="text-gray-500 text-sm">Thank you for your thoughts.</p></div>
                ) : (
                    <>
-                       <h3 className="text-2xl md:text-3xl font-serif font-bold text-black mb-6">Write a Review</h3>
+                       <h3 className="text-2xl font-serif font-bold text-black mb-6">Write a Review</h3>
                        <div className="space-y-4">
                            {PhantomGuard && <PhantomGuard value={honeyPot} onChange={setHoneyPot} />}
-                           <div><label className="text-xs font-bold text-gray-500 mb-1 block">Your Name</label><input value={reviewForm.userName} onChange={e=>setReviewForm({...reviewForm, userName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="John Doe"/></div>
-                           <div><label className="text-xs font-bold text-gray-500 mb-1 block">Rating</label><div className="flex gap-2">{[1,2,3,4,5].map(star => (<button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-transform hover:scale-110 ${reviewForm.rating >= star ? 'text-[#D4AF37]' : 'text-gray-200'}`}><Star size={28} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>))}</div></div>
-                           <div><label className="text-xs font-bold text-gray-500 mb-1 block">Your Review</label><textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black custom-scrollbar" placeholder="Tell us what you think..."/></div>
+                           <div><label className="text-xs font-bold text-gray-500 mb-1 block">Name</label><input value={reviewForm.userName} onChange={e=>setReviewForm({...reviewForm, userName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="John Doe"/></div>
+                           <div><label className="text-xs font-bold text-gray-500 mb-1 block">Rating</label><div className="flex gap-2">{[1,2,3,4,5].map(star => (<button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-transform hover:scale-110 ${reviewForm.rating >= star ? 'text-black' : 'text-gray-200'}`}><Star size={28} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>))}</div></div>
+                           <div><label className="text-xs font-bold text-gray-500 mb-1 block">Review</label><textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black custom-scrollbar" placeholder="What do you think?"/></div>
                            <div className="border-t border-gray-100 pt-4">
-                               <label className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-2"><Camera size={14}/> Upload Photo/Video</label>
+                               <label className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-2"><Camera size={14}/> Add Photo/Video</label>
                                <div className="flex flex-wrap gap-4">
                                    {reviewMedia.map((url: string, idx: number) => (
                                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 group">
                                            {url.match(/\.(mp4|webm|mov)$/i) ? <video src={url} className="w-full h-full object-cover"/> : <img src={url} className="w-full h-full object-cover"/>}
-                                           <button onClick={()=>setReviewMedia(reviewMedia.filter(x => x !== url))} className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Trash2 size={14}/></button>
+                                           <button onClick={()=>setReviewMedia(reviewMedia.filter(x => x !== url))} className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center"><Trash2 size={14}/></button>
                                        </div>
                                    ))}
-                                   <div className="relative w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#D4AF37] flex flex-col items-center justify-center cursor-pointer">{isUploadingMedia ? <RefreshCcw size={16} className="text-[#D4AF37] animate-spin"/> : <><UploadCloud size={16} className="text-gray-400"/><span className="text-[8px] font-bold text-gray-500">Upload</span></>}<input type="file" accept="image/*,video/*" onChange={handleCustomerMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isUploadingMedia}/></div>
+                                   <div className="relative w-16 h-16 rounded-xl border border-gray-300 hover:border-black flex flex-col items-center justify-center cursor-pointer bg-gray-50">{isUploadingMedia ? <RefreshCcw size={16} className="text-black animate-spin"/> : <><UploadCloud size={16} className="text-gray-500"/><span className="text-[8px] font-bold text-gray-500">Upload</span></>}<input type="file" accept="image/*,video/*" onChange={handleCustomerMediaUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isUploadingMedia}/></div>
                                </div>
                            </div>
-                           <button onClick={handleReviewSubmit} disabled={reviewStatus === 'submitting' || isUploadingMedia} className="w-full py-4 bg-black text-white font-bold uppercase tracking-widest rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50 text-xs mt-2">{reviewStatus === 'submitting' ? 'Submitting...' : 'Submit Review'}</button>
+                           <button onClick={handleReviewSubmit} disabled={reviewStatus === 'submitting' || isUploadingMedia} className="w-full py-4 bg-black text-white font-bold uppercase tracking-widest rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50 text-xs mt-2">{reviewStatus === 'submitting' ? 'Sending...' : 'Send Review'}</button>
                        </div>
                    </>
                )}
@@ -329,52 +361,36 @@ function FrontPageStore() {
         )}
       </AnimatePresence>
 
-      {/* 🌟 HAMBURGER OVERLAY 🌟 */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[1100] bg-white/95 backdrop-blur-3xl flex flex-col p-10 md:p-24 overflow-hidden">
-            <div className="flex justify-end"><button onClick={()=>setIsMenuOpen(false)} className="p-4 bg-gray-100 rounded-full text-black hover:rotate-90 transition-all duration-500"><X size={35} /></button></div>
-            <nav className="flex-1 flex flex-col justify-center space-y-10 md:space-y-14">
-                {["Home", "Shop", "Our Story", "Account"].map((m, i) => (
-                    <motion.div key={m} initial={{x: -50, opacity: 0}} animate={{x: 0, opacity: 1}} transition={{delay: i * 0.1}}>
-                        <Link href={m === "Home" ? "/" : m === "Shop" ? "/shop" : m === "Account" ? "/account" : "#ourstory"} onClick={()=>setIsMenuOpen(false)} className="text-black text-5xl md:text-8xl font-serif italic font-bold hover:text-gray-500 transition-all tracking-tighter block">{m}.</Link>
-                    </motion.div>
-                ))}
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 🌟 NON-OVERLAPPING STACKED HEADER 🌟 */}
-      <div className="bg-[#00150F] text-[var(--theme-primary)] py-2.5 px-4 md:px-10 flex justify-between items-center text-[8px] md:text-[9px] font-black uppercase tracking-widest z-[601] relative border-b border-white/10">
-        <div className="flex items-center gap-2"><Lock size={10}/> 100% Secure Store</div>
-        <div className="hidden sm:block text-white opacity-80">Free Shipping in India</div>
+      {/* 🌟 HEADER STACK 🌟 */}
+      <div className="bg-[#050505] text-white py-2.5 px-4 md:px-12 flex justify-between items-center text-[8px] md:text-[9px] font-bold uppercase tracking-[3px] z-[601] relative border-b border-gray-800">
+        <div className="flex items-center gap-2"><Lock size={10}/> Secure Checkout</div>
+        <div className="hidden sm:block text-gray-300">Free Shipping in India</div>
         <div className="flex gap-4"><span>Cash on Delivery</span></div>
       </div>
 
       <nav className={`fixed w-full z-[600] transition-all duration-500 ease-in-out ${isScrolled ? 'top-0 h-16 md:h-20 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-sm' : 'top-9 md:top-10 h-20 md:h-28 bg-transparent'}`}>
-        <div className="flex items-center justify-between px-4 md:px-16 h-full relative">
-          <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center justify-between px-4 md:px-12 h-full relative">
+          <div className="flex items-center gap-6">
             <button onClick={()=>setIsMenuOpen(true)} className={`p-2 -ml-2 rounded-full transition-all active:scale-95 ${isScrolled ? 'text-black hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
-                <Menu size={28}/>
+                <Menu size={24}/>
             </button>
-            <div className={`hidden lg:flex gap-8 text-[10px] font-bold uppercase tracking-[5px] ${isScrolled ? 'text-gray-600' : 'text-white/80'}`}>
+            <div className={`hidden lg:flex gap-8 text-[10px] font-bold uppercase tracking-[3px] ${isScrolled ? 'text-gray-600' : 'text-white/80'}`}>
               <Link href="/shop" className="hover:text-black transition-colors">Shop</Link>
-              <Link href="#ourstory" className="hover:text-black transition-colors">Our Story</Link>
+              <Link href="#ourstory" className="hover:text-black transition-colors">About Us</Link>
             </div>
           </div>
           
           <Link href="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-            <h1 className={`text-2xl md:text-3xl font-serif font-black tracking-[5px] md:tracking-[10px] uppercase transition-all ${isScrolled ? 'text-black' : 'text-white drop-shadow-md'}`}>Essential</h1>
+            <h1 className={`text-xl md:text-3xl font-serif font-black tracking-[6px] md:tracking-[10px] uppercase transition-all ${isScrolled ? 'text-black' : 'text-white drop-shadow-md'}`}>Essential</h1>
           </Link>
           
           <div className="flex items-center gap-4 md:gap-8">
-            <Link href="/account" className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-[9px] font-bold uppercase tracking-[3px] transition-all border ${isScrolled ? 'bg-black text-white border-black' : 'bg-white/20 text-white border-white/30 backdrop-blur-md hover:bg-white hover:text-black'}`}>
+            <Link href="/account" className={`hidden md:flex items-center gap-2 px-5 py-2 rounded-full text-[9px] font-bold uppercase tracking-[2px] transition-all border ${isScrolled ? 'bg-black text-white border-black' : 'bg-white/20 text-white border-white/30 backdrop-blur-md hover:bg-white hover:text-black'}`}>
                <ShieldCheck size={14} /> Account
             </Link>
             <div className="relative cursor-pointer group p-2" onClick={() => router.push('/checkout')}>
-              <ShoppingBag size={24} className={`transition-transform duration-300 group-hover:scale-110 ${isScrolled ? 'text-black' : 'text-white'}`}/>
-              {cart.length > 0 && <span className="absolute top-0 right-0 bg-[#D4AF37] text-black w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-md border-2 border-white">{cart.length}</span>}
+              <ShoppingBag size={20} className={`transition-transform duration-300 group-hover:scale-110 ${isScrolled ? 'text-black' : 'text-white'}`}/>
+              {cart.length > 0 && <span className="absolute top-0 right-0 bg-black text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shadow-md border border-white">{cart.length}</span>}
             </div>
           </div>
         </div>
@@ -382,51 +398,51 @@ function FrontPageStore() {
 
       <Isolated4DHero config={config} />
 
-      <CinematicBreak videoUrl={promoVideos[0]} title="Quality First" />
+      <CinematicBreak videoUrl={promoVideos[0]} title="Quality Watches" />
 
-      <section className="bg-white py-10 md:py-16 border-b border-gray-100 overflow-hidden relative z-[40]">
+      {/* 🌟 BRANDS 🌟 */}
+      <section className="bg-white py-10 border-b border-gray-100 overflow-hidden relative z-[40]">
         <div className="flex w-[200%]">
-          <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 30, repeat: Infinity }} className="flex gap-10 md:gap-20 items-center px-4 md:px-10 will-change-transform">
+          <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 30, repeat: Infinity }} className="flex gap-12 md:gap-24 items-center px-10 will-change-transform">
             {dynamicBrands.concat(dynamicBrands).map((b: any, i: number) => (
-              <div key={`brand-${i}`} className="flex items-center gap-4 md:gap-8 group cursor-default">
-                 <span className="text-xl md:text-4xl font-serif italic tracking-tighter whitespace-nowrap text-gray-300 group-hover:text-black transition-colors">{b}</span>
+              <div key={`brand-${i}`} className="flex items-center gap-6 group cursor-default">
+                 <span className="text-xl md:text-3xl font-serif italic tracking-tighter whitespace-nowrap text-gray-300 group-hover:text-black transition-colors duration-500">{b}</span>
               </div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* 🌟 NEW ARRIVALS (WITH BACKGROUND IMAGE) 🌟 */}
+      {/* 🌟 NEW ARRIVALS 🌟 */}
       {latestWatches.length > 0 && (
           <section className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
-             {/* Dynamic Background Image Layer */}
              <div className="absolute inset-0 z-0">
-                 <img src="https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=2000" className="w-full h-full object-cover grayscale opacity-40" />
-                 <div className="absolute inset-0 bg-[#FAFAFA]/90 backdrop-blur-md"></div>
+                 <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" className="w-full h-full object-cover opacity-30 grayscale" />
+                 <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFA] via-[#FAFAFA]/90 to-[#FAFAFA]"></div>
              </div>
 
-             <div className="relative z-10 px-4 md:px-12 max-w-[1800px] mx-auto mb-10 flex justify-between items-end">
+             <div className="relative z-10 px-6 md:px-16 max-w-[1600px] mx-auto mb-12 flex justify-between items-end">
                 <div>
                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[5px] mb-2">Just Landed</p>
-                   <h2 className="text-4xl md:text-6xl font-serif italic text-black tracking-tighter font-bold">New Arrivals.</h2>
+                   <h2 className="text-4xl md:text-6xl font-serif text-black tracking-tight font-bold drop-shadow-sm">New Arrivals.</h2>
                 </div>
-                <Link href="/shop" className="text-xs font-bold uppercase underline hidden md:block hover:text-gray-500">View All</Link>
+                <Link href="/shop" className="text-xs font-bold uppercase border-b-2 border-black pb-1 hover:text-gray-500 transition-all hidden md:block">Shop All</Link>
              </div>
 
-             <div className="relative z-10 w-full overflow-x-auto custom-scrollbar snap-x snap-mandatory scroll-pl-4 md:scroll-pl-12 pb-10">
-                 <div className="flex gap-4 md:gap-6 px-4 md:px-12 w-max">
+             <div className="relative z-10 w-full overflow-x-auto custom-scrollbar snap-x snap-mandatory scroll-pl-6 md:scroll-pl-16 pb-10">
+                 <div className="flex gap-6 md:gap-8 px-6 md:px-16 w-max">
                      {latestWatches.map((watch: any, i: number) => (
-                         <div key={`horiz-${i}`} onClick={()=>router.push(`/product/${watch.slug || watch._id}`)} className="w-[260px] md:w-[340px] shrink-0 snap-start bg-white rounded-[20px] md:rounded-[30px] p-6 border border-gray-200 group hover:border-black hover:shadow-2xl transition-all duration-500 flex flex-col will-change-transform shadow-lg cursor-pointer">
-                            <div className="h-56 md:h-72 bg-gray-50 rounded-2xl mb-6 p-4 flex items-center justify-center relative overflow-hidden">
-                                {watch.badge && <span className="absolute top-3 left-3 bg-black text-white text-[9px] font-bold uppercase px-3 py-1 rounded-full z-10">{watch.badge}</span>}
-                                <img src={watch.imageUrl || (watch.images && watch.images[0])} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" loading="lazy" />
+                         <div key={`horiz-${i}`} onClick={()=>router.push(`/product/${watch.slug || watch._id}`)} className="w-[260px] md:w-[340px] shrink-0 snap-start bg-white/95 backdrop-blur-md rounded-[20px] p-6 border border-gray-200 group hover:border-black hover:shadow-xl transition-all duration-500 cursor-pointer flex flex-col will-change-transform shadow-lg">
+                            <div className="h-56 md:h-72 bg-gray-50/50 rounded-2xl mb-6 p-6 flex items-center justify-center relative overflow-hidden">
+                                {watch.badge && <span className="absolute top-3 left-3 bg-black text-white text-[9px] font-bold uppercase px-3 py-1 rounded-full z-10 shadow-sm">{watch.badge}</span>}
+                                <img src={watch.imageUrl || (watch.images && watch.images[0])} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" loading="lazy" />
                             </div>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-1">{watch.brand}</p>
                             <h4 className="text-lg md:text-xl font-serif text-black leading-tight line-clamp-1 mb-4 font-bold">{watch.name}</h4>
                             <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
-                                <p className="font-bold text-lg md:text-2xl text-black">₹{Number(watch.offerPrice || watch.price).toLocaleString()}</p>
-                                <button onClick={(e) => addToCart(watch, e)} className="p-3 bg-black text-white rounded-full hover:bg-gray-800 transition-all active:scale-90 shadow-md">
-                                    <Plus size={18}/>
+                                <p className="font-bold text-lg md:text-xl text-black">₹{Number(watch.offerPrice || watch.price).toLocaleString()}</p>
+                                <button onClick={(e) => addToCart(watch, e)} className="p-3 bg-black text-white rounded-full hover:bg-gray-800 transition-all active:scale-95 shadow-md">
+                                    <Plus size={16}/>
                                 </button>
                             </div>
                          </div>
@@ -436,60 +452,60 @@ function FrontPageStore() {
           </section>
       )}
 
-      <CinematicBreak videoUrl={promoVideos[1]} title="The Vault Collection" />
+      <CinematicBreak videoUrl={promoVideos[1]} title="Premium Selection" />
 
-      {/* 🌟 CATALOGUE (WITH BACKGROUND VIDEO) 🌟 */}
-      <section id="ourcollection" className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
-        {/* Dynamic Background Video Layer */}
-        <div className="absolute inset-0 z-0">
-             <video src="https://cdn.pixabay.com/video/2021/08/11/84687-587289569_large.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover opacity-30" />
-             <div className="absolute inset-0 bg-[#FAFAFA]/85 backdrop-blur-xl"></div>
+      {/* 🌟 COLLECTION 🌟 */}
+      <section id="ourcollection" className="py-20 md:py-32 relative overflow-hidden bg-white">
+        <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-0 opacity-[0.03] pointer-events-none">
+            <video src="https://cdn.pixabay.com/video/2020/05/24/40092-424840899_large.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
         </div>
 
-        <div className="relative z-10 px-4 md:px-12 max-w-[1800px] mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-gray-200 pb-8">
-              <div className="mb-6 md:mb-0">
-                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[5px] mb-2">Shop by Category</p>
-                <h2 className="text-4xl md:text-6xl font-serif tracking-tighter leading-none text-black italic font-bold">Our Collection.</h2>
+        <div className="relative z-10 px-6 md:px-16 max-w-[1600px] mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 border-b border-gray-200 pb-8">
+              <div className="mb-8 md:mb-0">
+                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[5px] mb-2">Shop Now</p>
+                <h2 className="text-5xl md:text-7xl font-serif tracking-tight text-black font-bold">The Shop.</h2>
               </div>
               
               <div className="w-full md:w-auto flex flex-col items-end gap-4">
                  <div className="flex flex-wrap gap-2 justify-start md:justify-end w-full">
                    {categories.map((cat: any, i: number) => (
-                     <button key={`cat-${i}`} onClick={() => setActiveCategory(cat)} className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${activeCategory === cat ? 'bg-black text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:border-black hover:text-black'}`}>{cat}</button>
+                     <button key={`cat-${i}`} onClick={() => setActiveCategory(cat)} className={`px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${activeCategory === cat ? 'bg-black text-white shadow-md' : 'bg-gray-50 border border-gray-200 text-gray-600 hover:border-black hover:text-black'}`}>{cat}</button>
                    ))}
                  </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
              {filteredWatches.length === 0 ? (
-                 <div className="col-span-full py-20 text-center flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200">
-                    <Sparkles size={30} className="text-gray-300 mb-4 animate-pulse"/>
-                    <h3 className="text-2xl font-serif text-black mb-2 font-bold">Updating Collection</h3>
-                    <p className="text-gray-500 text-sm max-w-sm px-4">New watches are being added.</p>
+                 <div className="col-span-full py-32 text-center flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm rounded-[30px] border border-gray-200">
+                    <Sparkles size={40} className="text-gray-300 mb-6 animate-pulse"/>
+                    <h3 className="text-2xl font-serif text-black mb-3 font-bold">Loading Watches</h3>
+                    <p className="text-gray-500 text-sm max-w-sm px-4">Please wait while we fetch the latest watches.</p>
                  </div>
               ) : (
                 <AnimatePresence mode='popLayout'>
                   {filteredWatches.map((watch: any, i: number) => (
-                    <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{opacity:0}} transition={{ duration: 0.4 }} key={watch._id || i} className="group bg-white p-4 md:p-6 rounded-[20px] md:rounded-[30px] border border-gray-200 hover:border-black hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative cursor-pointer shadow-lg will-change-transform" onClick={() => router.push(`/product/${watch.slug || watch._id}`)}>
+                    <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{opacity:0}} transition={{ duration: 0.5 }} key={watch._id || i} className="group bg-white/90 backdrop-blur-md p-4 md:p-6 rounded-[20px] border border-gray-200 hover:border-black hover:shadow-xl transition-all duration-500 flex flex-col h-full relative cursor-pointer" onClick={() => router.push(`/product/${watch.slug || watch._id}`)}>
                       
-                      {watch.badge && <span className="absolute top-4 left-4 bg-black text-white text-[8px] font-bold px-2 py-1 rounded-md uppercase z-20 shadow-sm">{watch.badge}</span>}
+                      {watch.badge && <span className="absolute top-4 left-4 bg-black text-white text-[8px] font-bold px-2.5 py-1 rounded-md uppercase z-20 shadow-sm">{watch.badge}</span>}
                       
-                      <div className="flex aspect-square bg-gray-50 rounded-xl md:rounded-[20px] overflow-hidden mb-4 md:mb-6 items-center justify-center p-4 relative">
+                      <div className="flex aspect-square bg-gray-50/80 rounded-xl overflow-hidden mb-6 items-center justify-center p-6 relative will-change-transform">
                         <img src={watch.imageUrl || (watch.images && watch.images[0])} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" loading="lazy" />
                       </div>
 
                       <div className="flex-1 flex flex-col justify-between">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[2px] mb-1">{watch.brand}</p>
-                        <h4 className="text-sm md:text-xl font-serif text-black leading-tight mb-4 font-bold line-clamp-2">{watch.name}</h4>
-                        
+                        <div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[2px] mb-1">{watch.brand}</p>
+                            <h4 className="text-lg md:text-xl font-serif text-black leading-tight mb-4 font-bold line-clamp-2">{watch.name}</h4>
+                        </div>
                         <div className="flex justify-between items-end mt-auto pt-4 border-t border-gray-100">
                           <div>
                             <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Price</p>
                             <p className="text-lg md:text-2xl text-black font-bold tracking-tight">₹{Number(watch.offerPrice || watch.price).toLocaleString()}</p>
                           </div>
-                          <button onClick={(e) => addToCart(watch, e)} className="p-3 bg-gray-100 text-black rounded-full hover:bg-black hover:text-white transition-all shadow-sm flex items-center justify-center active:scale-90">
+                          <button onClick={(e) => addToCart(watch, e)} className="w-10 h-10 bg-gray-100 text-black rounded-full hover:bg-black hover:text-white transition-all flex items-center justify-center active:scale-90">
                              <Plus size={18}/>
                           </button>
                         </div>
@@ -502,45 +518,44 @@ function FrontPageStore() {
         </div>
       </section>
 
-      <CinematicBreak videoUrl={promoVideos[2]} title="Heritage & Craft" />
-
-      {/* DYNAMIC GALLERY OF PRECISION */}
-      <section className="py-20 bg-[#FAFAFA] border-t border-gray-100 hidden md:block">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-center gap-6 lg:gap-10 px-10">
-          <motion.div style={{ y: y1 }} className="w-1/3 flex flex-col gap-6 lg:gap-10 pt-20 will-change-transform">
-            <img src={galleryImages[0]} className="w-full h-[300px] lg:h-[400px] object-cover rounded-[30px] lg:rounded-[40px] shadow-lg" />
-            <img src={galleryImages[3]} className="w-full h-[250px] lg:h-[300px] object-cover rounded-[30px] lg:rounded-[40px] shadow-lg" />
+      {/* 🌟 GALLERY 🌟 */}
+      <section className="py-24 bg-[#FAFAFA] border-t border-gray-200 hidden md:flex items-center justify-center">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-center gap-10 px-10">
+          <motion.div style={{ y: y1 }} className="w-1/3 flex flex-col gap-10 pt-16 will-change-transform">
+            <img src={galleryImages[0]} className="w-full h-[400px] object-cover rounded-[30px] shadow-lg" />
+            <img src={galleryImages[3]} className="w-full h-[300px] object-cover rounded-[30px] shadow-lg" />
           </motion.div>
-          <div className="w-1/3 flex flex-col gap-6 lg:gap-10">
-            <div className="text-center py-10 px-4">
-              <FadeUp><p className="text-gray-500 text-[10px] font-bold uppercase tracking-[10px] mb-4">Craftsmanship</p></FadeUp>
-              <FadeUp delay={0.1}><h2 className="text-4xl lg:text-6xl font-serif tracking-tighter mb-4 font-bold text-black">The Art <br/><span className="italic text-gray-400">Of Time</span></h2></FadeUp>
+          <div className="w-1/3 flex flex-col gap-10">
+            <div className="text-center py-10 px-6">
+              <FadeUp><p className="text-gray-500 text-[10px] font-bold uppercase tracking-[10px] mb-4">Design</p></FadeUp>
+              <FadeUp delay={0.1}><h2 className="text-5xl lg:text-7xl font-serif tracking-tight mb-6 font-bold text-black">Modern <br/><span className="text-gray-400 italic">Styles.</span></h2></FadeUp>
             </div>
-            <img src={galleryImages[2]} className="w-full h-[400px] lg:h-[500px] object-cover rounded-[30px] lg:rounded-[40px] shadow-xl border border-gray-200" />
+            <img src={galleryImages[2]} className="w-full h-[500px] object-cover rounded-[40px] shadow-lg" />
           </div>
-          <motion.div style={{ y: y2 }} className="w-1/3 flex flex-col gap-6 lg:gap-10 pt-40 will-change-transform">
-            <img src={galleryImages[4]} className="w-full h-[350px] lg:h-[450px] object-cover rounded-[30px] lg:rounded-[40px] shadow-lg" />
-            <img src={galleryImages[5]} className="w-full h-[250px] lg:h-[350px] object-cover rounded-[30px] lg:rounded-[40px] shadow-lg" />
+          <motion.div style={{ y: y2 }} className="w-1/3 flex flex-col gap-10 pt-32 will-change-transform">
+            <img src={galleryImages[4]} className="w-full h-[450px] object-cover rounded-[30px] shadow-lg" />
+            <img src={galleryImages[5]} className="w-full h-[350px] object-cover rounded-[30px] shadow-lg" />
           </motion.div>
         </div>
       </section>
 
-      <section id="ourstory" className="py-24 md:py-40 bg-[#00150F] text-white relative overflow-hidden">
-        <div className="max-w-[1600px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+      {/* 🌟 OUR STORY 🌟 */}
+      <section id="ourstory" className="py-24 md:py-40 bg-black text-white relative overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
           <div className={config?.aboutConfig?.alignment === 'right' ? 'lg:order-2 text-right' : config?.aboutConfig?.alignment === 'center' ? 'text-center col-span-full max-w-4xl mx-auto' : 'text-left'}>
             <FadeUp>
-                <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest md:tracking-[10px] mb-6 flex items-center gap-4">
-                    <span className="w-8 h-px bg-white/50 hidden md:block"></span> {config?.aboutConfig?.title || "Our Story"}
+                <p className="text-white/50 text-[10px] font-bold uppercase tracking-[10px] mb-6 flex items-center gap-4">
+                    <span className="w-8 h-px bg-white/50 hidden md:block"></span> {config?.aboutConfig?.title || "ABOUT US"}
                 </p>
             </FadeUp>
             <FadeUp delay={0.1}>
-                <h2 className="text-4xl md:text-7xl font-serif leading-[1.1] tracking-tighter mb-8 italic text-white font-bold">
-                    Discover True <br/><span className="text-gray-400 not-italic">Luxury.</span>
+                <h2 className="text-5xl md:text-8xl font-serif leading-[1] tracking-tight mb-8 text-white font-bold">
+                    Built to <br/><span className="text-gray-400 italic">Last.</span>
                 </h2>
             </FadeUp>
             <FadeUp delay={0.2}>
-                <p className="text-white/70 text-base md:text-xl leading-relaxed font-serif">
-                  {(config?.aboutConfig?.content || "We bring the world's most premium watches directly to you. Guaranteed authenticity and unmatched service.").split(' ').map((word: string, idx: number) => {
+                <p className="text-white/70 text-lg md:text-2xl leading-relaxed font-serif max-w-3xl">
+                  {(config?.aboutConfig?.content || "We bring the world's best watches directly to you. Every piece is guaranteed authentic and checked for quality.").split(' ').map((word: string, idx: number) => {
                      const isBold = config?.aboutConfig?.boldWords?.split(',').map((w:string)=>w.trim().toLowerCase()).includes(word.toLowerCase().replace(/[^a-zA-Z]/g, ''));
                      return isBold ? <strong key={`bold-${idx}`} className="font-bold text-white"> {word} </strong> : <span key={`reg-${idx}`}> {word} </span>;
                   })}
@@ -548,8 +563,8 @@ function FrontPageStore() {
             </FadeUp>
           </div>
           {config?.aboutConfig?.alignment !== 'center' && (
-              <FadeUp delay={0.3} className="h-[400px] md:h-[600px] w-full bg-white/5 rounded-[30px] md:rounded-[50px] overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1200" className="w-full h-full object-cover opacity-80" alt="Heritage" />
+              <FadeUp delay={0.3} className="h-[400px] md:h-[600px] w-full bg-white/5 rounded-[40px] overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1200" className="w-full h-full object-cover opacity-80 hover:scale-105 transition-all duration-[2s]" alt="Story" />
               </FadeUp>
           )}
         </div>
@@ -557,34 +572,35 @@ function FrontPageStore() {
 
       <CinematicBreak videoUrl={promoVideos[3]} />
 
-      <section className="py-32 md:py-48 bg-[#050505] text-white border-t border-white/10 relative overflow-hidden">
-        <div className="absolute top-1/4 left-0 w-full overflow-hidden opacity-[0.05] pointer-events-none z-0 flex whitespace-nowrap will-change-transform">
-            <motion.h2 animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 40, repeat: Infinity }} className="text-[100px] md:text-[250px] font-serif italic text-white font-black">
-                LEGACY OF THE ELITE • TIMELESS PRECISION • WORN BY ICONS • MASTERPIECES • 
+      {/* 🌟 BRAND AMBASSADORS 🌟 */}
+      <section className="py-24 md:py-40 bg-white text-black border-t border-gray-100 relative overflow-hidden">
+        <div className="absolute top-1/4 left-0 w-full overflow-hidden opacity-[0.02] pointer-events-none z-0 flex whitespace-nowrap will-change-transform">
+            <motion.h2 animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 50, repeat: Infinity }} className="text-[100px] md:text-[250px] font-serif italic text-black font-black">
+                TRUSTED BY MANY • MODERN STYLES • TRUSTED BY MANY • 
             </motion.h2>
         </div>
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-10 relative z-10 mb-20 text-center">
             <FadeUp>
-                <p className="text-gray-500 uppercase tracking-[10px] text-[10px] font-bold mb-4">TRUSTED BY ELITES</p>
-                <h2 className="text-5xl md:text-8xl font-serif text-white tracking-tighter leading-none italic font-bold mb-8">Worn By Icons.</h2>
+                <p className="text-gray-500 uppercase tracking-[15px] text-[10px] font-bold mb-6">WORN BY LEADERS</p>
+                <h2 className="text-5xl md:text-[100px] font-serif text-black tracking-tight leading-none font-bold">Trusted Faces.</h2>
             </FadeUp>
         </div>
 
         <div className="relative w-full overflow-hidden flex z-20 py-10">
-            <div className="absolute left-0 top-0 bottom-0 w-10 md:w-64 bg-gradient-to-r from-[#050505] to-transparent z-30 pointer-events-none"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-10 md:w-64 bg-gradient-to-l from-[#050505] to-transparent z-30 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-16 md:w-[200px] bg-gradient-to-r from-white to-transparent z-30 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-16 md:w-[200px] bg-gradient-to-l from-white to-transparent z-30 pointer-events-none"></div>
 
             <div className="flex w-[300%] md:w-[200%]">
-                <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 35, repeat: Infinity }} className="flex gap-6 md:gap-16 items-stretch px-4 md:px-8 will-change-transform hover:[animation-play-state:paused]">
+                <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 35, repeat: Infinity }} className="flex gap-6 md:gap-12 items-stretch px-8 will-change-transform hover:[animation-play-state:paused]">
                     {liveCelebrities.length === 0 ? (
-                        [1, 2, 3, 4, 5].map((_, i) => <div key={i} className="w-[250px] md:w-[450px] aspect-[3/4] bg-white/5 rounded-[40px] animate-pulse shrink-0 border border-white/10"></div>)
+                        [1, 2, 3, 4, 5].map((_, i) => <div key={i} className="w-[240px] md:w-[350px] aspect-[3/4] bg-gray-100 rounded-[30px] animate-pulse"></div>)
                     ) : (
                         Array(4).fill(liveCelebrities).flat().map((celeb: any, i: number) => (
-                            <div key={`${celeb._id}-${i}`} className="w-[250px] md:w-[400px] aspect-[3/4] relative group rounded-[30px] md:rounded-[40px] overflow-hidden shrink-0 shadow-2xl cursor-pointer">
-                                {(celeb.imageUrl || celeb.img) && <img src={celeb.imageUrl || celeb.img} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 relative z-10" alt={celeb.name} />}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 md:p-8 flex flex-col justify-end translate-y-8 group-hover:translate-y-0 transition-transform duration-500 z-20">
-                                    <h4 className="text-white text-2xl md:text-4xl font-serif mb-1 tracking-tighter font-bold">{celeb.name}</h4>
+                            <div key={`${celeb._id}-${i}`} className="w-[240px] md:w-[380px] aspect-[3/4] relative group rounded-[30px] overflow-hidden shrink-0 shadow-lg cursor-pointer">
+                                {(celeb.imageUrl || celeb.img) && <img src={celeb.imageUrl || celeb.img} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-[1s] relative z-10" alt={celeb.name} />}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-8 flex flex-col justify-end z-20">
+                                    <h4 className="text-white text-3xl font-serif mb-1 font-bold">{celeb.name}</h4>
                                     <span className="text-[10px] uppercase font-bold tracking-[2px] text-gray-300">{celeb.title || celeb.watch}</span>
                                 </div>
                             </div>
@@ -595,43 +611,37 @@ function FrontPageStore() {
         </div>
       </section>
 
-      {/* 🌟 REVIEWS (WITH BACKGROUND VIDEO) 🌟 */}
-      <section id="reviews" className="py-20 md:py-32 relative overflow-hidden border-t border-gray-200">
-          {/* Dynamic Background Video Layer */}
+      {/* 🌟 REVIEWS 🌟 */}
+      <section id="reviews" className="py-24 md:py-40 relative overflow-hidden border-t border-gray-200">
           <div className="absolute inset-0 z-0">
-             <video src="https://cdn.pixabay.com/video/2020/02/21/32616-393246231_large.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover opacity-50" />
-             <div className="absolute inset-0 bg-[#FAFAFA]/80 backdrop-blur-xl"></div>
+             <video src="https://cdn.pixabay.com/video/2020/02/21/32616-393246231_large.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80" />
+             <div className="absolute inset-0 bg-white/90 backdrop-blur-xl"></div>
           </div>
 
-          <div className="text-center mb-16 relative z-10 px-4">
-             <h2 className="text-4xl md:text-7xl font-serif italic mb-4 text-black tracking-tighter font-bold">Customer Reviews</h2>
-             <button onClick={() => setIsReviewModalOpen(true)} className="mt-6 px-8 py-4 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl flex items-center justify-center mx-auto gap-2 active:scale-95">
-                 <Camera size={14}/> Write a Review
+          <div className="text-center mb-20 relative z-10 px-6">
+             <h2 className="text-5xl md:text-8xl font-serif mb-6 text-black tracking-tight font-bold">Customer Reviews.</h2>
+             <button onClick={() => setIsReviewModalOpen(true)} className="mt-8 px-10 py-4 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-[3px] hover:bg-gray-800 transition-all flex items-center justify-center mx-auto gap-3">
+                 <Camera size={16}/> Write a Review
              </button>
           </div>
-
           {flowingReviews.length > 0 && (
               <div className="flex w-[300%] md:w-[200%] relative z-10">
-                <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 40, repeat: Infinity }} className="flex gap-6 md:gap-10 items-stretch px-4 md:px-10 will-change-transform hover:[animation-play-state:paused]">
+                <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ ease: "linear", duration: 40, repeat: Infinity }} className="flex gap-6 md:gap-10 items-stretch px-10 will-change-transform hover:[animation-play-state:paused]">
                     {flowingReviews.concat(flowingReviews).map((rev: any, i: number) => (
-                        <div key={i} className="flex-shrink-0 w-[280px] md:w-[450px] bg-white/95 backdrop-blur-md border border-gray-200 p-8 md:p-10 rounded-[30px] flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all duration-500">
+                        <div key={i} className="flex-shrink-0 w-[300px] md:w-[450px] bg-white/80 backdrop-blur-md border border-white p-8 md:p-12 rounded-[40px] flex flex-col justify-between shadow-lg hover:bg-white hover:shadow-2xl transition-all duration-500">
                             <div>
                                 <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <p className="font-serif text-xl md:text-2xl font-bold mb-1 text-black">{rev.userName}</p>
-                                        <p className="text-[9px] text-gray-500 font-bold uppercase tracking-[2px]">Verified Buyer</p>
-                                    </div>
-                                    <ShieldCheck size={24} className="text-gray-300"/>
+                                    <div><p className="font-serif text-2xl font-bold mb-1 text-black">{rev.userName}</p><p className="text-[9px] text-gray-500 font-bold uppercase tracking-[2px]">Verified Buyer</p></div>
+                                    <ShieldCheck size={24} className="text-green-600"/>
                                 </div>
                                 <div className="flex gap-1 text-black mb-6">
                                     {[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={16} fill="currentColor"/>)}
                                 </div>
-                                <p className="text-gray-700 font-serif italic text-base leading-relaxed line-clamp-4">"{rev.comment}"</p>
-
+                                <p className="text-gray-700 font-serif text-lg leading-relaxed line-clamp-4">"{rev.comment}"</p>
                                 {rev.media && rev.media.length > 0 && (
-                                    <div className="flex gap-3 overflow-x-auto pt-6 mt-6 border-t border-gray-100">
+                                    <div className="flex gap-3 overflow-x-auto pt-6 mt-6 border-t border-gray-200">
                                         {rev.media.map((mediaUrl: string, mIdx: number) => (
-                                            mediaUrl.match(/\.(mp4|webm|mov)$/i) ? <video key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" /> : <img key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" loading="lazy" />
+                                            mediaUrl.match(/\.(mp4|webm|mov)$/i) ? <video key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" /> : <img key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" />
                                         ))}
                                     </div>
                                 )}
@@ -643,31 +653,24 @@ function FrontPageStore() {
           )}
       </section>
 
-      <CinematicBreak videoUrl={promoVideos[4]} title="Quality First" />
-
-      {/* 🌟 FAQ (WITH BACKGROUND IMAGE) 🌟 */}
-      <section className="py-20 md:py-32 relative overflow-hidden border-t border-gray-200">
-        {/* Dynamic Background Image Layer */}
+      {/* 🌟 FAQ 🌟 */}
+      <section className="py-24 md:py-40 relative overflow-hidden border-t border-gray-200">
         <div className="absolute inset-0 z-0">
              <img src="https://images.unsplash.com/photo-1508685096489-77a46807e604?q=80&w=2000" className="w-full h-full object-cover grayscale opacity-30" />
-             <div className="absolute inset-0 bg-[#FAFAFA]/95 backdrop-blur-sm"></div>
+             <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA]/95 to-[#FAFAFA]/90"></div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 relative z-10">
-           <FadeUp><h2 className="text-4xl md:text-6xl font-serif text-center mb-16 text-black tracking-tight font-bold">Help & FAQs.</h2></FadeUp>
+        <div className="max-w-[1000px] mx-auto px-8 relative z-10">
+           <FadeUp><h2 className="text-5xl md:text-7xl font-serif text-center mb-20 text-black tracking-tight font-bold drop-shadow-sm">Help & FAQs.</h2></FadeUp>
            <div className="space-y-4">
               {liveFaqs.length === 0 ? <p className="text-center text-gray-500">No questions yet.</p> : liveFaqs.map((faq: any, i: number) => (
-                <div key={i} className={`bg-white/95 backdrop-blur-md rounded-2xl border transition-all duration-500 ${openFaq === i ? 'border-black shadow-lg' : 'border-gray-200 hover:border-gray-400'}`}>
-                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full p-6 md:p-8 text-left flex justify-between items-center group">
-                    <span className="font-serif font-bold text-lg md:text-xl pr-6 text-black">{faq.q}</span>
-                    <div className={`p-3 rounded-full transition-all duration-500 ${openFaq === i ? 'bg-black text-white rotate-180' : 'bg-gray-50 text-gray-400 group-hover:bg-gray-200 group-hover:text-black'}`}><ChevronDown size={20}/></div>
+                <div key={i} className={`bg-white/90 backdrop-blur-sm rounded-[30px] border transition-all duration-500 ${openFaq === i ? 'border-black shadow-lg' : 'border-gray-200 hover:border-gray-400'}`}>
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full p-8 md:p-10 text-left flex justify-between items-center group">
+                    <span className="font-serif font-bold text-xl md:text-3xl pr-8 text-black">{faq.q}</span>
+                    <div className={`p-4 rounded-full transition-all duration-500 ${openFaq === i ? 'bg-black text-white rotate-180' : 'bg-gray-50 text-gray-500 border border-gray-200 group-hover:border-black group-hover:text-black'}`}><ChevronDown size={24}/></div>
                   </button>
                   <AnimatePresence>
-                    {openFaq === i && (
-                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{duration: 0.4}} className="px-6 md:px-8 pb-8">
-                          <p className="text-gray-600 text-sm md:text-base leading-relaxed border-t border-gray-100 pt-6">{faq.a}</p>
-                       </motion.div>
-                    )}
+                    {openFaq === i && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{duration: 0.5}} className="px-8 md:px-10 pb-10"><p className="text-gray-600 font-sans text-base md:text-lg leading-relaxed border-t border-gray-200 pt-6">{faq.a}</p></motion.div>}
                   </AnimatePresence>
                 </div>
               ))}
@@ -675,54 +678,20 @@ function FrontPageStore() {
         </div>
       </section>
 
-      {/* 🌟 ORIGINAL PREMIUM BLACK FOOTER (UNTOUCHED) 🌟 */}
-      <footer className="bg-black text-white pt-16 pb-8 border-t-[8px] border-[#D4AF37] relative z-20">
-         <div className="max-w-[1600px] mx-auto px-6 md:px-12">
-            <div className="flex flex-col md:flex-row justify-between border-b border-white/10 pb-12 mb-12 gap-8">
-                <div>
-                    <h3 className="text-3xl font-serif mb-2">Join Essential</h3>
-                    <p className="text-sm text-gray-400 max-w-sm">Get exclusive access to private sales and new arrivals.</p>
-                </div>
-                <div className="flex w-full md:w-auto">
-                    <input type="email" placeholder="Email address" className="bg-white/5 border border-white/20 p-3 md:p-4 text-white outline-none rounded-l-xl text-sm w-full md:w-64" />
-                    <button className="bg-[#D4AF37] text-black font-bold uppercase tracking-widest text-xs px-6 py-3 md:py-4 rounded-r-xl">Subscribe</button>
-                </div>
+      {/* 🌟 FOOTER 🌟 */}
+      <footer className="bg-black text-white pt-24 pb-12 border-t border-gray-800 relative z-20">
+         <div className="max-w-[1600px] mx-auto px-8 md:px-20">
+            <div className="flex flex-col md:flex-row justify-between border-b border-gray-800 pb-16 mb-16 gap-12">
+                <div><h3 className="text-4xl md:text-6xl font-serif font-bold text-white tracking-tight mb-4">Stay Updated.</h3><p className="text-gray-400 text-sm md:text-base">Sign up for new watches and exclusive sales.</p></div>
+                <div className="flex w-full md:w-auto h-max self-center border-b border-gray-600 focus-within:border-white transition-all pb-2"><input type="email" placeholder="Your Email" className="bg-transparent p-4 text-white outline-none text-lg w-full md:w-[300px]" /><button className="text-white font-bold uppercase tracking-[2px] text-xs px-6 hover:text-gray-300 transition-all">Sign Up</button></div>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-                <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Shop</h4>
-                    <ul className="space-y-3 text-sm text-white">
-                        <li><Link href="/shop" className="hover:text-[#D4AF37]">All Watches</Link></li>
-                        <li><Link href="/checkout" className="hover:text-[#D4AF37]">Cart</Link></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Support</h4>
-                    <ul className="space-y-3 text-sm text-white">
-                        <li><Link href="/account" className="hover:text-[#D4AF37]">My Account</Link></li>
-                        <li><Link href="/contact" className="hover:text-[#D4AF37]">Contact Us</Link></li>
-                    </ul>
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Policies</h4>
-                    <ul className="space-y-3 text-sm text-white">
-                        {legalPages.map((page:any, i:number) => (
-                           <li key={i}><Link href={`/policies/${page.slug}`} className="hover:text-[#D4AF37]">{page.title}</Link></li>
-                        ))}
-                    </ul>
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Contact</h4>
-                    <div className="space-y-2 text-sm text-white">
-                        <p>{corporateInfo?.companyName || 'Essential Rush'}</p>
-                        <p className="text-gray-400">{corporateInfo?.email || 'support@essential.com'}</p>
-                    </div>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-20 text-left">
+                <div><h4 className="text-[10px] font-bold uppercase tracking-[4px] text-gray-500 mb-8">Shop</h4><ul className="space-y-4 text-sm font-medium"><li><Link href="/shop" className="hover:text-gray-300 transition-all">All Watches</Link></li><li><Link href="/checkout" className="hover:text-gray-300 transition-all">My Cart</Link></li></ul></div>
+                <div><h4 className="text-[10px] font-bold uppercase tracking-[4px] text-gray-500 mb-8">Help</h4><ul className="space-y-4 text-sm font-medium"><li><Link href="/account" className="hover:text-gray-300 transition-all">My Account</Link></li><li><Link href="#faq" className="hover:text-gray-300 transition-all">Help Center</Link></li></ul></div>
+                <div className="col-span-2 md:col-span-1"><h4 className="text-[10px] font-bold uppercase tracking-[4px] text-gray-500 mb-8">Legal</h4><ul className="space-y-4 text-sm font-medium">{legalPages.map((page:any, i:number) => (<li key={i}><Link href={`/policies/${page.slug}`} className="hover:text-gray-300 transition-all">{page.title}</Link></li>))}</ul></div>
+                <div className="col-span-2 md:col-span-1"><h4 className="text-[10px] font-bold uppercase tracking-[4px] text-gray-500 mb-8">Contact</h4><div className="space-y-4 text-sm font-medium"><p className="text-white">{corporateInfo?.companyName || 'Essential Rush'}</p><p className="text-gray-400 flex items-center gap-3"><Mail size={16}/> {corporateInfo?.email || 'support@essential.com'}</p><div className="flex gap-6 mt-6"><Instagram className="text-gray-400 hover:text-white transition-all cursor-pointer" size={24} /><Facebook className="text-gray-400 hover:text-white transition-all cursor-pointer" size={24} /></div></div></div>
             </div>
-         </div>
-         <div className="text-center border-t border-white/10 pt-6">
-            <p className="text-[10px] uppercase tracking-[3px] text-gray-600">© {new Date().getFullYear()} Essential Rush. All Rights Reserved.</p>
+            <div className="text-center border-t border-gray-800 pt-8"><p className="text-[10px] font-bold uppercase tracking-[5px] text-gray-600">© 2026 ESSENTIAL RUSH. ALL RIGHTS RESERVED.</p></div>
          </div>
       </footer>
     </div>
