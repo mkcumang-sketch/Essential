@@ -4,15 +4,24 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-// Database Connection inside NextAuth
+// 🌟 DATABASE CONNECTION 🌟
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
-    await mongoose.connect(process.env.MONGODB_URI as string);
+    try {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+    } catch (error) {
+        console.error("DB Connection Error:", error);
+    }
 };
 
-// Assuming the same User model structure
+// 🌟 USER SCHEMA 🌟
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
-    name: String, email: String, phone: String, password: String, role: String, image: String
+    name: String, 
+    email: { type: String, unique: true, sparse: true }, 
+    phone: { type: String, unique: true, sparse: true }, 
+    password: String, 
+    role: { type: String, default: 'USER' }, 
+    image: String
 }));
 
 export const authOptions: NextAuthOptions = {
@@ -22,24 +31,54 @@ export const authOptions: NextAuthOptions = {
             clientId: process.env.GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
         }),
-        // 2. PHONE & PASSWORD LOGIN
+        // 2. PHONE & PASSWORD LOGIN WITH reCAPTCHA
         CredentialsProvider({
             name: "Mobile Number",
             credentials: {
-                phone: { label: "Phone Number", type: "text", placeholder: "e.g. 9876543210" },
-                password: { label: "Password", type: "password" }
+                phone: { label: "Phone Number", type: "text" },
+                password: { label: "Password", type: "password" },
+                captchaToken: { label: "Captcha", type: "text" } // 🛡️ Security Token
             },
             async authorize(credentials) {
-                if (!credentials?.phone || !credentials?.password) throw new Error("Missing credentials");
+                if (!credentials?.phone || !credentials?.password) {
+                    throw new Error("Please enter phone and password.");
+                }
+
+                // 🛡️ STEP 1: VERIFY GOOGLE reCAPTCHA SCORE 🛡️
+                try {
+                    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${credentials.captchaToken}`;
+                    const captchaRes = await fetch(verifyUrl, { method: 'POST' });
+                    const captchaData = await captchaRes.json();
+
+                    // Agar score 0.5 se kam hai toh block kar do (Bot detection)
+                    if (!captchaData.success || captchaData.score < 0.5) {
+                        throw new Error("Security check failed. Bots are not allowed.");
+                    }
+                } catch (err) {
+                    throw new Error("Security verification service unavailable.");
+                }
+
+                // 🛡️ STEP 2: VERIFY DATABASE USER 🛡️
                 await connectDB();
-                
                 const user = await User.findOne({ phone: credentials.phone });
-                if (!user || !user.password) throw new Error("Account not found");
+                
+                if (!user || !user.password) {
+                    throw new Error("No account found with this phone number.");
+                }
 
                 const isValidPassword = await bcrypt.compare(credentials.password, user.password);
-                if (!isValidPassword) throw new Error("Invalid password");
+                if (!isValidPassword) {
+                    throw new Error("Incorrect password.");
+                }
 
-                return { id: user._id.toString(), name: user.name, email: user.email, phone: user.phone, role: user.role };
+                // Success: Return user data to JWT
+                return { 
+                    id: user._id.toString(), 
+                    name: user.name, 
+                    email: user.email, 
+                    phone: user.phone, 
+                    role: user.role 
+                };
             }
         })
     ],
@@ -49,35 +88,49 @@ export const authOptions: NextAuthOptions = {
             if (account?.provider === "google") {
                 const existingUser = await User.findOne({ email: user.email });
                 if (!existingUser) {
-                    // Create new user if they log in with Google for the first time
-                    // NOTE: Assign SUPER_ADMIN here if it's your personal email, else USER
+                    // 🌟 Assign SUPER_ADMIN to your email, else regular USER 🌟
                     const role = user.email === 'mkcumang@gmail.com' ? 'SUPER_ADMIN' : 'USER';
-                    await User.create({ name: user.name, email: user.email, image: user.image, role: role });
+                    await User.create({ 
+                        name: user.name, 
+                        email: user.email, 
+                        image: user.image, 
+                        role: role 
+                    });
                 }
             }
             return true;
         },
         async jwt({ token, user }) {
+            // Initial sign in
             if (user) {
                 await connectDB();
-                const dbUser = await User.findOne({ $or: [{ email: user.email }, { phone: (user as any).phone }] });
-                token.role = dbUser?.role || 'USER';
-                token.phone = dbUser?.phone;
+                const dbUser = await User.findOne({ 
+                    $or: [{ email: user.email }, { phone: (user as any).phone }] 
+                });
+                if (dbUser) {
+                    token.role = dbUser.role || 'USER';
+                    token.phone = dbUser.phone;
+                    token.id = dbUser._id.toString();
+                }
             }
             return token;
         },
         async session({ session, token }) {
-            if (session?.user) {
+            if (session.user) {
                 (session.user as any).role = token.role;
                 (session.user as any).phone = token.phone;
+                (session.user as any).id = token.id;
             }
             return session;
         }
     },
-    session: { strategy: "jwt" },
+    session: { 
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
-        signIn: '/login', // We are pointing NextAuth to our custom elegant login page
+        signIn: '/login',
     }
 };
 
