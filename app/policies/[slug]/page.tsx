@@ -1,112 +1,87 @@
 import React from 'react';
+import { ShieldCheck, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
-import { ArrowLeft, Database, AlertTriangle } from 'lucide-react';
-import mongoose from 'mongoose';
-import connectDB from '@/lib/mongoose';
-import CmsConfig from '@/models/CmsConfig'; 
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-// 🌟 SMART FETCHER: Brings back the page AND debug info 🌟
-async function getPolicyData(rawSlug: string) {
+// 🌟 1. DATA FETCHER (Reads direct from your MongoDB/CMS via API) 🌟
+async function getPolicyData(slug: string) {
     try {
-        await connectDB();
+        // Vercel auto-detect URL or fallback to localhost
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
         
-        // Vercel strict model binding
-        const CmsModel = mongoose.models.CmsConfig || CmsConfig;
-        const config = await CmsModel.findOne({});
+        // Fetch CMS data completely fresh (no cache) to ensure Admin updates reflect instantly
+        const res = await fetch(`${baseUrl}/api/cms`, { cache: 'no-store' });
         
-        // Clean the slug (Removes weird URL encoding like %20)
-        const targetSlug = decodeURIComponent(rawSlug).toLowerCase().trim();
+        if (!res.ok) return null;
         
-        if (!config || !config.legalPages) {
-            return { error: "CMS_EMPTY", targetSlug, availableSlugs: [] };
-        }
+        const responseData = await res.json();
+        const legalPages = responseData?.data?.legalPages || [];
         
-        const availableSlugs = config.legalPages.map((p: any) => p.slug?.toLowerCase().trim());
-        const foundPage = config.legalPages.find((page: any) => 
-            page.slug?.toLowerCase().trim() === targetSlug
-        );
-
-        if (!foundPage) {
-            return { error: "NOT_FOUND", targetSlug, availableSlugs };
-        }
-
-        return { success: true, data: foundPage };
-
-    } catch (error: any) {
-        console.error("Policy Fetch Error:", error);
-        return { error: "DB_ERROR", details: error.message };
+        // Find the specific page that matches the URL slug
+        const policy = legalPages.find((p: any) => p.slug === slug);
+        
+        return policy || null;
+    } catch (error) {
+        console.error("Failed to fetch policy:", error);
+        return null;
     }
 }
 
-export default async function DynamicPolicyPage({ params }: { params: { slug: string } }) {
-    const result = await getPolicyData(params.slug);
+// 🌟 2. THE DYNAMIC PAGE GENERATOR (Next.js 15 Ready) 🌟
+export default async function DynamicPolicyPage({ params }: { params: Promise<{ slug: string }> }) {
+    
+    // 🛠️ THE FIX: Next.js 15 requires awaiting the params before using them
+    const resolvedParams = await params;
+    const slug = resolvedParams.slug;
 
-    // 🚨 IF SOMETHING FAILS, WE SHOW EXACTLY WHY ON THE SCREEN 🚨
-    if (!result || result.error) {
+    // Fetch the data for this specific slug
+    const policyData = await getPolicyData(slug);
+
+    // 🛑 ERROR FALLBACK: If admin hasn't created the page yet or link is broken
+    if (!policyData) {
         return (
-            <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center pt-20 px-6 font-sans">
-                <AlertTriangle size={60} className="text-red-500 mb-6" />
-                <h1 className="text-4xl font-serif mb-4 text-black text-center">Page Not Found (Diagnostic Mode)</h1>
-                
-                <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm max-w-xl w-full mb-8">
-                    <p className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-widest border-b pb-2">Error Details:</p>
-                    
-                    {result?.error === "DB_ERROR" && (
-                        <p className="text-red-500 text-sm">Database Connection Failed: {result.details}</p>
-                    )}
-                    
-                    {result?.error === "CMS_EMPTY" && (
-                        <p className="text-orange-500 text-sm">Database connected, but no Legal Pages found in the CMS. Please save a page in Godmode first.</p>
-                    )}
-
-                    {result?.error === "NOT_FOUND" && (
-                        <div className="space-y-3">
-                            <p className="text-gray-600 text-sm">The URL you clicked does not match any saved policy.</p>
-                            <p className="text-xs font-mono bg-gray-100 p-2 rounded">
-                                <span className="font-bold text-black">You requested:</span> "{result.targetSlug}"
-                            </p>
-                            <div className="text-xs font-mono bg-green-50 p-2 rounded text-green-700">
-                                <span className="font-bold">Available in Database:</span> 
-                                <ul className="list-disc pl-4 mt-1">
-                                    {result.availableSlugs.length > 0 
-                                        ? result.availableSlugs.map((s: string, i: number) => <li key={i}>"{s}"</li>)
-                                        : <li>None</li>
-                                    }
-                                </ul>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <Link href="/godmode" className="px-8 py-4 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-gray-800 transition-colors">
-                    Go to Godmode to Fix
+            <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 font-sans">
+                <AlertTriangle size={60} className="text-red-500 mb-6 opacity-80 animate-pulse" />
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-black mb-4 tracking-tighter">Page Not Found</h1>
+                <p className="text-gray-500 mb-8 text-center max-w-md">The document "{slug}" does not exist in the database. Please check your Admin Panel.</p>
+                <Link href="/" className="px-8 py-4 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-[4px] hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl">
+                    Return Home
                 </Link>
             </div>
         );
     }
 
-    // ✅ IF SUCCESSFUL, SHOW THE PREMIUM PAGE ✅
-    const pageData = result.data;
-
+    // ✅ SUCCESS: Render the page generated dynamically from Godmode
     return (
-        <div className="min-h-screen bg-[#FAFAFA] text-gray-900 font-sans pt-32 pb-20 px-6 md:px-12">
-            <div className="max-w-4xl mx-auto">
-                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-400 hover:text-black mb-10 transition-colors w-max">
-                    <ArrowLeft size={16}/> Back to Store
+        <div className="min-h-screen bg-[#FAFAFA] text-black font-sans selection:bg-[#D4AF37] selection:text-black">
+            
+            {/* 🌟 HEADER 🌟 */}
+            <header className="py-6 px-6 md:px-16 border-b border-gray-200 bg-white sticky top-0 z-50 flex items-center justify-between shadow-sm">
+                <Link href="/" className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[3px] text-gray-500 hover:text-black transition-colors">
+                    <ArrowLeft size={16} /> Back to Store
                 </Link>
+                <div className="flex items-center gap-2">
+                    <ShieldCheck size={18} className="text-green-600" />
+                    <span className="text-[9px] font-black uppercase tracking-[4px] text-gray-400 hidden sm:inline-block">Verified Document</span>
+                </div>
+            </header>
+
+            {/* 🌟 CONTENT AREA (Matches Minimalist Theme) 🌟 */}
+            <main className="max-w-4xl mx-auto px-6 py-24 md:py-32">
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[5px] mb-4">Legal Protocol</p>
+                <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-tight mb-6 text-black">{policyData.title}</h1>
+                <div className="w-24 h-1.5 bg-[#D4AF37] mb-16"></div>
                 
-                <h1 className="text-4xl md:text-6xl font-serif mb-10 border-b border-gray-200 pb-8 tracking-tighter text-black">
-                    {pageData.title}
-                </h1>
-                
-                <div 
-                    className="prose prose-lg max-w-none text-gray-600 prose-headings:font-serif prose-headings:text-black prose-a:text-[#D4AF37] prose-strong:text-black"
-                    dangerouslySetInnerHTML={{ __html: pageData.content }}
+                {/* Dynamically injecting the HTML text written by Admin in Godmode */}
+                <article 
+                    className="prose prose-lg prose-gray max-w-none text-gray-700 leading-loose prose-headings:font-serif prose-headings:font-bold prose-headings:text-black prose-a:text-[#D4AF37] prose-a:no-underline hover:prose-a:underline prose-p:mb-6"
+                    dangerouslySetInnerHTML={{ __html: policyData.content }} 
                 />
-            </div>
+            </main>
+            
+            {/* 🌟 SIMPLE FOOTER 🌟 */}
+            <footer className="bg-black text-white py-12 border-t-[8px] border-[#D4AF37] text-center">
+                 <p className="text-[10px] font-black uppercase tracking-[6px] text-gray-500">© 2026 ESSENTIAL RUSH. SECURE SYSTEM.</p>
+            </footer>
         </div>
     );
 }
