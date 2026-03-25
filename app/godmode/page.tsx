@@ -105,6 +105,10 @@ function AdminDashboard() {
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
   const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
+  
+  // 🌟 FIX: ADDED PROMO VIDEOS STATE HERE 🌟
+  const [promoVideos, setPromoVideos] = useState<string[]>(["", "", "", "", ""]); 
+
   const [uiConfig, setUiConfig] = useState({ primaryColor: '#D4AF37', bgColor: '#050505', fontFamily: 'serif', buttonRadius: 'full' });
   const [categories, setCategories] = useState(["Investment Grade", "Rare Vintage", "Modern Complications"]);
   const [newCategory, setNewCategory] = useState("");
@@ -183,6 +187,10 @@ function AdminDashboard() {
         if(resCms.data.heroSlides) setHeroSlides(resCms.data.heroSlides);
         if(resCms.data.aboutConfig) setAboutConfig(resCms.data.aboutConfig);
         if(resCms.data.galleryImages) setGalleryImages(resCms.data.galleryImages);
+        
+        // 🌟 FIX: LOAD PROMO VIDEOS FROM DB 🌟
+        if(resCms.data.promotionalVideos) setPromoVideos(resCms.data.promotionalVideos); 
+
         if(resCms.data.uiConfig) setUiConfig(resCms.data.uiConfig);
         if(resCms.data.categories) setCategories(resCms.data.categories);
         if(resCms.data.faqs) setFaqs(resCms.data.faqs);
@@ -238,7 +246,8 @@ function AdminDashboard() {
   const handleSaveCMS = async () => {
     setIsSyncing(true); addLog("Saving website changes...");
     try {
-      await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, uiConfig, categories, faqs, socialLinks, corporateInfo, legalPages }) });
+      // 🌟 FIX: SAVE PROMO VIDEOS TO DB 🌟
+      await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, promotionalVideos: promoVideos, uiConfig, categories, faqs, socialLinks, corporateInfo, legalPages }) });
       alert("Website Settings Saved Successfully!"); addLog("Website updated successfully.");
     } catch (e) { alert("Failed to save settings."); } finally { setIsSyncing(false); }
   };
@@ -810,30 +819,13 @@ function AdminDashboard() {
           {activeTab === 'PAGE_BUILDER' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="builder" className="grid grid-cols-1 xl:grid-cols-2 gap-10 pb-20">
                
-               <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 space-y-10">
-                  <h3 className="text-[#D4AF37] text-lg font-bold mb-4 border-b border-white/10 pb-4 flex items-center gap-2"><Layout size={20}/> Website Design Settings</h3>
-                  
+               <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 space-y-10 h-max">
+                  <h3 className="text-[#D4AF37] text-lg font-bold mb-4 border-b border-white/10 pb-4 flex items-center gap-2"><Layout size={20}/> Design Settings</h3>
                   <div className="grid grid-cols-2 gap-8">
-                    <div>
-                        <label className="text-xs text-gray-400 block mb-2">Primary Color</label>
-                        <div className="flex gap-3"><input type="color" value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1 cursor-pointer shrink-0"/><input value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div>
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-400 block mb-2">Background Color</label>
-                        <div className="flex gap-3"><input type="color" value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1 cursor-pointer shrink-0"/><input value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div>
-                    </div>
+                    <div><label className="text-xs text-gray-400 block mb-2">Primary Color</label><div className="flex gap-3"><input type="color" value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1"/><input value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div></div>
+                    <div><label className="text-xs text-gray-400 block mb-2">Background Color</label><div className="flex gap-3"><input type="color" value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1"/><input value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div></div>
                   </div>
                   
-                  <div className="space-y-4 pt-6 border-t border-white/10">
-                      <label className="text-sm font-bold text-white block mb-4">Social Media Links</label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Instagram size={18} className="text-gray-500 mr-3" /><input value={socialLinks.instagram} onChange={e=>setSocialLinks({...socialLinks, instagram: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Instagram URL" /></div>
-                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Facebook size={18} className="text-gray-500 mr-3" /><input value={socialLinks.facebook} onChange={e=>setSocialLinks({...socialLinks, facebook: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="Facebook URL" /></div>
-                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Youtube size={18} className="text-gray-500 mr-3" /><input value={socialLinks.youtube} onChange={e=>setSocialLinks({...socialLinks, youtube: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="YouTube URL" /></div>
-                         <div className="flex items-center bg-black border border-white/20 rounded-lg p-3"><Linkedin size={18} className="text-gray-500 mr-3" /><input value={socialLinks.linkedin} onChange={e=>setSocialLinks({...socialLinks, linkedin: e.target.value})} className="bg-transparent border-none outline-none text-sm text-white w-full" placeholder="LinkedIn URL" /></div>
-                      </div>
-                  </div>
-
                   <div className="space-y-6 pt-8 border-t border-white/10">
                       <h3 className="text-[#D4AF37] text-sm font-bold uppercase">Image Gallery (Home Page)</h3>
                       <div className="grid grid-cols-3 gap-4">
@@ -847,33 +839,45 @@ function AdminDashboard() {
                         ))}
                       </div>
                   </div>
-                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6"><Save size={18} className="inline mr-2"/> Save Website Settings</button>
+                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6">Save Builder Settings</button>
                </div>
 
                <div className="space-y-8">
                  <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
-                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">About Us Section</h3>
-                    <div className="space-y-5">
-                       <textarea value={aboutConfig.content} onChange={(e) => setAboutConfig({...aboutConfig, content: e.target.value})} rows={5} className="w-full bg-black border border-white/20 p-5 rounded-xl text-sm outline-none text-white custom-scrollbar" placeholder="Write about your brand here..."/>
-                       <div>
-                          <label className="text-xs text-gray-400 mb-2 block">Highlight Words (comma separated)</label>
-                          <input value={aboutConfig.boldWords} onChange={(e) => setAboutConfig({...aboutConfig, boldWords: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none text-[#00F0FF]" placeholder="e.g. luxury, authentic, premium"/>
-                       </div>
-                    </div>
-                 </div>
-                 
-                 <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4"><h3 className="text-[#D4AF37] text-lg font-bold">Home Page Banners</h3><button onClick={handleAddHeroSlide} className="text-white bg-black border border-white/20 px-3 py-1 rounded-lg text-sm">+ Add Banner</button></div>
-                    <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">Home Page Banners</h3>
+                    <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mb-4">
                        {heroSlides.map((slide, i) => (
                           <div key={slide.id || i} className="p-6 bg-black border border-white/20 rounded-2xl space-y-4 relative">
                              <div className="flex justify-between items-center"><span className="text-xs font-bold text-gray-500">Banner {i+1}</span><button onClick={() => handleRemoveHeroSlide(slide.id)} className="text-red-500 text-xs font-bold">Remove</button></div>
-                             <select value={slide.type} onChange={(e) => { const n = [...heroSlides]; n[i].type = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white"><option value="video">Video Banner</option><option value="image">Image Banner</option></select>
-                             <input value={slide.url} onChange={(e) => { const n = [...heroSlides]; n[i].url = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-blue-400" placeholder="Image/Video URL"/>
-                             <input value={slide.heading} onChange={(e) => { const n = [...heroSlides]; n[i].heading = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Banner Text (e.g. Welcome)"/>
+                             <select value={slide.type} onChange={(e) => { const n = [...heroSlides]; n[i].type = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white"><option value="video">Video</option><option value="image">Image</option></select>
+                             <input value={slide.url} onChange={(e) => { const n = [...heroSlides]; n[i].url = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-blue-400" placeholder="Media URL"/>
+                             <input value={slide.heading} onChange={(e) => { const n = [...heroSlides]; n[i].heading = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Banner Text"/>
                           </div>
                        ))}
                     </div>
+                    <button onClick={handleAddHeroSlide} className="w-full bg-white/5 border border-white/20 py-3 rounded-xl text-sm hover:bg-white hover:text-black transition-colors">+ Add New Banner</button>
+                 </div>
+
+                 {/* 🌟 NEW: CINEMATIC VIDEO BREAKS MODULE 🌟 */}
+                 <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30">
+                    <h3 className="text-[#00F0FF] text-lg font-bold mb-2 border-b border-white/10 pb-4 flex items-center gap-2"><Video size={20}/> Cinematic Video Breaks</h3>
+                    <p className="text-xs text-gray-400 mb-6">These videos will auto-play as full-width separators between sections on the home page.</p>
+                    
+                    <div className="space-y-4">
+                        {[1, 2, 3, 4, 5].map((slot, i) => (
+                            <div key={slot} className="flex flex-col md:flex-row items-center gap-4 bg-black p-4 rounded-2xl border border-white/10">
+                                <div className="w-full md:w-32 text-xs font-bold text-gray-500">Video Slot {slot}</div>
+                                <input 
+                                    value={promoVideos[i] || ''} 
+                                    onChange={(e) => { const newVids = [...promoVideos]; newVids[i] = e.target.value; setPromoVideos(newVids); }} 
+                                    className="flex-1 bg-transparent border border-white/20 p-3 rounded-lg text-sm text-white outline-none w-full" 
+                                    placeholder="Paste .mp4 URL here..."
+                                />
+                                <PremiumUploadNode placeholder="Upload" onUploadSuccess={(url:string)=>{ const newVids = [...promoVideos]; newVids[i] = url; setPromoVideos(newVids); }} />
+                            </div>
+                        ))}
+                    </div>
+                    <button onClick={handleSaveCMS} className="w-full py-4 bg-[#00F0FF] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6 text-sm">Save Cinematic Videos</button>
                  </div>
                </div>
             </motion.div>
