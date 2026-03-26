@@ -9,7 +9,7 @@ import {
   CheckCircle, Bot, Star, TrendingUp, Wallet, Activity, ShieldAlert, Download, MessageSquare, 
   FileText, Search, ChevronRight, Gift, Shield, Globe, Lock, ChevronUp, ChevronDown, Award, UploadCloud,
   Instagram, Facebook, Twitter, Youtube, Phone, Mail, Linkedin, AlignJustify,
-  Terminal, Radar, Fingerprint, Cpu, Network, ShoppingCart // 🌟 ShoppingCart ADDED HERE
+  Terminal, Radar, Fingerprint, Cpu, Network
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
@@ -19,7 +19,6 @@ const MODULES = [
   { id: 'INVENTORY', icon: Package, label: 'Products & Inventory' },
   { id: 'ORDER_TRACKER', icon: Truck, label: 'Manage Orders' },
   { id: 'CRM', icon: Users, label: 'Customers & CRM' },
-  { id: 'ABANDONED_CARTS', icon: AlertTriangle, label: 'Abandoned Carts' }, // 🌟 DEDICATED MODULE
   { id: 'MARKETING', icon: Gift, label: 'Coupons & Marketing' },
   { id: 'PAGE_BUILDER', icon: Layout, label: 'Website Builder' },
   { id: 'AMBASSADORS', icon: Award, label: 'Brand Ambassadors' }, 
@@ -84,6 +83,7 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) 
 function AdminDashboard() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState('FULL_DASHBOARD');
+  const [dashboardView, setDashboardView] = useState<'orders' | 'abandoned'>('orders');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [systemLogs, setSystemLogs] = useState<string[]>(["System starting...", "Connected to database successfully."]);
@@ -97,11 +97,9 @@ function AdminDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [fullAnalytics, setFullAnalytics] = useState<any>(null);
 
-  // CELEBRITY STATES
   const [celebs, setCelebs] = useState<any[]>([]);
   const [newCeleb, setNewCeleb] = useState({ name: '', title: '', imageUrl: '' });
 
-  // Page Builder States
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
   const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
@@ -113,23 +111,22 @@ function AdminDashboard() {
   const [faqs, setFaqs] = useState([{ q: 'Are these authentic?', a: 'Yes, 100% verified.' }]);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', twitter: '', youtube: '', linkedin: '' });
   
-  // Legal & Corporate States
   const [corporateInfo, setCorporateInfo] = useState({ companyName: 'Essential Rush Pvt Ltd', address: 'Ground Floor, Corporate Drive, Mumbai - 400001', phone1: '+91 98765 43210', phone2: '+91 98765 12345', email: 'support@essentialrush.com' });
   const [legalPages, setLegalPages] = useState([{ id: '1', title: 'Privacy Policy', slug: 'privacy-policy', content: 'Our privacy policy details...' }]);
   const [activeLegalPageId, setActiveLegalPageId] = useState('1');
 
-  // Reviews State
   const [fakeReview, setFakeReview] = useState<{userName: string, comment: string, rating: number, product: string, visibility: string, isAdminGenerated: boolean, media: string[]}>({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
   
-  // Inventory State
+  // 🌟 NEW: INVENTORY STATE WITH VAULT PRICING RULES 🌟
   const [watchForm, setWatchForm] = useState({ 
       name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', 
       imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', 
       description: '', seoTags: '', specifications: '', priority: 0, badge: 'New Arrival', 
-      amazonDetails: [{ key: 'Dial Color', value: 'Black' }] 
+      amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
+      // 👑 VIP PRICING DEFAULTS 👑
+      vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true
   });
 
-  // Marketing & Affiliates State
   const [couponForm, setCouponForm] = useState({ code: '', discountValue: '', minOrder: '', validUntil: '' });
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [agentForm, setAgentForm] = useState({ name: '', email: '', code: '', tier: 'Sales Partner', commissionRate: 5 });
@@ -252,6 +249,7 @@ function AdminDashboard() {
     } catch (e) { alert("Failed to add review."); } finally { setIsSyncing(false); }
   };
 
+  // 🌟 NEW: PRODUCT SAVE HANDLER WITH PRICING RULES 🌟
   const handleSaveProduct = async () => {
     if (!watchForm.name.trim() || !watchForm.price.toString().trim() || !watchForm.imageUrl.trim()) {
         return alert("⚠️ Missing Fields! Product Name, Base Price, and Main Image URL are mandatory.");
@@ -269,7 +267,14 @@ function AdminDashboard() {
           name: watchForm.name, slug: generatedSlug, sku: generatedSku, brand: watchForm.brand, category: watchForm.category,
           price: Number(watchForm.price) || 0, offerPrice: Number(watchForm.offerPrice) || Number(watchForm.price) || 0, stock: Number(watchForm.stock) || 0,
           imageUrl: watchForm.imageUrl, images: additionalImages, videoUrl: watchForm.videoUrl, model3DUrl: watchForm.model3DUrl,
-          description: watchForm.description, tags: tagsArray, priority: Number(watchForm.priority) || 0, badge: watchForm.badge, amazonDetails: validAmazonDetails 
+          description: watchForm.description, tags: tagsArray, priority: Number(watchForm.priority) || 0, badge: watchForm.badge, amazonDetails: validAmazonDetails,
+          
+          // 👑 INJECTING VAULT PRICING RULES 👑
+          vipVaultKey: watchForm.vipVaultKey.toUpperCase(),
+          vipDiscount: Number(watchForm.vipDiscount) || 0,
+          transitFee: Number(watchForm.transitFee) || 0,
+          taxPercentage: Number(watchForm.taxPercentage) || 18,
+          taxInclusive: watchForm.taxInclusive
       };
 
       const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalProduct) });
@@ -277,7 +282,11 @@ function AdminDashboard() {
 
       if (res.ok && data.success) { 
           alert("Product Saved Successfully!"); addLog("Product added to website inventory.");
-          setWatchForm({ name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }] });
+          // Reset complete form including pricing rules
+          setWatchForm({ 
+              name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
+              vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true 
+          });
           fetchDashboardData(); 
       } else {
           alert(`Error saving product: ${data.error || 'Check fields and try again'}`); addLog(`Error: ${data.error || 'Server error'}`);
@@ -452,21 +461,19 @@ function AdminDashboard() {
                    <p className="text-4xl md:text-5xl font-bold text-white">₹{(fullAnalytics.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
                  </div>
 
-                 {/* 🌟 UX IMPROVEMENT: Routing to Orders Tab directly */}
-                 <div onClick={() => setActiveTab('ORDER_TRACKER')} className="bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between border-white/10 hover:border-blue-500 hover:shadow-[0_0_20px_rgba(0,240,255,0.1)]">
+                 <div onClick={() => setDashboardView('orders')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'orders' ? 'border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
                    <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><Package size={16}/> Total Orders</p>
                    <div>
                      <p className="text-4xl font-bold text-[#00F0FF]">{fullAnalytics.metrics?.totalOrders || 0}</p>
-                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">Manage Orders <ChevronRight size={12}/></p>
+                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
                    </div>
                  </div>
                  
-                 {/* 🌟 UX IMPROVEMENT: Routing to new Abandoned Carts Tab directly */}
-                 <div onClick={() => setActiveTab('ABANDONED_CARTS')} className="bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between border-white/10 hover:border-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                 <div onClick={() => setDashboardView('abandoned')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'abandoned' ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
                    <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><AlertTriangle size={16} className={leads.length > 0 ? "text-red-500 animate-pulse" : ""}/> Abandoned Carts</p>
                    <div>
                      <p className="text-4xl font-bold text-red-500">{leads.length}</p>
-                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">Recover Carts <ChevronRight size={12}/></p>
+                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
                    </div>
                  </div>
               </div>
@@ -474,11 +481,14 @@ function AdminDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  <div className="lg:col-span-2 bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
                     <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                       <h3 className="text-xl font-bold text-white">Recent Orders</h3>
+                       <h3 className="text-xl font-bold text-white">
+                          {dashboardView === 'orders' ? 'Recent Orders' : 'Customers Who Did Not Buy (Abandoned)'}
+                       </h3>
                     </div>
 
                     <div className="space-y-4">
-                        {orders.length === 0 ? <p className="text-gray-500">No recent orders found.</p> :
+                       {dashboardView === 'orders' && (
+                          orders.length === 0 ? <p className="text-gray-500">No recent orders found.</p> :
                           orders.slice(0, 8).map((o: any, i: number) => (
                              <div key={i} className="flex justify-between items-center p-4 bg-black border border-white/10 rounded-xl hover:border-[#D4AF37]/50 transition-colors">
                                 <div className="flex items-center gap-4">
@@ -496,7 +506,26 @@ function AdminDashboard() {
                                 </div>
                              </div>
                           ))
-                        }
+                       )}
+
+                       {dashboardView === 'abandoned' && (
+                          leads.length === 0 ? <p className="text-gray-500">No abandoned carts found.</p> :
+                          leads.map((lead: any, i: number) => (
+                             <div key={i} className="flex justify-between items-center p-4 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><AlertTriangle size={16} /></div>
+                                   <div>
+                                      <p className="font-bold text-white text-sm">{lead.phone || lead.email || 'Guest'}</p>
+                                      <p className="text-xs text-red-400">Cart Value: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
+                                   </div>
+                                </div>
+                                <div className="flex gap-2">
+                                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20in%20your%20cart...`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-xs font-bold rounded-lg hover:bg-green-500 hover:text-black">WhatsApp</a>}
+                                   {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Purchase`} className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-lg hover:bg-white hover:text-black">Email</a>}
+                                </div>
+                             </div>
+                          ))
+                       )}
                     </div>
                  </div>
 
@@ -515,51 +544,6 @@ function AdminDashboard() {
              </motion.div>
           )}
 
-          {/* ================= NEW: ABANDONED CARTS DEDICATED MODULE ================= */}
-          {activeTab === 'ABANDONED_CARTS' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="abandoned" className="space-y-8">
-               <div className="bg-[#111] p-10 rounded-[30px] border border-red-500/30 flex items-center gap-6">
-                  <div className="p-5 bg-red-500/20 rounded-2xl text-red-500"><AlertTriangle size={30}/></div>
-                  <div>
-                     <h3 className="text-3xl font-bold text-white mb-1">Abandoned Carts Recovery</h3>
-                     <p className="text-sm text-gray-400">Track and contact customers who left without buying.</p>
-                  </div>
-               </div>
-
-               <div className="bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
-                   <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                      <h3 className="text-xl font-bold text-white">Pending Recoveries</h3>
-                      <span className="bg-red-500/20 text-red-500 px-4 py-2 rounded-lg text-xs font-bold">{leads.length} Carts</span>
-                   </div>
-
-                   <div className="space-y-4">
-                      {leads.length === 0 ? <p className="text-gray-500 text-center py-10">No abandoned carts found. Great!</p> :
-                         leads.map((lead: any, i: number) => (
-                             <div key={i} className="flex flex-col md:flex-row justify-between items-center p-6 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors gap-4">
-                                <div className="flex items-center gap-4 w-full md:w-auto">
-                                   <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><ShoppingCart size={20} /></div>
-                                   <div>
-                                      <p className="font-bold text-white text-lg">{lead.name || 'Guest User'}</p>
-                                      <p className="text-xs text-gray-400 flex gap-3 mt-1">
-                                          <span>{lead.phone || 'No Phone'}</span> | <span>{lead.email || 'No Email'}</span>
-                                      </p>
-                                   </div>
-                                </div>
-                                <div className="flex flex-col items-end w-full md:w-auto">
-                                   <p className="text-2xl font-bold text-red-400 mb-2">₹{lead.cartTotal?.toLocaleString() || '---'}</p>
-                                   <div className="flex gap-2">
-                                      {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20amazing%20in%20your%20cart%20at%20Essential.%20Can%20we%20help%20you%20complete%20your%20purchase?`} target="_blank" className="px-5 py-2.5 bg-green-500/20 text-green-500 text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-green-500 hover:text-black transition-all">WhatsApp</a>}
-                                      {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Essential Purchase`} className="px-5 py-2.5 bg-white/10 text-white text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-white hover:text-black transition-all">Email</a>}
-                                   </div>
-                                </div>
-                             </div>
-                         ))
-                      }
-                   </div>
-               </div>
-            </motion.div>
-          )}
-          
           {/* ================= 2. INVENTORY ================= */}
           {activeTab === 'INVENTORY' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="inv" className="grid grid-cols-1 xl:grid-cols-12 gap-8">
@@ -620,7 +604,7 @@ function AdminDashboard() {
                               ))}
                               {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').length < 8 && (
                                   <div className="scale-75 origin-left">
-                                      <PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>setWatchForm({...watchForm, images: [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== ''), url]})} />
+                                      <PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>{ const newGallery = [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== '')]; newGallery.push(url); setWatchForm({...watchForm, images: newGallery}); }} />
                                   </div>
                               )}
                            </div>
@@ -651,9 +635,54 @@ function AdminDashboard() {
                            <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={3} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar" placeholder="Product Description..."/>
                         </div>
 
+                        {/* 👑 ENTERPRISE PRICING ENGINE SECTION 👑 */}
+                        <div className="mt-8 p-6 bg-black/40 border border-[#D4AF37]/30 rounded-2xl shadow-inner relative overflow-hidden">
+                            <div className="absolute -right-10 -top-10 opacity-5 pointer-events-none"><ShieldCheck size={120} className="text-[#D4AF37]"/></div>
+                            <h3 className="text-lg font-serif font-bold mb-6 flex items-center gap-2 text-white relative z-10">
+                                <ShieldCheck size={20} className="text-[#D4AF37]" /> Vault Pricing Rules
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10">
+                                <div className="p-4 bg-black rounded-xl border border-white/10">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 flex justify-between">
+                                        VIP Vault Key <span className="text-gray-500 font-mono">(Optional)</span>
+                                    </label>
+                                    <input value={watchForm.vipVaultKey} onChange={(e) => setWatchForm({...watchForm, vipVaultKey: e.target.value.toUpperCase()})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] uppercase text-[#D4AF37]" placeholder="e.g. ROLEXVIP" />
+                                </div>
+                                <div className="p-4 bg-black rounded-xl border border-white/10">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Vault Discount (₹)</label>
+                                    <input type="number" value={watchForm.vipDiscount} onChange={(e) => setWatchForm({...watchForm, vipDiscount: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="5000" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                                <div className="p-4 bg-black rounded-xl border border-white/10">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Transit Fee (₹)</label>
+                                    <input type="number" value={watchForm.transitFee} onChange={(e) => setWatchForm({...watchForm, transitFee: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="0 for Free" />
+                                </div>
+                                <div className="p-4 bg-black rounded-xl border border-white/10">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Tax Bracket (GST %)</label>
+                                    <select value={watchForm.taxPercentage} onChange={(e) => setWatchForm({...watchForm, taxPercentage: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white appearance-none">
+                                        <option className="bg-black" value="0">0% (Exempt)</option>
+                                        <option className="bg-black" value="3">3% (Bullion/Gold)</option>
+                                        <option className="bg-black" value="12">12%</option>
+                                        <option className="bg-black" value="18">18% (Standard)</option>
+                                        <option className="bg-black" value="28">28% (Luxury)</option>
+                                    </select>
+                                </div>
+                                <div className="p-4 bg-black rounded-xl border border-white/10 flex flex-col justify-center items-center cursor-pointer transition-all hover:border-[#D4AF37]/50" onClick={() => setWatchForm({...watchForm, taxInclusive: !watchForm.taxInclusive})}>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block text-center">Tax Type</label>
+                                    <div className={`px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors w-full text-center ${watchForm.taxInclusive ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                                        {watchForm.taxInclusive ? 'Inclusive (In-Price)' : 'Exclusive (+ Extra)'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/* 👑 END ENTERPRISE PRICING ENGINE 👑 */}
+
                         <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product</button>
                      </div>
-                 </div>
+                  </div>
                </div>
 
                {/* PRODUCT LIST */}
@@ -857,7 +886,7 @@ function AdminDashboard() {
                     <button onClick={handleAddHeroSlide} className="w-full bg-white/5 border border-white/20 py-3 rounded-xl text-sm hover:bg-white hover:text-black transition-colors">+ Add New Banner</button>
                  </div>
 
-                 {/* 🌟 NEW: CINEMATIC VIDEO BREAKS MODULE 🌟 */}
+                 {/* 🌟 CINEMATIC VIDEO BREAKS MODULE 🌟 */}
                  <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30">
                     <h3 className="text-[#00F0FF] text-lg font-bold mb-2 border-b border-white/10 pb-4 flex items-center gap-2"><Video size={20}/> Cinematic Video Breaks</h3>
                     <p className="text-xs text-gray-400 mb-6">These videos will auto-play as full-width separators between sections on the home page.</p>
