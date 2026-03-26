@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/context/ToastContext';
 import { 
     Filter, ChevronDown, ShoppingBag, Star, X, Search, 
     ArrowRight, SlidersHorizontal, ArrowLeft, ShieldCheck, CheckCircle 
@@ -16,6 +17,7 @@ export default function CataloguePage() {
     const [selectedBrand, setSelectedBrand] = useState<string>('ALL');
     const [sortOption, setSortOption] = useState<string>('NEWEST');
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const { showToast } = useToast();
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
     // Fetch Products on Mount
@@ -102,6 +104,7 @@ export default function CataloguePage() {
         
         localStorage.setItem('luxury_cart', JSON.stringify(newCart));
         alert(`${product.name} added to your vault!`);
+        showToast("Added to your Vault Collection!", "success");
         // Optional: Dispatch event to update navbar cart count if using event listeners
         window.dispatchEvent(new Event('cartUpdated')); 
     };
