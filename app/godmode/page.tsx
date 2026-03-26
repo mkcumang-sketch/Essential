@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import { 
   BarChart3, Package, BrainCircuit, Landmark, Users, RefreshCcw, Trash2, Layout, Video, 
   AlignCenter, AlignLeft, AlignRight, PlusCircle, Link as LinkIcon, ShieldCheck, Eye, Save, 
@@ -14,6 +15,11 @@ import {
 import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
 
+// 🌟 SEO COMPONENTS IMPORTED 🌟
+import SeoPanel from '@/components/admin/SeoPanel';
+import ImageSeoPanel from '@/components/admin/ImageSeoPanel';
+import SeoAnalyticsDashboard from '@/components/admin/SeoAnalyticsDashboard';
+
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
   { id: 'INVENTORY', icon: Package, label: 'Products & Inventory' },
@@ -22,6 +28,7 @@ const MODULES = [
   { id: 'MARKETING', icon: Gift, label: 'Coupons & Marketing' },
   { id: 'PAGE_BUILDER', icon: Layout, label: 'Website Builder' },
   { id: 'AMBASSADORS', icon: Award, label: 'Brand Ambassadors' }, 
+  { id: 'SEO_ENGINE', icon: Globe, label: 'SEO Command Center' }, // 🌟 NAYA SEO MODULE
   { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Policies' },
   { id: 'REVIEWS', icon: Star, label: 'Customer Reviews' },
   { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliates & Partners' },
@@ -117,14 +124,16 @@ function AdminDashboard() {
 
   const [fakeReview, setFakeReview] = useState<{userName: string, comment: string, rating: number, product: string, visibility: string, isAdminGenerated: boolean, media: string[]}>({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
   
-  // 🌟 NEW: INVENTORY STATE WITH VAULT PRICING RULES 🌟
+  // 🌟 NEW: INVENTORY STATE WITH VAULT PRICING RULES AND SEO 🌟
   const [watchForm, setWatchForm] = useState({ 
       name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', 
       imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', 
       description: '', seoTags: '', specifications: '', priority: 0, badge: 'New Arrival', 
       amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
       // 👑 VIP PRICING DEFAULTS 👑
-      vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true
+      vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
+      // 🌟 NEW: SEO ENGINE STATE 🌟
+      seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
   });
 
   const [couponForm, setCouponForm] = useState({ code: '', discountValue: '', minOrder: '', validUntil: '' });
@@ -249,7 +258,7 @@ function AdminDashboard() {
     } catch (e) { alert("Failed to add review."); } finally { setIsSyncing(false); }
   };
 
-  // 🌟 NEW: PRODUCT SAVE HANDLER WITH PRICING RULES 🌟
+  // 🌟 NEW: PRODUCT SAVE HANDLER WITH PRICING RULES AND SEO 🌟
   const handleSaveProduct = async () => {
     if (!watchForm.name.trim() || !watchForm.price.toString().trim() || !watchForm.imageUrl.trim()) {
         return alert("⚠️ Missing Fields! Product Name, Base Price, and Main Image URL are mandatory.");
@@ -260,7 +269,8 @@ function AdminDashboard() {
       const tagsArray = watchForm.seoTags.split(',').map(s=>s.trim()).filter(s=>s);
       const additionalImages = watchForm.images.filter(img => typeof img === 'string' && img.trim() !== "");
 
-      const generatedSlug = watchForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
+      // Use the Custom SEO Slug if available, otherwise generate one
+      const generatedSlug = watchForm.seo.slug || watchForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
       const generatedSku = `PRD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
 
       const finalProduct = { 
@@ -274,7 +284,10 @@ function AdminDashboard() {
           vipDiscount: Number(watchForm.vipDiscount) || 0,
           transitFee: Number(watchForm.transitFee) || 0,
           taxPercentage: Number(watchForm.taxPercentage) || 18,
-          taxInclusive: watchForm.taxInclusive
+          taxInclusive: watchForm.taxInclusive,
+          
+          // 🌟 INJECTING SEO ENGINE DATA 🌟
+          seo: watchForm.seo
       };
 
       const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalProduct) });
@@ -282,10 +295,11 @@ function AdminDashboard() {
 
       if (res.ok && data.success) { 
           alert("Product Saved Successfully!"); addLog("Product added to website inventory.");
-          // Reset complete form including pricing rules
+          // Reset complete form including pricing rules & SEO
           setWatchForm({ 
               name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
-              vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true 
+              vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
+              seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
           });
           fetchDashboardData(); 
       } else {
@@ -629,7 +643,7 @@ function AdminDashboard() {
                                ))}
                            </div>
                            <div className="pt-2">
-                              <label className="text-xs text-gray-500 mb-1 block">SEO Tags (comma separated)</label>
+                              <label className="text-xs text-gray-500 mb-1 block">Quick Tags (comma separated)</label>
                               <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="luxury, watch, men..." />
                            </div>
                            <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={3} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar" placeholder="Product Description..."/>
@@ -680,7 +694,13 @@ function AdminDashboard() {
                         </div>
                         {/* 👑 END ENTERPRISE PRICING ENGINE 👑 */}
 
-                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product</button>
+                        {/* 🚀 NEW: SEO & IMAGE OPTIMIZATION ENGINE 🚀 */}
+                        <div className="mt-8 pt-8 border-t border-white/10 space-y-8">
+                            <SeoPanel entityData={watchForm} setEntityData={setWatchForm} />
+                            <ImageSeoPanel entityData={watchForm} setEntityData={setWatchForm} />
+                        </div>
+
+                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product to Vault</button>
                      </div>
                   </div>
                </div>
@@ -911,7 +931,47 @@ function AdminDashboard() {
             </motion.div>
           )}
 
-          {/* ================= 7. LEGAL POLICIES ================= */}
+          {/* ================= 7. AMBASSADORS (CELEBRITIES) ================= */}
+          {activeTab === 'AMBASSADORS' && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ambassadors" className="space-y-8">
+               <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 flex flex-col md:flex-row gap-8">
+                  <div className="flex-1 space-y-4">
+                     <h3 className="text-2xl font-serif text-white mb-6 flex items-center gap-3"><Award size={24} className="text-[#D4AF37]"/> Add Brand Ambassador</h3>
+                     <input value={newCeleb.name} onChange={e=>setNewCeleb({...newCeleb, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Celebrity Name"/>
+                     <input value={newCeleb.title} onChange={e=>setNewCeleb({...newCeleb, title: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Title (e.g. Actor / Athlete)"/>
+                     <button onClick={handleAddCelebrity} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4">Save Ambassador</button>
+                  </div>
+                  <div className="flex flex-col gap-4 items-center justify-center border-l border-white/10 pl-8">
+                     <PremiumUploadNode placeholder="Photo" onUploadSuccess={(url:string)=>setNewCeleb({...newCeleb, imageUrl: url})} />
+                     {newCeleb.imageUrl && <div className="h-32 w-32 rounded-xl overflow-hidden border border-white/20"><img src={newCeleb.imageUrl} className="w-full h-full object-cover"/></div>}
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {celebs.map((c) => (
+                      <div key={c._id} className="bg-[#111] rounded-2xl border border-white/10 overflow-hidden relative group shadow-lg hover:border-[#D4AF37]/50 transition-all">
+                          <div className="h-56 relative">
+                              <img src={c.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                              <button onClick={() => handleDeleteCeleb(c._id)} className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                          </div>
+                          <div className="p-5 text-center">
+                              <h4 className="font-bold text-lg text-white mb-1">{c.name}</h4>
+                              <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-wider">{c.title}</p>
+                          </div>
+                      </div>
+                  ))}
+               </div>
+            </motion.div>
+          )}
+
+          {/* ================= 8. SEO ENGINE (NEW) ================= */}
+          {activeTab === 'SEO_ENGINE' && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8">
+                <SeoAnalyticsDashboard />
+            </motion.div>
+          )}
+
+          {/* ================= 9. LEGAL POLICIES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
              <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
                 <div className="lg:col-span-4 space-y-8">
@@ -973,7 +1033,7 @@ function AdminDashboard() {
              </motion.div>
           )}
 
-          {/* ================= 8. REVIEWS ================= */}
+          {/* ================= 10. REVIEWS ================= */}
           {activeTab === 'REVIEWS' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="rev" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                <div className="lg:col-span-4 space-y-8">
@@ -1043,7 +1103,7 @@ function AdminDashboard() {
             </motion.div>
           )}
 
-          {/* ================= 9. AFFILIATES ================= */}
+          {/* ================= 11. AFFILIATES ================= */}
           {activeTab === 'SALES_FORCE' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="salesforce" className="space-y-8">
                <div className="bg-[#111] p-10 rounded-[40px] border border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -1087,7 +1147,7 @@ function AdminDashboard() {
             </motion.div>
           )}
 
-          {/* ================= 10. AI PRICING ================= */}
+          {/* ================= 12. AI PRICING ================= */}
           {activeTab === 'AI_ENGINE' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ai" className="max-w-3xl mx-auto space-y-10">
                <div className="text-center mb-10">
@@ -1126,7 +1186,7 @@ function AdminDashboard() {
             </motion.div>
           )}
 
-          {/* ================= 11. SECURITY ================= */}
+          {/* ================= 13. SECURITY ================= */}
           {activeTab === 'SECURITY' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} className="max-w-2xl mx-auto mt-20">
                <div className="bg-[#111] border border-red-500/30 p-12 rounded-[40px] flex flex-col items-center text-center">
@@ -1136,39 +1196,6 @@ function AdminDashboard() {
                   <button className="px-10 py-5 bg-red-600 text-white text-sm font-bold uppercase rounded-xl hover:bg-red-500 transition-all flex items-center gap-2">
                      <Lock size={18}/> Turn On Maintenance Mode
                   </button>
-               </div>
-            </motion.div>
-          )}
-
-          {/* 🌟 12. AMBASSADORS (CELEBRITIES) 🌟 */}
-          {activeTab === 'AMBASSADORS' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ambassadors" className="space-y-8">
-               <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 flex flex-col md:flex-row gap-8">
-                  <div className="flex-1 space-y-4">
-                     <h3 className="text-2xl font-serif text-white mb-6 flex items-center gap-3"><Award size={24} className="text-[#D4AF37]"/> Add Brand Ambassador</h3>
-                     <input value={newCeleb.name} onChange={e=>setNewCeleb({...newCeleb, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Celebrity Name"/>
-                     <input value={newCeleb.title} onChange={e=>setNewCeleb({...newCeleb, title: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Title (e.g. Actor / Athlete)"/>
-                     <button onClick={handleAddCelebrity} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4">Save Ambassador</button>
-                  </div>
-                  <div className="flex flex-col gap-4 items-center justify-center border-l border-white/10 pl-8">
-                     <PremiumUploadNode placeholder="Photo" onUploadSuccess={(url:string)=>setNewCeleb({...newCeleb, imageUrl: url})} />
-                     {newCeleb.imageUrl && <div className="h-32 w-32 rounded-xl overflow-hidden border border-white/20"><img src={newCeleb.imageUrl} className="w-full h-full object-cover"/></div>}
-                  </div>
-               </div>
-
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {celebs.map((c) => (
-                      <div key={c._id} className="bg-[#111] rounded-2xl border border-white/10 overflow-hidden relative group shadow-lg hover:border-[#D4AF37]/50 transition-all">
-                          <div className="h-56 relative">
-                              <img src={c.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                              <button onClick={() => handleDeleteCeleb(c._id)} className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
-                          </div>
-                          <div className="p-5 text-center">
-                              <h4 className="font-bold text-lg text-white mb-1">{c.name}</h4>
-                              <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-wider">{c.title}</p>
-                          </div>
-                      </div>
-                  ))}
                </div>
             </motion.div>
           )}
