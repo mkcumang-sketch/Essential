@@ -16,9 +16,9 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
 
 // 🌟 SEO COMPONENTS IMPORTED 🌟
-import SeoPanel from '@/components/Admin/seopanel';
-import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
-import SeoAnalyticsDashboard from '@/components/Admin/SeoAnalyticsDashboard';
+import SeoPanel from '@/components/admin/SeoPanel';
+import ImageSeoPanel from '@/components/admin/ImageSeoPanel';
+import SeoAnalyticsDashboard from '@/components/admin/SeoAnalyticsDashboard';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
