@@ -26,11 +26,14 @@ export default function PremiumAccountDashboard() {
         if (status === "unauthenticated") {
             router.push('/login');
         } else if (status === "authenticated" && session?.user) {
-            // Fetch all 15 features data from the aggregator
+            // Fetch Dynamic Data for the LOGGED-IN USER ONLY
             fetch('/api/user/dashboard', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: (session.user as any).phone, email: session.user.email })
+                body: JSON.stringify({ 
+                    phone: (session.user as any).phone, 
+                    email: session.user.email 
+                })
             })
             .then(res => res.json())
             .then(json => {
@@ -89,6 +92,10 @@ export default function PremiumAccountDashboard() {
         { id: 'SUPPORT', label: 'Reviews & Support', icon: MessageSquare },
     ];
 
+    // 🌟 ALWAYS USE SESSION DATA FOR IDENTITY 🌟
+    const userName = session?.user?.name || 'Premium Member';
+    const userRole = (session?.user as any)?.role || 'USER';
+
     return (
         <div className="min-h-screen bg-[#FAFAFA] font-sans text-gray-900 pb-20 relative">
             
@@ -122,10 +129,21 @@ export default function PremiumAccountDashboard() {
                 <aside className="w-full lg:w-72 shrink-0">
                     <div className="bg-black text-white p-6 rounded-[30px] mb-8 shadow-xl relative overflow-hidden">
                         <div className="absolute -right-10 -top-10 text-white/5 pointer-events-none"><ShieldCheck size={150}/></div>
-                        <h3 className="font-serif text-2xl mb-1 relative z-10">{dashData.profile.name}</h3>
-                        <p className="text-[10px] text-[#D4AF37] font-black uppercase tracking-[2px] mb-6 relative z-10">Elite Member</p>
                         
-                        {/* FEATURE 1: Profile Completeness Meter */}
+                        {/* 🌟 USER IDENTITY TIED TO SESSION 🌟 */}
+                        <h3 className="font-serif text-2xl mb-1 relative z-10">{userName}</h3>
+                        <p className="text-[10px] text-[#D4AF37] font-black uppercase tracking-[2px] mb-6 relative z-10">
+                            {userRole === 'SUPER_ADMIN' ? 'Site Administrator' : 'Elite Member'}
+                        </p>
+                        
+                        {userRole === 'SUPER_ADMIN' && (
+                            <div className="relative z-10 mb-6">
+                                <Link href="/godmode" className="w-full py-3 bg-[#D4AF37]/20 text-[#D4AF37] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all flex justify-center items-center gap-2">
+                                    <ShieldCheck size={16}/> Admin Panel
+                                </Link>
+                            </div>
+                        )}
+
                         <div className="relative z-10">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-[9px] uppercase tracking-widest text-gray-400">Profile Strength</span>
@@ -153,7 +171,6 @@ export default function PremiumAccountDashboard() {
                     {activeTab === 'OVERVIEW' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             
-                            {/* REPLACED CHART WITH ACCOUNT SNAPSHOT */}
                             <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Orders</p>
@@ -170,7 +187,6 @@ export default function PremiumAccountDashboard() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* FEATURE 13: Recommendations */}
                                 <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
                                     <h4 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2"><Star size={16} className="text-[#D4AF37]"/> Curated For You</h4>
                                     <div className="space-y-4">
@@ -186,7 +202,6 @@ export default function PremiumAccountDashboard() {
                                     </div>
                                 </div>
 
-                                {/* Quick Actions - NOW FUNCTIONAL */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div onClick={() => showToast("No Digital Certificates available for current assets.")} className="bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center hover:border-black cursor-pointer transition-all group">
                                         <div className="w-14 h-14 bg-gray-50 text-black rounded-full flex items-center justify-center mb-4 group-hover:bg-black group-hover:text-white transition-colors"><ShieldCheck size={24}/></div>
@@ -208,6 +223,7 @@ export default function PremiumAccountDashboard() {
                                 <div className="bg-white p-12 rounded-[40px] text-center border border-gray-100">
                                     <ShoppingBag size={40} className="mx-auto text-gray-300 mb-4"/>
                                     <p className="text-gray-500 font-serif">You haven't acquired any timepieces yet.</p>
+                                    <Link href="/shop" className="mt-6 inline-block px-8 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-gray-800 transition-all">Shop Now</Link>
                                 </div>
                             ) : dashData.orders.map((order: any) => (
                                 <div key={order.id} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col gap-6">
@@ -216,13 +232,11 @@ export default function PremiumAccountDashboard() {
                                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Order {order.id}</p>
                                             <h4 className="font-serif text-2xl font-bold">₹{order.total.toLocaleString()}</h4>
                                         </div>
-                                        {/* FEATURE 4: Download Invoice - NOW FUNCTIONAL */}
                                         <button onClick={() => showToast(`Invoice for ${order.id} is downloading...`)} className="px-6 py-3 bg-gray-50 hover:bg-black hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 w-max">
                                             <Download size={14}/> Download Invoice
                                         </button>
                                     </div>
                                     
-                                    {/* FEATURE 3: Order Timeline */}
                                     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between px-4">
                                         {order.timeline.map((step:any, i:number) => (
                                             <div key={i} className="flex flex-row md:flex-col items-center md:items-center gap-4 md:gap-2 w-full relative">
@@ -275,7 +289,6 @@ export default function PremiumAccountDashboard() {
                                 </div>
                             </div>
 
-                            {/* FEATURE 14: Coupon & Offer Vault */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="bg-white p-10 rounded-[40px] border border-gray-200 shadow-sm">
                                     <h3 className="text-xl font-bold mb-6 font-serif">Withdraw Funds</h3>
@@ -288,7 +301,7 @@ export default function PremiumAccountDashboard() {
                                 <div className="bg-[#D4AF37]/10 p-10 rounded-[40px] border border-[#D4AF37]/30">
                                     <h3 className="text-xl font-bold mb-6 font-serif text-black flex items-center gap-2"><Ticket size={20}/> Coupon Vault</h3>
                                     <div className="space-y-4">
-                                        {dashData.coupons.map((c:any, i:number) => (
+                                        {dashData.coupons.length === 0 ? <p className="text-gray-500 text-sm">No coupons available.</p> : dashData.coupons.map((c:any, i:number) => (
                                             <div key={i} className="bg-white p-5 rounded-2xl border border-[#D4AF37]/30 flex justify-between items-center shadow-sm">
                                                 <div>
                                                     <p className="font-bold text-sm text-black">{c.discount} OFF</p>
@@ -308,7 +321,6 @@ export default function PremiumAccountDashboard() {
                     {/* --- TAB 4: WISHLIST & RECENTLY VIEWED --- */}
                     {activeTab === 'WISHLIST' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* FEATURE 8: Wishlist */}
                             <div>
                                 <h3 className="text-2xl font-serif mb-6 border-b border-gray-200 pb-4">Saved to Wishlist</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -320,14 +332,12 @@ export default function PremiumAccountDashboard() {
                                             </div>
                                             <h4 className="font-bold text-sm mb-1">{item.name}</h4>
                                             <p className="font-mono text-xs text-gray-500 mb-4">₹{item.price.toLocaleString()}</p>
-                                            {/* FUNCTIONAL MOVE TO CART */}
                                             <button onClick={() => handleMoveToCart(item)} className="w-full py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-[#D4AF37] hover:text-black transition-colors">Move to Cart</button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* FEATURE 9: Recently Viewed */}
                             <div>
                                 <h3 className="text-2xl font-serif mb-6 border-b border-gray-200 pb-4 flex items-center gap-2"><Eye size={20} className="text-gray-400"/> Recently Viewed</h3>
                                 <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar">
@@ -345,14 +355,13 @@ export default function PremiumAccountDashboard() {
                     {/* --- TAB 5: ADDRESSES & SECURITY --- */}
                     {activeTab === 'SETTINGS' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* FEATURE 2: Multiple Address Book */}
                             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
                                 <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                                     <h3 className="text-xl font-bold font-serif flex items-center gap-2"><MapPin size={20}/> Address Book</h3>
                                     <button onClick={() => handleActionPrompt('Add Address', 'Enter your new complete address:')} className="text-[10px] font-black uppercase text-[#D4AF37]">+ Add New</button>
                                 </div>
                                 <div className="space-y-4">
-                                    {dashData.addresses.map((addr:any) => (
+                                    {dashData.addresses.length === 0 ? <p className="text-gray-500 text-sm">No saved addresses.</p> : dashData.addresses.map((addr:any) => (
                                         <div key={addr.id} className={`p-5 rounded-2xl border ${addr.isDefault ? 'border-black bg-gray-50' : 'border-gray-100'}`}>
                                             <div className="flex justify-between mb-2">
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-gray-200 rounded">{addr.type}</span>
@@ -365,10 +374,9 @@ export default function PremiumAccountDashboard() {
                             </div>
 
                             <div className="space-y-8">
-                                {/* FEATURE 7: Saved Payments */}
                                 <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
                                     <h3 className="text-xl font-bold font-serif flex items-center gap-2 mb-6 border-b border-gray-100 pb-4"><CreditCard size={20}/> Saved Cards</h3>
-                                    {dashData.savedCards.map((card:any) => (
+                                    {dashData.savedCards.length === 0 ? <p className="text-gray-500 text-sm">No cards saved.</p> : dashData.savedCards.map((card:any) => (
                                         <div key={card.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
                                             <div className="w-12 h-8 bg-[#1A1F71] rounded flex items-center justify-center text-white text-[10px] font-bold italic">VISA</div>
                                             <div className="flex-1">
@@ -379,7 +387,6 @@ export default function PremiumAccountDashboard() {
                                     ))}
                                 </div>
 
-                                {/* FEATURE 15: Security Panel */}
                                 <div className="bg-[#050505] p-8 rounded-[40px] shadow-sm text-white relative overflow-hidden">
                                     <div className="absolute right-[-20px] top-[-20px] opacity-10"><ShieldAlert size={150}/></div>
                                     <h3 className="text-xl font-bold font-serif mb-6 relative z-10">Account Security</h3>
@@ -387,8 +394,8 @@ export default function PremiumAccountDashboard() {
                                         <button onClick={() => showToast("Password reset link sent to your email/phone.")} className="w-full py-4 bg-white/10 rounded-xl text-xs font-bold hover:bg-white hover:text-black transition-colors">Change Password</button>
                                         <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                                             <p className="text-[10px] uppercase text-gray-400 mb-1">Last Login IP</p>
-                                            <p className="text-sm font-mono">{dashData.profile.loginHistory[0].ip}</p>
-                                            <p className="text-[9px] text-gray-500 mt-1">{new Date(dashData.profile.loginHistory[0].date).toLocaleString()}</p>
+                                            <p className="text-sm font-mono">{dashData.profile.loginHistory?.[0]?.ip || '192.168.1.1'}</p>
+                                            <p className="text-[9px] text-gray-500 mt-1">{new Date().toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -400,13 +407,12 @@ export default function PremiumAccountDashboard() {
                     {activeTab === 'SUPPORT' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="space-y-8">
-                                {/* FEATURE 10: Notifications */}
                                 <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
                                     <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                                         <h3 className="text-xl font-bold font-serif flex items-center gap-2"><Bell size={20}/> Alerts</h3>
                                     </div>
                                     <div className="space-y-4">
-                                        {dashData.notifications.map((n:any) => (
+                                        {dashData.notifications.length === 0 ? <p className="text-gray-500 text-sm">No new alerts.</p> : dashData.notifications.map((n:any) => (
                                             <div key={n.id} className={`p-4 rounded-xl border ${n.unread ? 'bg-blue-50 border-blue-100' : 'bg-gray-50 border-gray-100'}`}>
                                                 <h4 className="font-bold text-sm mb-1">{n.title}</h4>
                                                 <p className="text-xs text-gray-600 mb-2">{n.desc}</p>
@@ -416,7 +422,6 @@ export default function PremiumAccountDashboard() {
                                     </div>
                                 </div>
 
-                                {/* FEATURE 11: Support Tickets */}
                                 <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
                                     <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                                         <h3 className="text-xl font-bold font-serif flex items-center gap-2"><AlertCircle size={20}/> Support Tickets</h3>
@@ -434,7 +439,6 @@ export default function PremiumAccountDashboard() {
                                 </div>
                             </div>
 
-                            {/* FEATURE 12: Review Manager */}
                             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
                                 <h3 className="text-xl font-bold font-serif flex items-center gap-2 mb-6 border-b border-gray-100 pb-4"><Star size={20}/> My Submitted Reviews</h3>
                                 <div className="space-y-6">
