@@ -5,12 +5,26 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 // 🌟 DATABASE CONNECTION 🌟
+// 🌟 BULLETPROOF DATABASE CONNECTION 🌟
+let isConnected = false; // Global variable to cache connection
+
 const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
+    mongoose.set('strictQuery', true);
+    
+    if (isConnected || mongoose.connection.readyState >= 1) {
+        return; // Pehle se connected hai toh wapas mat connect karo
+    }
+    
     try {
-        await mongoose.connect(process.env.MONGODB_URI as string);
+        await mongoose.connect(process.env.MONGODB_URI as string, {
+            bufferCommands: true, // Yeh error ko suppress karne ke liye zaroori hai
+            maxPoolSize: 10,
+        });
+        isConnected = true;
+        console.log("✅ MongoDB Connected Successfully");
     } catch (error) {
-        console.error("DB Connection Error:", error);
+        console.error("❌ DB Connection Error:", error);
+        throw new Error("Database connection failed! Please check your MONGODB_URI and IP Whitelist.");
     }
 };
 
