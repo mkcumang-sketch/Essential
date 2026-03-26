@@ -3,10 +3,37 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    const { pathname } = req.nextUrl;
+    const { pathname, origin } = req.nextUrl;
 
-    // 1. 🛡️ GODMODE (ADMIN PANEL) PROTECTION
+    // ==========================================
+    // 1. 🚀 SEO REDIRECT MANAGER (Runs First)
+    // ==========================================
+    // We skip API, static files, and admin panels to keep the site lightning fast
+    if (!pathname.startsWith('/api') && 
+        !pathname.startsWith('/_next') && 
+        !pathname.startsWith('/godmode') &&
+        !pathname.includes('.')) {
+        
+        try {
+            // Fast Edge-compatible API call to check if this URL needs a 301/302 redirect
+            const res = await fetch(`${origin}/api/seo/redirects/check?path=${encodeURIComponent(pathname)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data?.redirectUrl) {
+                    return NextResponse.redirect(new URL(data.redirectUrl, req.url), data.isPermanent ? 301 : 302);
+                }
+            }
+        } catch (error) {
+            console.error("Redirect check skipped (Network/Build phase)");
+        }
+    }
+
+    // ==========================================
+    // 2. 🛡️ SECURITY & AUTHENTICATION
+    // ==========================================
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+    // 👑 GODMODE (ADMIN PANEL) PROTECTION
     if (pathname.startsWith('/godmode')) {
         if (!token) {
             return NextResponse.redirect(new URL('/login', req.url));
@@ -16,7 +43,7 @@ export async function middleware(req: NextRequest) {
         }
     }
 
-    // 2. 👤 CLIENT ACCOUNT PROTECTION
+    // 👤 CLIENT ACCOUNT PROTECTION
     if (pathname.startsWith('/account') || pathname.startsWith('/checkout')) {
         if (!token) {
             return NextResponse.redirect(new URL('/login', req.url));
@@ -26,7 +53,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
 }
 
-// Ensure paths match exactly what you use in your app
+// ⚙️ MATCHER CONFIGURATION
+// It must check everything EXCEPT static files to catch old broken URLs for SEO redirects
 export const config = {
-    matcher: ['/godmode/:path*', '/account/:path*', '/checkout/:path*']
+    matcher: [
+        '/((?!_next/static|_next/image|favicon.ico).*)',
+    ]
 };
