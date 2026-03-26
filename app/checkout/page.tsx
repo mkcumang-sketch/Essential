@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShieldCheck, Truck, ArrowLeft, CheckCircle, Key, Info, Tag, ShoppingBag, X } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, CheckCircle, Tag, Info, ShoppingBag, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -37,14 +37,13 @@ export default function CheckoutPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
 
-    // 🎟️ REFERRAL / VAULT KEY STATES
+    // 🎟️ PROMO STATES (Handles both Product-Specific & Global Referrals)
     const [vaultKeyInput, setVaultKeyInput] = useState('');
-    const [appliedVaultKey, setAppliedVaultKey] = useState('');
+    const [promoDetails, setPromoDetails] = useState<{code: string, type: 'product'|'global', discountValue: number} | null>(null);
+    const [isVerifying, setIsVerifying] = useState(false);
     
-    // 🌟 TOAST STATES
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    // Shipping Details Form
     const [shippingData, setShippingData] = useState({
         name: '', email: '', phone: '', address: '', city: '', state: '', pincode: ''
     });
@@ -52,23 +51,17 @@ export default function CheckoutPage() {
     useEffect(() => {
         const savedCart = JSON.parse(localStorage.getItem('luxury_cart') || '[]');
         setCart(savedCart);
-        
         if (session?.user) {
-            setShippingData(prev => ({
-                ...prev,
-                name: session.user?.name || '',
-                email: session.user?.email || '',
-                phone: (session.user as any)?.phone || ''
-            }));
+            setShippingData(prev => ({...prev, name: session.user?.name || '', email: session.user?.email || '', phone: (session.user as any)?.phone || ''}));
         }
     }, [session]);
 
     const showLuxuryToast = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ show: true, message: msg, type });
-        setTimeout(() => setToast({ ...toast, show: false }), 4000);
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
     };
 
-    // 👑 THE MASTER PRICING CALCULATOR (Smart Math Engine)
+    // 👑 THE MASTER PRICING CALCULATOR
     const { subtotal, totalDiscount, totalTransit, totalTaxes, grandTotal } = useMemo(() => {
         let sub = 0; let disc = 0; let transit = 0; let tax = 0;
 
@@ -77,10 +70,12 @@ export default function CheckoutPage() {
             const qty = Number(item.qty);
             sub += itemPrice * qty;
 
-            // Referral Check: Code matches product's specific VIP Vault Key
-            if (appliedVaultKey && item.vipVaultKey?.toUpperCase() === appliedVaultKey) {
-                disc += Number(item.vipDiscount || 0) * qty;
+            // 1. Product Specific VIP Discount Math
+            if (promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase()) {
+                const productDisc = Number(item.vipDiscount || 0) * qty;
+                disc += productDisc;
                 itemPrice -= Number(item.vipDiscount || 0);
+                if(itemPrice < 0) itemPrice = 0;
             }
 
             transit += Number(item.transitFee || 0) * qty;
@@ -89,21 +84,49 @@ export default function CheckoutPage() {
             }
         });
 
-        return { subtotal: sub, totalDiscount: disc, totalTransit: transit, totalTaxes: tax, grandTotal: (sub - disc) + transit + tax };
-    }, [cart, appliedVaultKey]);
+        // 2. Global Referral/Coupon Math (Percentage Based)
+        if (promoDetails?.type === 'global') {
+            const globalDisc = (sub * promoDetails.discountValue) / 100;
+            disc += globalDisc;
+        }
 
-    const handleApplyVaultKey = () => {
+        return { subtotal: sub, totalDiscount: disc, totalTransit: transit, totalTaxes: tax, grandTotal: (sub - disc) + transit + tax };
+    }, [cart, promoDetails]);
+
+    const handleApplyPromoCode = async () => {
         if (!vaultKeyInput.trim()) return;
         const code = vaultKeyInput.toUpperCase();
+        setIsVerifying(true);
         
-        // Validation: Check if this code exists in any cart item
-        const isValid = cart.some(item => item.vipVaultKey?.toUpperCase() === code);
-        
-        if (isValid) {
-            setAppliedVaultKey(code);
-            showLuxuryToast(`VIP Access Granted: Code ${code} Applied!`, 'success');
-        } else {
-            showLuxuryToast("Invalid Vault Key or not applicable to your selection.", "error");
+        try {
+            // 1. Check Product-Specific Code First (Local Cart Check)
+            const isProductCode = cart.some(item => item.vipVaultKey?.toUpperCase() === code);
+            if (isProductCode) {
+                setPromoDetails({ code, type: 'product', discountValue: 0 }); 
+                showLuxuryToast(`VIP Access Granted: Watch Code Applied!`, 'success');
+                setIsVerifying(false);
+                return;
+            }
+
+            // 2. If not local, ask Database (Referrals & Coupons)
+            const res = await fetch('/api/verify-promo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setPromoDetails({ code, type: 'global', discountValue: data.discountValue });
+                showLuxuryToast(`Code Applied: ${data.discountValue}% Off!`, 'success');
+            } else {
+                setPromoDetails(null);
+                showLuxuryToast("Invalid Vault Key or Referral Code.", "error");
+            }
+        } catch (err) {
+            showLuxuryToast("Error connecting to Vault. Try again.", "error");
+        } finally {
+            setIsVerifying(false);
         }
     };
 
@@ -120,7 +143,7 @@ export default function CheckoutPage() {
                     items: cart,
                     totalAmount: grandTotal,
                     financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
-                    appliedVaultKey,
+                    appliedVaultKey: promoDetails?.code || '',
                     customer: shippingData,
                     paymentMethod: 'COD'
                 })
@@ -130,7 +153,7 @@ export default function CheckoutPage() {
                 localStorage.removeItem('luxury_cart');
                 setOrderPlaced(true); 
             } else {
-                showLuxuryToast("Acquisition failed. Please verify your details.", "error");
+                showLuxuryToast("Acquisition failed. Please verify details.", "error");
             }
         } catch (error) {
             showLuxuryToast("Connection interrupted. Try again.", "error");
@@ -153,7 +176,6 @@ export default function CheckoutPage() {
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-black pt-24 pb-20 font-sans">
             <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
-            
             <div className="max-w-[1300px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16">
                 
                 {/* --- Left Side: Shipping --- */}
@@ -161,9 +183,7 @@ export default function CheckoutPage() {
                     <button onClick={() => router.back()} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-400 hover:text-black transition-colors">
                         <ArrowLeft size={16} /> Back
                     </button>
-                    
                     <h2 className="text-5xl font-serif font-bold border-b border-gray-200 pb-6 tracking-tighter">SECURE CHECKOUT.</h2>
-                    
                     <form onSubmit={handlePlaceOrder} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
@@ -180,10 +200,7 @@ export default function CheckoutPage() {
                         <div className="pt-10">
                             <h3 className="text-xs font-black uppercase tracking-widest mb-6">Payment Selection</h3>
                             <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div>
-                                    <span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span>
-                                </div>
+                                <div className="flex items-center gap-4"><div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div><span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span></div>
                                 <CheckCircle size={24} className="text-black"/>
                             </div>
                         </div>
@@ -202,14 +219,12 @@ export default function CheckoutPage() {
                         <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
                             {cart.map((item, i) => (
                                 <div key={i} className="flex gap-4">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center">
-                                        <img src={item.imageUrl} className="max-h-full mix-blend-multiply" />
-                                    </div>
+                                    <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center"><img src={item.imageUrl} className="max-h-full mix-blend-multiply" /></div>
                                     <div className="flex-1">
                                         <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1">{item.name}</h4>
                                         <p className="text-[10px] text-gray-400 font-mono mt-1">QTY: {item.qty}</p>
                                         <p className="font-bold text-sm mt-1">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
-                                        {appliedVaultKey === item.vipVaultKey?.toUpperCase() && (
+                                        {promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase() && (
                                             <span className="inline-block bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
                                         )}
                                     </div>
@@ -217,18 +232,25 @@ export default function CheckoutPage() {
                             ))}
                         </div>
 
-                        {/* --- VAULT KEY INPUT (REFERRAL) --- */}
+                        {/* --- PROMO & REFERRAL BOX --- */}
                         <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200">
-                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 block flex items-center gap-2"><Tag size={12}/> Referral / Vault Key</label>
+                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Referral / Vault Key</label>
                             <div className="flex gap-2">
-                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: ELITE10" />
-                                <button onClick={handleApplyVaultKey} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all">Apply</button>
+                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: VIP-BK7S" />
+                                <button onClick={handleApplyPromoCode} disabled={isVerifying} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
+                                    {isVerifying ? '...' : 'Apply'}
+                                </button>
                             </div>
                         </div>
 
                         <div className="space-y-4 border-t border-gray-100 pt-8">
                             <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
-                            {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest"><span>Vault Benefit</span><span>-₹{totalDiscount.toLocaleString()}</span></div>}
+                            
+                            {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest">
+                                <span>{promoDetails?.type === 'global' ? 'Referral Benefit' : 'Vault Benefit'}</span>
+                                <span>-₹{totalDiscount.toLocaleString()}</span>
+                            </div>}
+                            
                             <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Transit & Insurance</span><span>{totalTransit === 0 ? "Complimentary" : `₹${totalTransit.toLocaleString()}`}</span></div>
                             {totalTaxes > 0 && <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Taxes & Duties</span><span>₹{totalTaxes.toLocaleString()}</span></div>}
                             
@@ -239,7 +261,6 @@ export default function CheckoutPage() {
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     );
