@@ -37,7 +37,7 @@ export const authOptions: NextAuthOptions = {
             credentials: {
                 phone: { label: "Phone Number", type: "text" },
                 password: { label: "Password", type: "password" },
-                captchaToken: { label: "Captcha", type: "text" } // 🛡️ Security Token
+                captchaToken: { label: "Captcha", type: "text" } 
             },
             async authorize(credentials) {
                 if (!credentials?.phone || !credentials?.password) {
@@ -50,7 +50,6 @@ export const authOptions: NextAuthOptions = {
                     const captchaRes = await fetch(verifyUrl, { method: 'POST' });
                     const captchaData = await captchaRes.json();
 
-                    // Agar score 0.5 se kam hai toh block kar do (Bot detection)
                     if (!captchaData.success || captchaData.score < 0.5) {
                         throw new Error("Security check failed. Bots are not allowed.");
                     }
@@ -88,38 +87,41 @@ export const authOptions: NextAuthOptions = {
             if (account?.provider === "google") {
                 const existingUser = await User.findOne({ email: user.email });
                 if (!existingUser) {
-                    // 🌟 Assign SUPER_ADMIN to your email, else regular USER 🌟
                     const role = user.email === 'mkcumang@gmail.com' ? 'SUPER_ADMIN' : 'USER';
-                    await User.create({ 
+                    const newUser = await User.create({ 
                         name: user.name, 
                         email: user.email, 
                         image: user.image, 
                         role: role 
                     });
+                    // Attach to user object for JWT
+                    (user as any).role = newUser.role;
+                    user.id = newUser._id.toString();
+                } else {
+                    // Attach existing data to user object for JWT
+                    (user as any).role = existingUser.role;
+                    (user as any).phone = existingUser.phone;
+                    user.id = existingUser._id.toString();
                 }
             }
             return true;
         },
         async jwt({ token, user }) {
-            // Initial sign in
+            // 🌟 FIX: NO EXTRA DB CALLS HERE. Fast and secure.
+            // 'user' only exists on the first sign-in, after that token persists.
             if (user) {
-                await connectDB();
-                const dbUser = await User.findOne({ 
-                    $or: [{ email: user.email }, { phone: (user as any).phone }] 
-                });
-                if (dbUser) {
-                    token.role = dbUser.role || 'USER';
-                    token.phone = dbUser.phone;
-                    token.id = dbUser._id.toString();
-                }
+                token.id = user.id;
+                token.role = (user as any).role || 'USER';
+                token.phone = (user as any).phone;
             }
             return token;
         },
         async session({ session, token }) {
+            // Send token data to frontend
             if (session.user) {
+                (session.user as any).id = token.id;
                 (session.user as any).role = token.role;
                 (session.user as any).phone = token.phone;
-                (session.user as any).id = token.id;
             }
             return session;
         }

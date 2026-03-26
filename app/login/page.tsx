@@ -72,6 +72,7 @@ export default function LoginPortal() {
     };
 
     // 🌟 UPDATED: Handle Login with Security 🌟
+    // 🌟 UPDATED: Handle Login with Security 🌟
     const handleManualLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phone || !password) return alert("Please enter details.");
@@ -91,14 +92,16 @@ export default function LoginPortal() {
                 alert("Invalid Credentials or Security Check Failed.");
                 setIsLoading(false);
             } else {
-                window.location.href = '/account';
+                // 🌟 FIX: Force Next.js to update state and read new cookie
+                router.refresh(); 
+                router.push('/account');
             }
         } catch (err) {
             alert("Login failed.");
             setIsLoading(false);
         }
     };
-
+    
     return (
         <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-gray-200 relative overflow-hidden">
             
