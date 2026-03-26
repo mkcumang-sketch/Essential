@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
-// Ensure DB Connection
+// 🌟 BULLETPROOF DB CONNECTION 🌟
 let isConnected = false;
 const connectDB = async () => {
     mongoose.set('strictQuery', true);
@@ -10,7 +10,7 @@ const connectDB = async () => {
     isConnected = true;
 };
 
-// Define Schema references if they don't exist yet
+// Schemas
 const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
 
@@ -23,12 +23,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "User identity missing" }, { status: 400 });
         }
 
-        // 1. DYNAMIC ORDERS FETCH: Sirf is user ke orders nikalo (Exclude PENDING/Abandoned carts)
+        // 🌟 THE FIX: Dynamic Query Builder 🌟
+        // Isse empty strings match nahi honge aur kisi aur ka data nahi aayega!
+        const orConditions = [];
+        if (email && email.trim() !== '') orConditions.push({ 'customer.email': email });
+        if (phone && phone.trim() !== '') orConditions.push({ 'customer.phone': phone });
+
+        // Security check: Agar email aur phone dono hi blank hain toh rok do
+        if (orConditions.length === 0) {
+             return NextResponse.json({ success: false, error: "Invalid user data" });
+        }
+
+        // 1. DYNAMIC ORDERS FETCH: Strictly for this user
         const userOrders = await Order.find({
-            $or: [
-                { 'customer.email': email }, 
-                { 'customer.phone': phone }
-            ],
+            $or: orConditions,
             status: { $ne: 'PENDING' }
         }).sort({ createdAt: -1 }).lean();
 
@@ -45,16 +53,21 @@ export async function POST(req: Request) {
             ]
         }));
 
-        // 2. Fetch User Record for Points/Referral (Create mock defaults if fields are missing in DB)
-        const dbUser = await User.findOne({ $or: [{ email }, { phone }] });
+        // 2. Fetch Strictly this User's Profile
+        const userQuery = [];
+        if (email && email.trim() !== '') userQuery.push({ email: email });
+        if (phone && phone.trim() !== '') userQuery.push({ phone: phone });
+
+        const dbUser = await User.findOne({ $or: userQuery });
+        
         const walletPoints = dbUser?.walletPoints || 0;
         const refCode = dbUser?.referralCode || `VIP-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-        // 3. Construct the Personalized Payload
+        // 3. Construct the 100% Personalized Payload
         const dashData = {
             profile: {
                 completeness: dbUser?.address ? 100 : 75,
-                loginHistory: [{ ip: "192.168.1.1", date: new Date().toISOString() }]
+                loginHistory: [{ ip: "Secured", date: new Date().toISOString() }]
             },
             orders: formattedOrders,
             wallet: {
@@ -62,7 +75,7 @@ export async function POST(req: Request) {
                 totalEarned: walletPoints,
                 referralCode: refCode
             },
-            // For now, keep the rest as empty/default arrays until you build these backend modules
+            // Keep the rest as empty/default arrays until you build these backend modules
             recommendations: [],
             coupons: [],
             wishlist: [],
