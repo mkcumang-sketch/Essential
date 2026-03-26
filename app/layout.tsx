@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
-import Navbar from '@/components/Navbar';
-import { GlobalProvider } from './GlobalProvider'; // 🌟 1. NAYA IMPORT
+import { GlobalProvider } from './GlobalProvider';
 
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
@@ -16,17 +15,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[#FAFAFA] text-gray-900 antialiased">
+      <body className="bg-[#FAFAFA] text-gray-900 antialiased overflow-x-hidden">
         
-        {/* 🌟 2. NAYA WRAPPER */}
+        {/* 🌟 GLOBAL WRAPPER: Handles Auth and Cart States */}
         <GlobalProvider>
-          <Navbar /> 
           
-          <main className="pt-24"> 
+          {/* ❌ Removed <Navbar /> from here because home page already has a premium header.
+              This prevents the "Double Header" glitch. 
+          */}
+          
+          <main> 
+             {/* ❌ Removed pt-24 (padding top). 
+                Now your Hero section will stick perfectly to the top.
+             */}
             {children}
           </main>
           
+          {/* Vercel Analytics for tracking traffic */}
           <Analytics />
+          
         </GlobalProvider>
 
       </body>

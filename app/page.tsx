@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { PhantomGuard } from '@/components/PhantomGuard';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { useSession } from "next-auth/react"; // 🌟 NEW IMPORT ADDED
+import { useSession } from "next-auth/react";
 
 const LUXURY_BRANDS = ["ROLEX", "PATEK PHILIPPE", "AUDEMARS PIGUET", "RICHARD MILLE", "CARTIER", "OMEGA", "VACHERON CONSTANTIN"];
 const DEFAULT_GALLERY_IMAGES = [
@@ -30,7 +30,28 @@ const DEFAULT_PROMO_VIDEOS = [
     ""  
 ];
 
-// 🌟 VIDEO BREAK
+// 🌟 PREMIUM TOAST COMPONENT
+const LuxuryToast = ({ show, message, type = "success" }: any) => (
+    <AnimatePresence>
+        {show && (
+            <motion.div 
+                initial={{ opacity: 0, y: 50, x: "-50%" }}
+                animate={{ opacity: 1, y: 0, x: "-50%" }}
+                exit={{ opacity: 0, scale: 0.95, x: "-50%" }}
+                className="fixed bottom-10 left-1/2 z-[3000] bg-black/95 backdrop-blur-xl border border-[#D4AF37]/50 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[320px]"
+            >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-red-500/20 text-red-500'}`}>
+                    {type === 'success' ? <ShoppingBag size={20} /> : <X size={20} />}
+                </div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Vault Updated</p>
+                    <p className="text-white text-sm font-serif italic">{message}</p>
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
+
 const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string }) => {
     if (!videoUrl || videoUrl.trim() === '') return null;
     return (
@@ -53,7 +74,6 @@ const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string
     );
 };
 
-// 🌟 HERO BANNER
 const Isolated4DHero = ({ config }: { config: any }) => {
   const heroRef = useRef(null);
   const router = useRouter();
@@ -145,7 +165,7 @@ const FadeUp = ({ children, delay = 0, className = "" }: any) => (
 
 function FrontPageStore() {
   const router = useRouter();
-  const { data: session, status } = useSession(); // 🌟 NEW: Session state fetched
+  const { data: session, status } = useSession();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
@@ -170,6 +190,9 @@ function FrontPageStore() {
   const [corporateInfo, setCorporateInfo] = useState<any>(null);
   const [legalPages, setLegalPages] = useState<any[]>([]);
 
+  // 🌟 NEW TOAST STATE
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ userName: '', comment: '', rating: 5 });
   const [reviewMedia, setReviewMedia] = useState<string[]>([]);
@@ -182,6 +205,11 @@ function FrontPageStore() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const showLuxuryToast = (msg: string, type: 'success' | 'error' = 'success') => {
+      setToast({ show: true, message: msg, type });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+  };
 
   useEffect(() => {
     const fetchPersonalizedData = async () => {
@@ -255,15 +283,15 @@ function FrontPageStore() {
     });
   }, [liveWatches, activeCategory, searchTerm]);
 
-  // 🌟 NEW: RESTRICTED ADD TO CART + ABANDONED CART SYNC 🌟
+  // 🌟 UPDATED: ADD TO CART WITH LUXURY TOAST 🌟
   const addToCart = async (product: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // 1. Force Login Check
+    // 1. Force Login Check with Luxury Handling
     if (status === 'unauthenticated' || !session) {
-        alert("Please Log In or Sign Up to add premium watches to your cart.");
-        router.push('/login'); 
+        showLuxuryToast("Please Login to access the vault.", "error");
+        setTimeout(() => router.push('/login'), 2000); 
         return;
     }
 
@@ -272,12 +300,13 @@ function FrontPageStore() {
     const newCart = exists ? cart.map(i => i._id === product._id ? {...i, qty: i.qty+1} : i) : [...cart, {...product, qty: 1}];
     setCart(newCart);
     localStorage.setItem('luxury_cart', JSON.stringify(newCart));
-    alert("Added to Cart!");
+    
+    // ✅ NO MORE BROWSER ALERT - LUXURY TOAST INSTEAD
+    showLuxuryToast(`${product.name} added to your collection.`, "success");
 
-    // 3. Background sync to Godmode (Abandoned Cart Lead)
+    // 3. Background sync to Godmode
     try {
         const cartTotal = newCart.reduce((total, item) => total + (Number(item.offerPrice || item.price) * item.qty), 0);
-        
         await fetch('/api/cart/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -292,7 +321,7 @@ function FrontPageStore() {
             })
         });
     } catch (err) {
-        console.error("Cart sync failed, but local cart updated.");
+        console.error("Cart sync failed");
     }
   };
 
@@ -306,14 +335,14 @@ function FrontPageStore() {
           const res = await fetch("/api/upload", { method: "POST", body: formData });
           const data = await res.json();
           if (data.success && data.url) setReviewMedia(prev => [...prev, data.url]);
-          else alert("Upload failed.");
-      } catch(err) { alert("Network error."); } finally { setIsUploadingMedia(false); }
+          else showLuxuryToast("Upload failed.", "error");
+      } catch(err) { showLuxuryToast("Network error.", "error"); } finally { setIsUploadingMedia(false); }
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (honeyPot.length > 0) return setReviewStatus('success'); 
-    if (!reviewForm.userName || !reviewForm.comment) return alert("Please fill your details.");
+    if (!reviewForm.userName || !reviewForm.comment) return showLuxuryToast("Fill details.", "error");
 
     setReviewStatus('submitting');
     try {
@@ -334,6 +363,9 @@ function FrontPageStore() {
 
   return (
     <div className="bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white overflow-x-hidden scroll-smooth">
+      
+      {/* 🌟 LUXURY TOAST ATTACHED 🌟 */}
+      <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
 
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-black origin-left z-[1000]" style={{ scaleX }} />
 

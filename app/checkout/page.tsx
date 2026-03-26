@@ -3,8 +3,31 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShieldCheck, Truck, ArrowLeft, CheckCircle, Key, Info } from 'lucide-react';
+import { ShieldCheck, Truck, ArrowLeft, CheckCircle, Key, Info, Tag, ShoppingBag, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+
+// --- LUXURY TOAST COMPONENT ---
+const LuxuryToast = ({ show, message, type = "success" }: any) => (
+    <AnimatePresence>
+        {show && (
+            <motion.div 
+                initial={{ opacity: 0, y: 50, x: "-50%" }}
+                animate={{ opacity: 1, y: 0, x: "-50%" }}
+                exit={{ opacity: 0, scale: 0.95, x: "-50%" }}
+                className="fixed bottom-10 left-1/2 z-[2000] bg-black/95 backdrop-blur-xl border border-[#D4AF37]/50 px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-4 min-w-[320px]"
+            >
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                    {type === 'success' ? <CheckCircle size={20} /> : <X size={20} />}
+                </div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Vault System</p>
+                    <p className="text-white text-sm font-serif italic">{message}</p>
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -14,9 +37,12 @@ export default function CheckoutPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
 
-    // 👑 VIP Vault Key States
+    // 🎟️ REFERRAL / VAULT KEY STATES
     const [vaultKeyInput, setVaultKeyInput] = useState('');
     const [appliedVaultKey, setAppliedVaultKey] = useState('');
+    
+    // 🌟 TOAST STATES
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     // Shipping Details Form
     const [shippingData, setShippingData] = useState({
@@ -37,59 +63,56 @@ export default function CheckoutPage() {
         }
     }, [session]);
 
-    // 👑 THE MASTER PRICING CALCULATOR (Smart Math Engine) 👑
+    const showLuxuryToast = (msg: string, type: 'success' | 'error' = 'success') => {
+        setToast({ show: true, message: msg, type });
+        setTimeout(() => setToast({ ...toast, show: false }), 4000);
+    };
+
+    // 👑 THE MASTER PRICING CALCULATOR (Smart Math Engine)
     const { subtotal, totalDiscount, totalTransit, totalTaxes, grandTotal } = useMemo(() => {
-        let sub = 0;
-        let disc = 0;
-        let transit = 0;
-        let tax = 0;
+        let sub = 0; let disc = 0; let transit = 0; let tax = 0;
 
         cart.forEach(item => {
             let itemPrice = Number(item.offerPrice || item.price);
             const qty = Number(item.qty);
-
             sub += itemPrice * qty;
 
-            // 1. VIP Discount Check
-            if (appliedVaultKey && item.vipVaultKey && appliedVaultKey.toUpperCase() === item.vipVaultKey.toUpperCase()) {
-                const discountValue = Number(item.vipDiscount || 0) * qty;
-                disc += discountValue;
+            // Referral Check: Code matches product's specific VIP Vault Key
+            if (appliedVaultKey && item.vipVaultKey?.toUpperCase() === appliedVaultKey) {
+                disc += Number(item.vipDiscount || 0) * qty;
                 itemPrice -= Number(item.vipDiscount || 0);
-                if (itemPrice < 0) itemPrice = 0; // Price negative nahi ho sakti
             }
 
-            // 2. Insured Transit Fee Check
             transit += Number(item.transitFee || 0) * qty;
-
-            // 3. Tax / GST Check (Only add if Exclusive)
             if (item.taxInclusive === false) {
-                const taxRate = Number(item.taxPercentage || 0) / 100;
-                tax += (itemPrice * qty) * taxRate;
+                tax += (itemPrice * qty) * (Number(item.taxPercentage || 18) / 100);
             }
         });
 
-        return {
-            subtotal: sub,
-            totalDiscount: disc,
-            totalTransit: transit,
-            totalTaxes: tax,
-            grandTotal: (sub - disc) + transit + tax
-        };
+        return { subtotal: sub, totalDiscount: disc, totalTransit: transit, totalTaxes: tax, grandTotal: (sub - disc) + transit + tax };
     }, [cart, appliedVaultKey]);
 
     const handleApplyVaultKey = () => {
         if (!vaultKeyInput.trim()) return;
-        setAppliedVaultKey(vaultKeyInput.toUpperCase());
-        // UI Feedback can be handled via toast in a real app
+        const code = vaultKeyInput.toUpperCase();
+        
+        // Validation: Check if this code exists in any cart item
+        const isValid = cart.some(item => item.vipVaultKey?.toUpperCase() === code);
+        
+        if (isValid) {
+            setAppliedVaultKey(code);
+            showLuxuryToast(`VIP Access Granted: Code ${code} Applied!`, 'success');
+        } else {
+            showLuxuryToast("Invalid Vault Key or not applicable to your selection.", "error");
+        }
     };
 
     const handlePlaceOrder = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (cart.length === 0) return alert("Your cart is empty!");
+        if (cart.length === 0) return showLuxuryToast("Your cart is empty!", "error");
         
         setIsSubmitting(true);
         try {
-            // Updated Payload with Exact Financial Breakdown
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -103,15 +126,14 @@ export default function CheckoutPage() {
                 })
             });
 
-            const data = await res.json();
-            if (res.ok && data.success) {
+            if (res.ok) {
                 localStorage.removeItem('luxury_cart');
                 setOrderPlaced(true); 
             } else {
-                alert("Something went wrong. Please try again.");
+                showLuxuryToast("Acquisition failed. Please verify your details.", "error");
             }
         } catch (error) {
-            alert("Network Error!");
+            showLuxuryToast("Connection interrupted. Try again.", "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -119,126 +141,101 @@ export default function CheckoutPage() {
 
     if (orderPlaced) {
         return (
-            <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 text-center">
-                <CheckCircle size={80} className="text-[#D4AF37] mb-6 shadow-[0_0_30px_rgba(212,175,55,0.4)] rounded-full" />
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-black mb-4">Acquisition Confirmed!</h1>
-                <p className="text-gray-500 mb-8 max-w-md font-serif italic">Thank you for your trust. Your premium timepieces are being prepared for secure transit. Payment will be collected upon delivery.</p>
-                <Link href="/shop" className="px-10 py-5 bg-black text-white text-[10px] font-bold uppercase tracking-[4px] rounded-full hover:bg-[#D4AF37] hover:text-black transition-all">
-                    Return to Vault
-                </Link>
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white">
+                <motion.div initial={{scale:0}} animate={{scale:1}}><CheckCircle size={100} className="text-[#D4AF37] mb-6 shadow-[0_0_50px_rgba(212,175,55,0.3)] rounded-full" /></motion.div>
+                <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 tracking-tighter uppercase">Order Secured</h1>
+                <p className="text-gray-400 mb-10 max-w-md font-serif italic text-lg">Acquisition successful. Your timepieces are being prepared for armored transit.</p>
+                <Link href="/shop" className="px-12 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-2xl">Return to Vault</Link>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] text-black pt-24 pb-20">
-            <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="min-h-screen bg-[#FAFAFA] text-black pt-24 pb-20 font-sans">
+            <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
+            
+            <div className="max-w-[1300px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16">
                 
-                {/* Left Side: Shipping Form */}
-                <div className="lg:col-span-7 space-y-8">
+                {/* --- Left Side: Shipping --- */}
+                <div className="lg:col-span-7 space-y-10">
                     <button onClick={() => router.back()} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-400 hover:text-black transition-colors">
-                        <ArrowLeft size={16} /> Back to Cart
+                        <ArrowLeft size={16} /> Back
                     </button>
                     
-                    <h2 className="text-4xl font-serif font-bold border-b border-gray-200 pb-4">Secure Checkout</h2>
+                    <h2 className="text-5xl font-serif font-bold border-b border-gray-200 pb-6 tracking-tighter">SECURE CHECKOUT.</h2>
                     
                     <form onSubmit={handlePlaceOrder} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Full Name</label><input required value={shippingData.name} onChange={e=>setShippingData({...shippingData, name: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="John Doe"/></div>
-                            <div><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Phone Number</label><input required value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="+91 9876543210"/></div>
+                            <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
+                            <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Phone Number" value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone:e.target.value})}/>
                         </div>
-                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Email Address</label><input required type="email" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="john@example.com"/></div>
-                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">Secure Delivery Address</label><textarea required value={shippingData.address} onChange={e=>setShippingData({...shippingData, address: e.target.value})} rows={3} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black custom-scrollbar" placeholder="House No, Street, Landmark..."/></div>
+                        <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
+                        <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
                         
-                        <div className="grid grid-cols-3 gap-6">
-                            <div className="col-span-1"><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">PIN Code</label><input required value={shippingData.pincode} onChange={e=>setShippingData({...shippingData, pincode: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="110001"/></div>
-                            <div className="col-span-1"><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">City</label><input required value={shippingData.city} onChange={e=>setShippingData({...shippingData, city: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="Mumbai"/></div>
-                            <div className="col-span-1"><label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 block">State</label><input required value={shippingData.state} onChange={e=>setShippingData({...shippingData, state: e.target.value})} className="w-full bg-white border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="Maharashtra"/></div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="PIN" value={shippingData.pincode} onChange={e=>setShippingData({...shippingData, pincode:e.target.value})}/>
+                            <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black col-span-2" placeholder="City" value={shippingData.city} onChange={e=>setShippingData({...shippingData, city:e.target.value})}/>
                         </div>
 
-                        {/* Payment Method Selector */}
-                        <div className="pt-6 border-t border-gray-200">
-                            <h3 className="text-lg font-serif font-bold mb-4">Payment Method</h3>
-                            <div className="p-5 border-2 border-black rounded-xl bg-gray-50 flex items-center justify-between cursor-pointer">
-                                <span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery (COD)</span>
-                                <div className="w-5 h-5 rounded-full border-4 border-black flex items-center justify-center"><div className="w-2 h-2 bg-black rounded-full"></div></div>
+                        <div className="pt-10">
+                            <h3 className="text-xs font-black uppercase tracking-widest mb-6">Payment Selection</h3>
+                            <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div>
+                                    <span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span>
+                                </div>
+                                <CheckCircle size={24} className="text-black"/>
                             </div>
-                            <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400 mt-3 flex items-center gap-2"><ShieldCheck size={14}/> Razorpay & Crypto integrations locked pending domain.</p>
                         </div>
 
-                        <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-5 bg-black text-white font-black uppercase tracking-[4px] text-[10px] rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50 mt-6 shadow-xl">
-                            {isSubmitting ? 'Securing Assets...' : 'Confirm Acquisition'}
+                        <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-6 bg-black text-white font-black uppercase tracking-[5px] text-[11px] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all shadow-2xl disabled:opacity-50">
+                            {isSubmitting ? 'Authenticating...' : 'Confirm Acquisition'}
                         </button>
                     </form>
                 </div>
 
-                {/* Right Side: Order Summary & Math Engine */}
+                {/* --- Right Side: Summary --- */}
                 <div className="lg:col-span-5">
-                    <div className="bg-white border border-gray-200 p-8 md:p-10 rounded-[40px] sticky top-32 shadow-xl">
-                        <h3 className="text-2xl font-serif font-bold mb-6 border-b border-gray-100 pb-4">Invoice Summary</h3>
+                    <div className="bg-white border border-gray-100 p-8 md:p-10 rounded-[40px] sticky top-24 shadow-2xl">
+                        <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4">Vault Summary</h3>
                         
-                        <div className="space-y-6 mb-8 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
-                            {cart.length === 0 ? <p className="text-sm text-gray-500 font-serif italic">Your vault is empty.</p> : cart.map((item, i) => (
+                        <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                            {cart.map((item, i) => (
                                 <div key={i} className="flex gap-4">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 flex items-center justify-center shrink-0 border border-gray-100">
-                                        <img src={item.imageUrl || (item.images && item.images[0])} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                                    <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center">
+                                        <img src={item.imageUrl} className="max-h-full mix-blend-multiply" />
                                     </div>
-                                    <div className="flex-1 flex flex-col justify-center">
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{item.brand}</p>
-                                        <h4 className="text-sm font-bold line-clamp-1 mb-1">{item.name}</h4>
-                                        <div className="flex justify-between items-end w-full">
-                                            <p className="text-xs text-gray-500 font-mono">Qty: {item.qty}</p>
-                                            <p className="font-bold text-sm font-mono">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
-                                        </div>
-                                        {/* Show applied discount badge if valid */}
-                                        {appliedVaultKey && appliedVaultKey === item.vipVaultKey?.toUpperCase() && (
-                                            <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold uppercase mt-2 w-max">-₹{item.vipDiscount} VIP Vault Discount</span>
+                                    <div className="flex-1">
+                                        <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1">{item.name}</h4>
+                                        <p className="text-[10px] text-gray-400 font-mono mt-1">QTY: {item.qty}</p>
+                                        <p className="font-bold text-sm mt-1">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
+                                        {appliedVaultKey === item.vipVaultKey?.toUpperCase() && (
+                                            <span className="inline-block bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
                                         )}
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* 👑 VIP VAULT KEY INPUT 👑 */}
-                        <div className="mb-8">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2"><Key size={12}/> VIP Vault Key</label>
+                        {/* --- VAULT KEY INPUT (REFERRAL) --- */}
+                        <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200">
+                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 block flex items-center gap-2"><Tag size={12}/> Referral / Vault Key</label>
                             <div className="flex gap-2">
-                                <input 
-                                    value={vaultKeyInput} 
-                                    onChange={(e) => setVaultKeyInput(e.target.value)} 
-                                    className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm font-mono uppercase outline-none focus:border-[#D4AF37] placeholder-gray-300" 
-                                    placeholder="Enter Code"
-                                />
-                                <button onClick={handleApplyVaultKey} className="px-6 bg-black text-[#D4AF37] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[#D4AF37] hover:text-black transition-colors">Apply</button>
+                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: ELITE10" />
+                                <button onClick={handleApplyVaultKey} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all">Apply</button>
                             </div>
                         </div>
 
-                        {/* 👑 FINANCIAL BREAKDOWN 👑 */}
-                        <div className="border-t border-gray-100 pt-6 space-y-4">
-                            <div className="flex justify-between text-sm text-gray-500 font-mono"><span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
+                        <div className="space-y-4 border-t border-gray-100 pt-8">
+                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
+                            {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest"><span>Vault Benefit</span><span>-₹{totalDiscount.toLocaleString()}</span></div>}
+                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Transit & Insurance</span><span>{totalTransit === 0 ? "Complimentary" : `₹${totalTransit.toLocaleString()}`}</span></div>
+                            {totalTaxes > 0 && <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Taxes & Duties</span><span>₹{totalTaxes.toLocaleString()}</span></div>}
                             
-                            {totalDiscount > 0 && (
-                                <div className="flex justify-between text-sm text-green-600 font-mono font-bold"><span>Vault Discount</span><span>-₹{totalDiscount.toLocaleString()}</span></div>
-                            )}
-                            
-                            <div className="flex justify-between text-sm text-gray-500 font-mono items-center">
-                                <span className="flex items-center gap-1">Transit Fee <Info size={12} className="text-gray-300"/></span>
-                                {totalTransit === 0 ? <span className="text-[#D4AF37] font-bold uppercase text-xs tracking-widest">Complimentary</span> : <span>₹{totalTransit.toLocaleString()}</span>}
+                            <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-100">
+                                <span className="font-black text-xs uppercase tracking-[4px]">Grand Total</span>
+                                <span className="text-4xl font-serif font-black tracking-tighter">₹{grandTotal.toLocaleString()}</span>
                             </div>
-
-                            {totalTaxes > 0 && (
-                                <div className="flex justify-between text-sm text-gray-500 font-mono"><span>Duties & Taxes (Exclusive)</span><span>₹{totalTaxes.toLocaleString()}</span></div>
-                            )}
-
-                            <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-200">
-                                <span className="font-bold text-lg uppercase tracking-widest">Grand Total</span>
-                                <span className="text-3xl font-serif font-bold text-black tracking-tighter">₹{grandTotal.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 flex items-center gap-4 text-[10px] uppercase font-bold tracking-widest text-gray-400 bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                            <ShieldCheck size={24} className="text-[#D4AF37] shrink-0" />
-                            <p className="leading-relaxed">All transactions are secured with military-grade encryption. Assets are fully insured during transit.</p>
                         </div>
                     </div>
                 </div>
