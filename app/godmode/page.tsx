@@ -9,7 +9,7 @@ import {
   CheckCircle, Bot, Star, TrendingUp, Wallet, Activity, ShieldAlert, Download, MessageSquare, 
   FileText, Search, ChevronRight, Gift, Shield, Globe, Lock, ChevronUp, ChevronDown, Award, UploadCloud,
   Instagram, Facebook, Twitter, Youtube, Phone, Mail, Linkedin, AlignJustify,
-  Terminal, Radar, Fingerprint, Cpu, Network
+  Terminal, Radar, Fingerprint, Cpu, Network, ShoppingCart // 🌟 ShoppingCart ADDED HERE
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
 import dynamic from 'next/dynamic';
@@ -19,9 +19,10 @@ const MODULES = [
   { id: 'INVENTORY', icon: Package, label: 'Products & Inventory' },
   { id: 'ORDER_TRACKER', icon: Truck, label: 'Manage Orders' },
   { id: 'CRM', icon: Users, label: 'Customers & CRM' },
+  { id: 'ABANDONED_CARTS', icon: AlertTriangle, label: 'Abandoned Carts' }, // 🌟 DEDICATED MODULE
   { id: 'MARKETING', icon: Gift, label: 'Coupons & Marketing' },
   { id: 'PAGE_BUILDER', icon: Layout, label: 'Website Builder' },
-  { id: 'AMBASSADORS', icon: Award, label: 'Brand Ambassadors' }, // RESTORED CELEBRITY TAB
+  { id: 'AMBASSADORS', icon: Award, label: 'Brand Ambassadors' }, 
   { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Policies' },
   { id: 'REVIEWS', icon: Star, label: 'Customer Reviews' },
   { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliates & Partners' },
@@ -83,7 +84,6 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) 
 function AdminDashboard() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState('FULL_DASHBOARD');
-  const [dashboardView, setDashboardView] = useState<'orders' | 'abandoned'>('orders');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [systemLogs, setSystemLogs] = useState<string[]>(["System starting...", "Connected to database successfully."]);
@@ -105,8 +105,6 @@ function AdminDashboard() {
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
   const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
-  
-  // 🌟 FIX: ADDED PROMO VIDEOS STATE HERE 🌟
   const [promoVideos, setPromoVideos] = useState<string[]>(["", "", "", "", ""]); 
 
   const [uiConfig, setUiConfig] = useState({ primaryColor: '#D4AF37', bgColor: '#050505', fontFamily: 'serif', buttonRadius: 'full' });
@@ -159,7 +157,7 @@ function AdminDashboard() {
         fetch(`/api/reviews?admin=true&t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
         fetch(`/api/admin/marketing?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
         fetch(`/api/admin/users?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]})),
-        fetch(`/api/celebrity?t=${ts}`).then(r => r.ok ? r.json() : {data: []}) // FETCH CELEBRITIES
+        fetch(`/api/celebrity?t=${ts}`).then(r => r.ok ? r.json() : {data: []})
       ]);
       
       if (resLeads.leads) setLeads(resLeads.leads);
@@ -170,7 +168,6 @@ function AdminDashboard() {
       if (resAnalytics && resAnalytics.success) setFullAnalytics(resAnalytics);
       if (resCelebs.data) setCelebs(resCelebs.data);
       
-      // Smart Sort Reviews (Pending at Top)
       if (resReviews.data) {
           const sortedRevs = resReviews.data.sort((a:any, b:any) => {
               if (a.visibility === 'pending' && b.visibility !== 'pending') return -1;
@@ -187,10 +184,7 @@ function AdminDashboard() {
         if(resCms.data.heroSlides) setHeroSlides(resCms.data.heroSlides);
         if(resCms.data.aboutConfig) setAboutConfig(resCms.data.aboutConfig);
         if(resCms.data.galleryImages) setGalleryImages(resCms.data.galleryImages);
-        
-        // 🌟 FIX: LOAD PROMO VIDEOS FROM DB 🌟
         if(resCms.data.promotionalVideos) setPromoVideos(resCms.data.promotionalVideos); 
-
         if(resCms.data.uiConfig) setUiConfig(resCms.data.uiConfig);
         if(resCms.data.categories) setCategories(resCms.data.categories);
         if(resCms.data.faqs) setFaqs(resCms.data.faqs);
@@ -210,7 +204,6 @@ function AdminDashboard() {
       if (session?.user?.role === 'SUPER_ADMIN') fetchDashboardData(); 
   }, [session]);
 
-  // Silent Background Sync
   useEffect(() => {
       if (session?.user?.role !== 'SUPER_ADMIN') return;
       const interval = setInterval(() => fetchDashboardData(true), 15000);
@@ -230,29 +223,16 @@ function AdminDashboard() {
       return () => clearInterval(interval);
   }, []);
 
-  const moveItem = (array: any[], index: number, direction: number, setter: any) => {
-    const newArr = [...array];
-    if (index + direction >= 0 && index + direction < newArr.length) {
-      const temp = newArr[index];
-      newArr[index] = newArr[index + direction];
-      newArr[index + direction] = temp;
-      setter(newArr);
-    }
-  };
-
-  // UI & Content Deployment
   const handleAddHeroSlide = () => setHeroSlides([...heroSlides, { id: Date.now(), type: 'video', url: '', heading: 'New Banner' }]);
   const handleRemoveHeroSlide = (id: number) => setHeroSlides(heroSlides.filter(s => s.id !== id));
   const handleSaveCMS = async () => {
     setIsSyncing(true); addLog("Saving website changes...");
     try {
-      // 🌟 FIX: SAVE PROMO VIDEOS TO DB 🌟
       await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, promotionalVideos: promoVideos, uiConfig, categories, faqs, socialLinks, corporateInfo, legalPages }) });
       alert("Website Settings Saved Successfully!"); addLog("Website updated successfully.");
     } catch (e) { alert("Failed to save settings."); } finally { setIsSyncing(false); }
   };
 
-  // AI Pricing Rules
   const handleSaveAIRules = async () => {
     setIsSyncing(true); addLog("Saving pricing rules...");
     try {
@@ -261,7 +241,6 @@ function AdminDashboard() {
     } catch (e) { alert("Failed to save pricing rules."); } finally { setIsSyncing(false); }
   };
 
-  // Synthetic Review Injection
   const handleAddFakeReview = async () => {
     if (!fakeReview.userName || !fakeReview.comment) return alert("Please fill name and review comment.");
     setIsSyncing(true); addLog(`Adding review for ${fakeReview.userName}...`);
@@ -273,7 +252,6 @@ function AdminDashboard() {
     } catch (e) { alert("Failed to add review."); } finally { setIsSyncing(false); }
   };
 
-  // Asset Injection (Inventory)
   const handleSaveProduct = async () => {
     if (!watchForm.name.trim() || !watchForm.price.toString().trim() || !watchForm.imageUrl.trim()) {
         return alert("⚠️ Missing Fields! Product Name, Base Price, and Main Image URL are mandatory.");
@@ -315,7 +293,6 @@ function AdminDashboard() {
     try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
-  // Order & Review Modifiers
   const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
     setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
     try {
@@ -332,7 +309,6 @@ function AdminDashboard() {
       } catch (e) { alert("Failed to update review."); } finally { setIsSyncing(false); }
   };
 
-  // Affiliates & Marketing
   const handleAddAffiliate = async () => {
     if (!agentForm.name || !agentForm.email) return alert("Name and Email are required.");
     setIsSyncing(true); addLog("Creating new affiliate partner...");
@@ -355,7 +331,6 @@ function AdminDashboard() {
       } catch (e) { alert("Failed to save coupon."); } finally { setIsSyncing(false); }
   };
 
-  // CELEBRITY HANDLERS
   const handleAddCelebrity = async () => {
       if(!newCeleb.name || !newCeleb.imageUrl) return alert("Name and Image are required.");
       setIsSyncing(true); addLog("Adding Brand Ambassador...");
@@ -379,7 +354,6 @@ function AdminDashboard() {
   };
 
 
-  // Auth & Load States
   if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">LOADING ADMIN...</p></div></div>;
   if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Login to Admin Panel</button></div>;
 
@@ -478,19 +452,21 @@ function AdminDashboard() {
                    <p className="text-4xl md:text-5xl font-bold text-white">₹{(fullAnalytics.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
                  </div>
 
-                 <div onClick={() => setDashboardView('orders')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'orders' ? 'border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
+                 {/* 🌟 UX IMPROVEMENT: Routing to Orders Tab directly */}
+                 <div onClick={() => setActiveTab('ORDER_TRACKER')} className="bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between border-white/10 hover:border-blue-500 hover:shadow-[0_0_20px_rgba(0,240,255,0.1)]">
                    <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><Package size={16}/> Total Orders</p>
                    <div>
                      <p className="text-4xl font-bold text-[#00F0FF]">{fullAnalytics.metrics?.totalOrders || 0}</p>
-                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
+                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">Manage Orders <ChevronRight size={12}/></p>
                    </div>
                  </div>
                  
-                 <div onClick={() => setDashboardView('abandoned')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'abandoned' ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
+                 {/* 🌟 UX IMPROVEMENT: Routing to new Abandoned Carts Tab directly */}
+                 <div onClick={() => setActiveTab('ABANDONED_CARTS')} className="bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between border-white/10 hover:border-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
                    <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><AlertTriangle size={16} className={leads.length > 0 ? "text-red-500 animate-pulse" : ""}/> Abandoned Carts</p>
                    <div>
                      <p className="text-4xl font-bold text-red-500">{leads.length}</p>
-                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
+                     <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">Recover Carts <ChevronRight size={12}/></p>
                    </div>
                  </div>
               </div>
@@ -498,14 +474,11 @@ function AdminDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  <div className="lg:col-span-2 bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
                     <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                       <h3 className="text-xl font-bold text-white">
-                          {dashboardView === 'orders' ? 'Recent Orders' : 'Customers Who Did Not Buy (Abandoned)'}
-                       </h3>
+                       <h3 className="text-xl font-bold text-white">Recent Orders</h3>
                     </div>
 
                     <div className="space-y-4">
-                       {dashboardView === 'orders' && (
-                          orders.length === 0 ? <p className="text-gray-500">No recent orders found.</p> :
+                        {orders.length === 0 ? <p className="text-gray-500">No recent orders found.</p> :
                           orders.slice(0, 8).map((o: any, i: number) => (
                              <div key={i} className="flex justify-between items-center p-4 bg-black border border-white/10 rounded-xl hover:border-[#D4AF37]/50 transition-colors">
                                 <div className="flex items-center gap-4">
@@ -523,26 +496,7 @@ function AdminDashboard() {
                                 </div>
                              </div>
                           ))
-                       )}
-
-                       {dashboardView === 'abandoned' && (
-                          leads.length === 0 ? <p className="text-gray-500">No abandoned carts found.</p> :
-                          leads.map((lead: any, i: number) => (
-                             <div key={i} className="flex justify-between items-center p-4 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors">
-                                <div className="flex items-center gap-4">
-                                   <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><AlertTriangle size={16} /></div>
-                                   <div>
-                                      <p className="font-bold text-white text-sm">{lead.phone || lead.email || 'Guest'}</p>
-                                      <p className="text-xs text-red-400">Cart Value: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
-                                   </div>
-                                </div>
-                                <div className="flex gap-2">
-                                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20in%20your%20cart...`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-xs font-bold rounded-lg hover:bg-green-500 hover:text-black">WhatsApp</a>}
-                                   {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Purchase`} className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-lg hover:bg-white hover:text-black">Email</a>}
-                                </div>
-                             </div>
-                          ))
-                       )}
+                        }
                     </div>
                  </div>
 
@@ -561,13 +515,58 @@ function AdminDashboard() {
              </motion.div>
           )}
 
+          {/* ================= NEW: ABANDONED CARTS DEDICATED MODULE ================= */}
+          {activeTab === 'ABANDONED_CARTS' && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="abandoned" className="space-y-8">
+               <div className="bg-[#111] p-10 rounded-[30px] border border-red-500/30 flex items-center gap-6">
+                  <div className="p-5 bg-red-500/20 rounded-2xl text-red-500"><AlertTriangle size={30}/></div>
+                  <div>
+                     <h3 className="text-3xl font-bold text-white mb-1">Abandoned Carts Recovery</h3>
+                     <p className="text-sm text-gray-400">Track and contact customers who left without buying.</p>
+                  </div>
+               </div>
+
+               <div className="bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
+                   <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
+                      <h3 className="text-xl font-bold text-white">Pending Recoveries</h3>
+                      <span className="bg-red-500/20 text-red-500 px-4 py-2 rounded-lg text-xs font-bold">{leads.length} Carts</span>
+                   </div>
+
+                   <div className="space-y-4">
+                      {leads.length === 0 ? <p className="text-gray-500 text-center py-10">No abandoned carts found. Great!</p> :
+                         leads.map((lead: any, i: number) => (
+                             <div key={i} className="flex flex-col md:flex-row justify-between items-center p-6 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors gap-4">
+                                <div className="flex items-center gap-4 w-full md:w-auto">
+                                   <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><ShoppingCart size={20} /></div>
+                                   <div>
+                                      <p className="font-bold text-white text-lg">{lead.name || 'Guest User'}</p>
+                                      <p className="text-xs text-gray-400 flex gap-3 mt-1">
+                                          <span>{lead.phone || 'No Phone'}</span> | <span>{lead.email || 'No Email'}</span>
+                                      </p>
+                                   </div>
+                                </div>
+                                <div className="flex flex-col items-end w-full md:w-auto">
+                                   <p className="text-2xl font-bold text-red-400 mb-2">₹{lead.cartTotal?.toLocaleString() || '---'}</p>
+                                   <div className="flex gap-2">
+                                      {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20amazing%20in%20your%20cart%20at%20Essential.%20Can%20we%20help%20you%20complete%20your%20purchase?`} target="_blank" className="px-5 py-2.5 bg-green-500/20 text-green-500 text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-green-500 hover:text-black transition-all">WhatsApp</a>}
+                                      {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Essential Purchase`} className="px-5 py-2.5 bg-white/10 text-white text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-white hover:text-black transition-all">Email</a>}
+                                   </div>
+                                </div>
+                             </div>
+                         ))
+                      }
+                   </div>
+               </div>
+            </motion.div>
+          )}
+          
           {/* ================= 2. INVENTORY ================= */}
           {activeTab === 'INVENTORY' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="inv" className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                <div className="xl:col-span-5 space-y-8 h-max sticky top-0">
-                  
-                  {/* CATEGORIES */}
-                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
+                 
+                 {/* CATEGORIES */}
+                 <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2"><Layout size={18} className="text-[#D4AF37]"/> Manage Categories</h3>
                      <div className="flex gap-3 mb-4">
                         <input value={newCategory} onChange={e=>setNewCategory(e.target.value)} className="flex-1 bg-black border border-white/20 p-3 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Add new category..." />
@@ -581,10 +580,10 @@ function AdminDashboard() {
                            </div>
                         ))}
                      </div>
-                  </div>
+                 </div>
 
-                  {/* ADD PRODUCT FORM */}
-                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10 shadow-lg relative overflow-hidden">
+                 {/* ADD PRODUCT FORM */}
+                 <div className="bg-[#111] p-8 rounded-[30px] border border-white/10 shadow-lg relative overflow-hidden">
                      <h3 className="text-2xl font-bold text-white mb-6">Add New Product</h3>
                      <div className="space-y-5 relative z-10">
                         <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
@@ -654,7 +653,7 @@ function AdminDashboard() {
 
                         <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product</button>
                      </div>
-                  </div>
+                 </div>
                </div>
 
                {/* PRODUCT LIST */}

@@ -1,37 +1,58 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
-const leadSchema = new mongoose.Schema({
-    sessionId: { type: String, required: true, unique: true },
-    phone: String,
-    email: String,
-    cartTotal: Number,
-    status: String
-}, { timestamps: true });
-
-const Lead = mongoose.models.Lead || mongoose.model('Lead', leadSchema);
-
+// 🌟 DB CONNECTION 🌟
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
-    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (e) {}
+    await mongoose.connect(process.env.MONGODB_URI as string);
 };
 
-export async function GET(req: Request) {
+// 🌟 ORDER SCHEMA (For tracking Sales and Abandoned Carts) 🌟
+const OrderSchema = new mongoose.Schema({
+    orderId: String,
+    customer: { name: String, email: String, phone: String },
+    items: Array,
+    totalAmount: Number,
+    status: { type: String, default: 'PENDING' }, // PENDING means Abandoned if not updated
+    createdAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
+
+export async function GET() {
     try {
         await connectDB();
+
+        // Saare orders fetch karo
+        const allOrders = await Order.find().sort({ createdAt: -1 });
+
+        // 1. Calculate Metrics (Total Revenue & Valid Orders)
+        const validOrders = allOrders.filter(o => o.status !== 'CANCELLED' && o.status !== 'PENDING');
+        const totalRevenue = validOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
         
-        // Fetch real abandoned carts from DB
-        const realLeads = await Lead.find({ status: 'abandoned' }).sort({ updatedAt: -1 }).limit(20);
+        // 2. Find Abandoned Carts (Leads)
+        // Jo orders lambe time se 'PENDING' hain, unko abandoned maan lo
+        const abandonedCarts = allOrders
+            .filter(o => o.status === 'PENDING')
+            .map(o => ({
+                name: o.customer?.name || 'Guest User',
+                phone: o.customer?.phone || '',
+                email: o.customer?.email || '',
+                cartTotal: o.totalAmount || 0,
+                date: o.createdAt
+            }));
 
-        // 🌟 PREMIUM UX: If DB is empty, send simulated leads so the Godmode UI looks active 🌟
-        const displayLeads = realLeads.length > 0 ? realLeads : [
-            { phone: '+91 98765 43210', email: 'guest_492@gmail.com', cartTotal: 125000, status: 'abandoned' },
-            { phone: '+91 99887 76655', email: 'anonymous_buyer@yahoo.com', cartTotal: 450000, status: 'abandoned' },
-            { phone: 'Encrypted IP', email: 'vip_client_uk@outlook.com', cartTotal: 890000, status: 'abandoned' }
-        ];
+        return NextResponse.json({
+            success: true,
+            leads: abandonedCarts, // Yeh aapke "Abandoned Carts" module mein dikhega
+            metrics: {
+                totalRevenue,
+                totalOrders: validOrders.length
+            }
+        });
 
-        return NextResponse.json({ success: true, leads: displayLeads });
     } catch (error) {
+        console.error("Analytics Error:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch analytics" }, { status: 500 });
     }
 }

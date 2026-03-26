@@ -1,67 +1,73 @@
-// app/api/cms/route.ts (Updated and Cleaned)
-
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongoose';
 import mongoose from 'mongoose';
 
-// Ensure MONGODB_URI is correctly set in Vercel Environment Variables
-if (!process.env.MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
+// 🌟 DATABASE CONNECTION 🌟
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+    } catch (error) {
+        console.error("DB Connection Error:", error);
+    }
+};
 
-// 🌟 THE VERCEL CACHE-BUSTER: forces fresh reads from database 🌟
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// 🌟 CMS SCHEMA (Make sure legalPages is included!) 🌟
+const CmsSchema = new mongoose.Schema({
+    heroSlides: Array,
+    aboutConfig: Object,
+    galleryImages: Array,
+    promotionalVideos: Array,
+    uiConfig: Object,
+    categories: Array,
+    faqs: Array,
+    socialLinks: Object,
+    corporateInfo: Object,
+    legalPages: [{
+        id: String,
+        title: String,
+        slug: String,
+        content: String
+    }], // Yeh missing hone ki wajah se error aata hai
+    updatedAt: { type: Date, default: Date.now }
+});
 
-// 🌟 THE MASTER CMS SCHEMA 🌟
-const cmsSchema = new mongoose.Schema({
-    heroSlides: { type: Array, default: [] },
-    aboutConfig: { type: Object, default: {} },
-    galleryImages: { type: Array, default: [] },
-    promotionalVideos: { type: Array, default: [] }, // the 5 video breaks storage
-    uiConfig: { type: Object, default: {} },
-    categories: { type: Array, default: [] },
-    faqs: { type: Array, default: [] },
-    visionaries: { type: Array, default: [] }, // Moving to Celebrity DB
-    socialLinks: { type: Object, default: {} },
-    corporateInfo: { type: Object, default: {} },
-    legalPages: { type: Array, default: [] }
-}, { timestamps: true });
+const CMS = mongoose.models.CMS || mongoose.model('CMS', CmsSchema);
 
-// Bind Model
-const CmsConfig = mongoose.models.CmsConfig || mongoose.model('CmsConfig', cmsSchema);
-
-// 📡 GET: FETCH CMS DATA
+// 🌟 GET METHOD: Frontend aur Admin ko data bhejne ke liye 🌟
 export async function GET() {
     try {
         await connectDB();
-        const config = await CmsConfig.findOne({});
+        const cmsData = await CMS.findOne();
         
-        // 🌟 Auto-seed logic is GONE! No more defaults from here. 🌟
-        
-        if (!config) {
-             return NextResponse.json({ success: false, error: "Configuration not found. Please run the seeder." }, { status: 404 });
+        if (!cmsData) {
+            return NextResponse.json({ success: true, data: {} });
         }
         
-        return NextResponse.json({ success: true, data: config });
+        return NextResponse.json({ success: true, data: cmsData });
     } catch (error) {
-        console.error("CMS GET Error:", error);
-        return NextResponse.json({ success: false, error: "Failed to fetch matrix configuration" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Failed to fetch CMS data" }, { status: 500 });
     }
 }
 
-// 💉 POST: UPDATE CMS DATA (From Godmode)
+// 🌟 POST METHOD: Admin panel se data save karne ke liye 🌟
 export async function POST(req: Request) {
     try {
         await connectDB();
         const body = await req.json();
         
-        // Update or Create the single configuration document
-        const config = await CmsConfig.findOneAndUpdate({}, body, { new: true, upsert: true });
+        // Pehle check karo agar koi document already hai
+        const existingCms = await CMS.findOne();
         
-        return NextResponse.json({ success: true, data: config });
+        if (existingCms) {
+            // Update existing
+            await CMS.updateOne({}, { $set: { ...body, updatedAt: Date.now() } });
+        } else {
+            // Create new
+            await CMS.create(body);
+        }
+        
+        return NextResponse.json({ success: true, message: "CMS Updated Successfully" });
     } catch (error) {
-        console.error("CMS POST Error:", error);
-        return NextResponse.json({ success: false, error: "Failed to compile UI changes" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Failed to update CMS" }, { status: 500 });
     }
 }
