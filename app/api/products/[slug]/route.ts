@@ -1,62 +1,35 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { Product }from '@/models/Product';
 import mongoose from 'mongoose';
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    await mongoose.connect(process.env.MONGODB_URI as string);
+    isConnected = true;
+};
 
-export async function GET(req: Request, context: any) {
-  try {
-    await connectDB();
-    
-    // Safe extraction for Next 15
-    const params = await context.params; 
-    const identifier = params?.slug || params?.id; 
-    
-    if (!identifier) return NextResponse.json({ error: "Invalid Asset" }, { status: 400 });
+// Define Schema inline to avoid import issues
+const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
 
-    let product = null;
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+    try {
+        await connectDB();
+        const dataToUpdate = await req.json();
+        
+        const updatedProduct = await Product.findByIdAndUpdate(
+            params.id, 
+            { $set: dataToUpdate }, 
+            { new: true }
+        );
 
-    // 1. Try finding by MongoDB ID first (Super Fast)
-    if (mongoose.Types.ObjectId.isValid(identifier)) {
-        product = await Product.findById(identifier);
+        if (!updatedProduct) {
+            return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, product: updatedProduct });
+
+    } catch (error) {
+        console.error("Update Error:", error);
+        return NextResponse.json({ success: false, error: "Server Error" }, { status: 500 });
     }
-    
-    // 2. If not found by ID, try finding by Slug
-    if (!product) {
-        product = await Product.findOne({ slug: identifier });
-    }
-    
-    if (!product) {
-        return NextResponse.json({ error: "Asset not found" }, { status: 404 });
-    }
-
-    // ALWAYS return inside a "data" object for consistency
-    return NextResponse.json({ success: true, data: product });
-  } catch (error: any) {
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
-  }
-}
-
-export async function PATCH(req: Request, context: any) {
-  try {
-    await connectDB();
-    const params = await context.params;
-    const identifier = params?.slug || params?.id;
-    const body = await req.json();
-    
-    if (!identifier) return NextResponse.json({ error: "Invalid Asset ID" }, { status: 400 });
-
-    let updatedProduct;
-    if (mongoose.Types.ObjectId.isValid(identifier)) {
-        updatedProduct = await Product.findByIdAndUpdate(identifier, { $set: body }, { new: true });
-    } else {
-        updatedProduct = await Product.findOneAndUpdate({ slug: identifier }, { $set: body }, { new: true });
-    }
-
-    return NextResponse.json({ success: true, data: updatedProduct });
-  } catch (error: any) {
-    return NextResponse.json({ error: "Update Error" }, { status: 500 });
-  }
 }
