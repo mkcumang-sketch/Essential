@@ -13,12 +13,13 @@ import {
   Terminal, Radar, Fingerprint, Cpu, Network
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
+import RedirectManager from '@/components/admin/RedirectManager';
 import dynamic from 'next/dynamic';
 
 // 🌟 SEO COMPONENTS IMPORTED 🌟
-import SeoPanel from '@/components/Admin/SeoPanel';
-import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
-import SeoAnalyticsDashboard from '@/components/Admin/SeoAnalyticsDashboard';
+import SeoPanel from '@/components/admin/SeoPanel';
+import ImageSeoPanel from '@/components/admin/ImageSeoPanel';
+import SeoAnalyticsDashboard from '@/components/admin/SeoAnalyticsDashboard';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
@@ -965,11 +966,14 @@ function AdminDashboard() {
           )}
 
           {/* ================= 8. SEO ENGINE (NEW) ================= */}
-          {activeTab === 'SEO_ENGINE' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8">
-                <SeoAnalyticsDashboard />
-            </motion.div>
-          )}
+          {/* ================= 8. SEO ENGINE ================= */}
+{activeTab === 'SEO_ENGINE' && (
+  <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8">
+      <SeoAnalyticsDashboard />
+      {/* Naya Redirect Manager yahan daal do! */}
+      <RedirectManager /> 
+  </motion.div>
+)}
 
           {/* ================= 9. LEGAL POLICIES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
