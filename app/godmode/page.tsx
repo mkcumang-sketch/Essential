@@ -46,7 +46,6 @@ const DEFAULT_GALLERY = [
   "https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1000"
 ];
 
-// Note: Kept this here because it's still used in Page Builder, Reviews, and Ambassadors
 const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) => {
     const [dragging, setDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -132,9 +131,7 @@ function AdminDashboard() {
       imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', 
       description: '', seoTags: '', specifications: '', priority: 0, badge: 'New Arrival', 
       amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
-      // 👑 VIP PRICING DEFAULTS 👑
       vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
-      // 🌟 NEW: SEO ENGINE STATE 🌟
       seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
   });
 
@@ -281,14 +278,12 @@ function AdminDashboard() {
           imageUrl: watchForm.imageUrl, images: additionalImages, videoUrl: watchForm.videoUrl, model3DUrl: watchForm.model3DUrl,
           description: watchForm.description, tags: tagsArray, priority: Number(watchForm.priority) || 0, badge: watchForm.badge, amazonDetails: validAmazonDetails,
           
-          // 👑 INJECTING VAULT PRICING RULES 👑
           vipVaultKey: watchForm.vipVaultKey.toUpperCase(),
           vipDiscount: Number(watchForm.vipDiscount) || 0,
           transitFee: Number(watchForm.transitFee) || 0,
           taxPercentage: Number(watchForm.taxPercentage) || 18,
           taxInclusive: watchForm.taxInclusive,
           
-          // 🌟 INJECTING SEO ENGINE DATA 🌟
           seo: watchForm.seo
       };
 
@@ -377,7 +372,6 @@ function AdminDashboard() {
           setCelebs(celebs.filter(c => c._id !== id));
       } catch(e) { alert("Failed to delete."); }
   };
-
 
   if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">LOADING ADMIN...</p></div></div>;
   if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Login to Admin Panel</button></div>;
@@ -596,7 +590,6 @@ function AdminDashboard() {
                             placeholder="Brand Name"
                           />
                           
-                          {/* 🚨 DROPDOWN HATA KAR SIMPLE TYPE INPUT LAGA DIYA 🚨 */}
                           <input 
                             value={watchForm.category} 
                             onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
@@ -627,7 +620,6 @@ function AdminDashboard() {
                             <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center gap-8">
                                 <div className="flex-1 w-full">
                                     <label className="text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest">Main Product Image (Required)</label>
-                                    {/* 🚨 Uses the Premium Drag & Drop Node */}
                                     <PremiumUploadNode 
                                         placeholder="Main Image" 
                                         onUploadSuccess={(url: string) => setWatchForm({...watchForm, imageUrl: url})} 
@@ -693,25 +685,49 @@ function AdminDashboard() {
                             </div>
                         </div>
 
+                        {/* 🌟 UNLIMITED SPECIFICATIONS FIX 🌟 */}
                         <div className="space-y-4 pt-4 border-t border-white/10">
                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                <label className="text-sm font-bold text-white flex items-center gap-2"><AlignJustify size={16}/> Specifications</label>
-                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] text-xs font-bold hover:text-white">+ Add Row</button>
+                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] text-xs font-bold hover:text-white px-3 py-1 bg-[#D4AF37]/10 rounded-lg transition-colors">+ Add Row</button>
                            </div>
-                           <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                           
+                           {/* Removed max-h-32, changed to max-h-[400px] */}
+                           <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                                {watchForm.amazonDetails.map((detail, i) => (
-                                   <div key={i} className="flex gap-2 items-center">
-                                       <input value={detail.key} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="w-1/3 bg-black border border-white/20 p-2 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Dial Color"/>
-                                       <input value={detail.value} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="flex-1 bg-black border border-white/20 p-2 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Black"/>
-                                       <button onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} className="text-red-500 p-2 hover:bg-red-500/20 rounded"><X size={14}/></button>
+                                   <div key={i} className="flex gap-3 items-center">
+                                       <input 
+                                          value={detail.key} 
+                                          onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} 
+                                          className="w-1/3 bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" 
+                                          placeholder="e.g. Dial Color"
+                                       />
+                                       <input 
+                                          value={detail.value} 
+                                          onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} 
+                                          className="flex-1 bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" 
+                                          placeholder="e.g. Matte Black"
+                                       />
+                                       <button 
+                                          onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} 
+                                          className="text-red-500 p-3 hover:bg-red-500/20 rounded-lg transition-colors"
+                                          title="Remove row"
+                                       >
+                                          <X size={16}/>
+                                       </button>
                                    </div>
                                ))}
                            </div>
-                           <div className="pt-2">
-                              <label className="text-xs text-gray-500 mb-1 block">Quick Tags (comma separated)</label>
-                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="luxury, watch, men..." />
+
+                           <div className="pt-4 border-t border-white/5">
+                              <label className="text-xs text-gray-500 mb-2 block font-bold uppercase tracking-widest">Quick Tags (comma separated)</label>
+                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="luxury, watch, men, automatic..." />
                            </div>
-                           <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={3} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar" placeholder="Product Description..."/>
+                           
+                           <div>
+                               <label className="text-xs text-gray-500 mb-2 block font-bold uppercase tracking-widest">Detailed Description</label>
+                               <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar leading-relaxed" placeholder="Describe the masterpiece..."/>
+                           </div>
                         </div>
 
                         {/* 👑 ENTERPRISE PRICING ENGINE SECTION 👑 */}
@@ -765,7 +781,7 @@ function AdminDashboard() {
                             <ImageSeoPanel entityData={watchForm} setEntityData={setWatchForm} />
                         </div>
 
-                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product to Vault</button>
+                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Save Product to Vault</button>
                      </div>
                   </div>
                </div>
