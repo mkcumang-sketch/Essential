@@ -5,17 +5,21 @@ import type { NextRequest } from 'next/server';
 export async function middleware(req: NextRequest) {
     const { pathname, origin } = req.nextUrl;
 
+    // 🚨 1. FIX: NEXTAUTH LOGIN LOOP PREVENTER
+    // Agar route NextAuth ka hai, toh middleware ko usme ungli mat karne do
+    if (pathname.startsWith('/api/auth')) {
+        return NextResponse.next();
+    }
+
     // ==========================================
-    // 1. 🚀 SEO REDIRECT MANAGER (Runs First)
+    // 2. 🚀 SEO REDIRECT MANAGER
     // ==========================================
-    // We skip API, static files, and admin panels to keep the site lightning fast
     if (!pathname.startsWith('/api') && 
         !pathname.startsWith('/_next') && 
         !pathname.startsWith('/godmode') &&
         !pathname.includes('.')) {
         
         try {
-            // Fast Edge-compatible API call to check if this URL needs a 301/302 redirect
             const res = await fetch(`${origin}/api/seo/redirects/check?path=${encodeURIComponent(pathname)}`);
             if (res.ok) {
                 const data = await res.json();
@@ -24,12 +28,12 @@ export async function middleware(req: NextRequest) {
                 }
             }
         } catch (error) {
-            console.error("Redirect check skipped (Network/Build phase)");
+            console.error("Redirect check skipped");
         }
     }
 
     // ==========================================
-    // 2. 🛡️ SECURITY & AUTHENTICATION
+    // 3. 🛡️ SECURITY & AUTHENTICATION
     // ==========================================
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
@@ -39,7 +43,7 @@ export async function middleware(req: NextRequest) {
             return NextResponse.redirect(new URL('/login', req.url));
         }
         if (token.role !== 'SUPER_ADMIN') {
-            return NextResponse.redirect(new URL('/account', req.url)); // Send them to normal account
+            return NextResponse.redirect(new URL('/account', req.url)); 
         }
     }
 
@@ -53,8 +57,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
 }
 
-// ⚙️ MATCHER CONFIGURATION
-// It must check everything EXCEPT static files to catch old broken URLs for SEO redirects
 export const config = {
     matcher: [
         '/((?!_next/static|_next/image|favicon.ico).*)',
