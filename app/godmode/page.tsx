@@ -589,21 +589,21 @@ function AdminDashboard() {
                         <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
                         
                          <div className="grid grid-cols-2 gap-4">
-  <input 
-    value={watchForm.brand} 
-    onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} 
-    className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
-    placeholder="Brand Name"
-  />
-  
-  {/* 🚨 DROPDOWN HATA KAR SIMPLE TYPE INPUT LAGA DIYA 🚨 */}
-  <input 
-    value={watchForm.category} 
-    onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
-    className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
-    placeholder="Category Name (e.g. Vintage, Modern)"
-  />
-</div>
+                          <input 
+                            value={watchForm.brand} 
+                            onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} 
+                            className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+                            placeholder="Brand Name"
+                          />
+                          
+                          {/* 🚨 DROPDOWN HATA KAR SIMPLE TYPE INPUT LAGA DIYA 🚨 */}
+                          <input 
+                            value={watchForm.category} 
+                            onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
+                            className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+                            placeholder="Category Name (e.g. Vintage, Modern)"
+                          />
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                            <div><label className="text-xs text-gray-500 mb-1 block">Display Order (Higher = Top)</label><input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="100" /></div>
                            <div><label className="text-xs text-gray-500 mb-1 block">Product Tag/Badge</label><input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Best Seller" /></div>
@@ -615,63 +615,81 @@ function AdminDashboard() {
                             <div><label className="text-xs text-gray-500 mb-1 block">Total Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
                         </div>
 
-                        {/* 🌟 URL TYPING/PASTING INSTEAD OF DRAG AND DROP 🌟 */}
+                        {/* 🌟 DEVICE UPLOAD (DRAG & DROP) REINSTATED 🌟 */}
                         <div className="space-y-6 pt-4 border-t border-white/10">
                             <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                 <label className="text-sm font-bold text-white flex items-center gap-2">
-                                    <ImageIcon size={16}/> Product Image URLs
+                                    <ImageIcon size={16}/> Product Images (Device Upload)
                                 </label>
                             </div>
                             
-                            {/* Main Image URL Input */}
-                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
-                                <label className="text-xs text-gray-400 block mb-2 font-bold uppercase tracking-widest">Main Image URL (Required)</label>
-                                <input 
-                                    value={watchForm.imageUrl} 
-                                    onChange={e => setWatchForm({...watchForm, imageUrl: e.target.value})} 
-                                    className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-[#D4AF37] font-mono" 
-                                    placeholder="Paste direct image link here (https://...)"
-                                />
-                                {/* Preview Box */}
-                                {watchForm.imageUrl && (
-                                    <div className="mt-4 w-24 h-24 rounded-lg overflow-hidden border border-white/20">
-                                        <img src={watchForm.imageUrl} alt="Main Preview" className="w-full h-full object-cover" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Additional Images URL Input */}
-                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
-                                <label className="text-xs text-gray-400 block mb-2 font-bold uppercase tracking-widest">Additional Images (Comma Separated)</label>
-                                <textarea 
-                                    value={watchForm.images.join(', ')} 
-                                    onChange={(e) => {
-                                        const urls = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                                        setWatchForm({...watchForm, images: urls.slice(0, 6)});
-                                    }}
-                                    rows={3}
-                                    className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white font-mono custom-scrollbar" 
-                                    placeholder="Link 1, Link 2, Link 3..."
-                                />
-                                {/* Preview Thumbnails */}
-                                <div className="flex flex-wrap gap-3 mt-4">
-                                    {watchForm.images.map((img, i) => (
-                                        <div key={i} className="w-16 h-16 rounded-lg overflow-hidden relative group border border-white/20">
-                                            <img src={img} className="w-full h-full object-cover" />
+                            {/* Main Image Upload Box */}
+                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center gap-8">
+                                <div className="flex-1 w-full">
+                                    <label className="text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest">Main Product Image (Required)</label>
+                                    {/* 🚨 Uses the Premium Drag & Drop Node */}
+                                    <PremiumUploadNode 
+                                        placeholder="Main Image" 
+                                        onUploadSuccess={(url: string) => setWatchForm({...watchForm, imageUrl: url})} 
+                                    />
+                                </div>
+                                
+                                {/* Large Preview Box for Main Image */}
+                                <div className="w-40 h-40 rounded-xl overflow-hidden border-2 border-dashed border-white/20 flex items-center justify-center bg-black shrink-0 relative group">
+                                    {watchForm.imageUrl ? (
+                                        <>
+                                            <img src={watchForm.imageUrl} alt="Main Preview" className="w-full h-full object-cover" />
+                                            {/* Button to remove main image */}
                                             <button 
-                                                onClick={() => setWatchForm({...watchForm, images: watchForm.images.filter((_, idx) => idx !== i)})} 
-                                                className="absolute top-1 right-1 p-1 bg-red-600 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => setWatchForm({...watchForm, imageUrl: ''})}
+                                                className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase"
                                             >
-                                                <X size={12}/>
+                                                <Trash2 size={16} /> Remove
                                             </button>
-                                        </div>
-                                    ))}
+                                        </>
+                                    ) : (
+                                        <span className="text-xs text-gray-600 font-bold uppercase">No Image</span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-2">
-                               <div><label className="text-xs text-gray-500 mb-1 block">Video Link (Optional)</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="Video URL"/></div>
-                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="3D File URL"/></div>
+                            {/* Additional Images Upload Box */}
+                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
+                                <label className="text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest">Additional Images (Max 6)</label>
+                                
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    {/* Display uploaded additional images */}
+                                    {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').map((img, i) => (
+                                        <div key={i} className="w-24 h-24 rounded-xl overflow-hidden relative group border border-white/20 shadow-lg">
+                                            <img src={img} className="w-full h-full object-cover" />
+                                            <button 
+                                                onClick={() => setWatchForm({...watchForm, images: watchForm.images.filter((_, idx) => idx !== i)})} 
+                                                className="absolute top-1 right-1 p-1.5 bg-red-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X size={14}/>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Show uploader only if less than 6 images */}
+                                    {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').length < 6 && (
+                                        <div className="scale-90 origin-left">
+                                            <PremiumUploadNode 
+                                                placeholder="Add More" 
+                                                onUploadSuccess={(url: string) => { 
+                                                    const newGallery = [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== '')]; 
+                                                    newGallery.push(url); 
+                                                    setWatchForm({...watchForm, images: newGallery}); 
+                                                }} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                               <div><label className="text-xs text-gray-500 mb-1 block">Video Link (Optional)</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Paste Video URL"/></div>
+                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Paste 3D File URL"/></div>
                             </div>
                         </div>
 
