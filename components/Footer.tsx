@@ -18,6 +18,11 @@ export default function Footer() {
     const corporateInfo = cmsData?.corporateInfo || {};
     const socialLinks = cmsData?.socialLinks || {};
 
+    {/* 🚨 Check karein ki href exact yahi ho */}
+<Link href="/policies/privacy-policy" className="hover:text-[#D4AF37] transition-colors">
+  Privacy Policy
+</Link>
+
     return (
         <footer className="bg-black text-white pt-24 pb-12 border-t-[10px] border-[#D4AF37]">
          <div className="max-w-[1800px] mx-auto px-6 md:px-16">
