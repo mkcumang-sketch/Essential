@@ -14,22 +14,26 @@ body {
   background-color: #006039;
   color: #ffffff;
 }
+/* app/globals.css - in sb rules ko file ke end mein daal do */
+
 /* 💎 ESSENTIAL RUSH LUXURY VIEWER ENGINE 💎 */
 .luxury-viewer-engine {
-  color: #b3b3b3;
-  line-height: 1.8;
+  color: #e0e0e0; /* Bright Silver, black background par readble hai */
+  line-height: 1.9;
   font-size: 17px;
+  width: 100%;
 }
 
 /* Headings from Admin Panel */
 .luxury-viewer-engine h1 {
   font-family: 'Georgia', serif;
-  color: #D4AF37;
+  color: #D4AF37; /* Luxury Gold */
   font-size: clamp(2.5rem, 5vw, 4rem);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-align: center;
   margin-bottom: 4rem;
+  font-weight: normal;
 }
 
 .luxury-viewer-engine h2 {
@@ -39,9 +43,10 @@ body {
   margin-bottom: 1.5rem;
   border-left: 3px solid #D4AF37;
   padding-left: 20px;
+  font-weight: normal;
 }
 
-/* 🎥 CINEMATIC MEDIA (Images & Videos) */
+/* 🎥 CINEMATIC MEDIA (Images & Videos) from Backend */
 .luxury-viewer-engine img, 
 .luxury-viewer-engine video {
   width: 100%;
@@ -52,10 +57,4 @@ body {
   border: 1px solid rgba(212, 175, 55, 0.2);
   box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
   display: block;
-}
-
-/* Luxury Highlights */
-.luxury-viewer-engine strong {
-  color: #D4AF37;
-  font-weight: 600;
 }

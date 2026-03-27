@@ -587,13 +587,22 @@ function AdminDashboard() {
                      <div className="space-y-5 relative z-10">
                         <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
                         
-                        <div className="grid grid-cols-2 gap-4">
-                          <input value={watchForm.brand} onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Brand Name"/>
-                          <select value={watchForm.category} onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]">
-                             {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-
+                         <div className="grid grid-cols-2 gap-4">
+  <input 
+    value={watchForm.brand} 
+    onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} 
+    className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+    placeholder="Brand Name"
+  />
+  
+  {/* 🚨 DROPDOWN HATA KAR SIMPLE TYPE INPUT LAGA DIYA 🚨 */}
+  <input 
+    value={watchForm.category} 
+    onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
+    className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+    placeholder="Category Name (e.g. Vintage, Modern)"
+  />
+</div>
                         <div className="grid grid-cols-2 gap-4">
                            <div><label className="text-xs text-gray-500 mb-1 block">Display Order (Higher = Top)</label><input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="100" /></div>
                            <div><label className="text-xs text-gray-500 mb-1 block">Product Tag/Badge</label><input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Best Seller" /></div>
