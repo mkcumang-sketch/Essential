@@ -975,23 +975,35 @@ function AdminDashboard() {
   </motion.div>
 )}
 
-          {/* ================= 9. LEGAL POLICIES ================= */}
+       
+        {/* ================= 9. LEGAL POLICIES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
              <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
                 <div className="lg:col-span-4 space-y-8">
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                         <h3 className="text-lg font-bold text-white">Pages</h3>
-                        <button onClick={() => setLegalPages([...legalPages, { id: Date.now().toString(), title: 'New Policy', slug: 'new-policy', content: '' }])} className="text-[#D4AF37] text-sm font-bold bg-[#D4AF37]/20 px-3 py-1 rounded">+ Add Page</button>
+                        <button 
+                            onClick={() => {
+                                // 🌟 NEW: Default Cinematic Template for new pages
+                                const cinematicTemplate = `<h1>New Premium Policy</h1>\n\n<p>Welcome to <strong>ESSENTIAL RUSH</strong>. Replace this text with your legal or brand content.</p>\n\n<h2>01. First Section Heading</h2>\n<p>Write your detailed policy here. Use the media uploader on the right to insert cinematic images or videos.</p>`;
+                                const newId = Date.now().toString();
+                                setLegalPages([...legalPages, { id: newId, title: 'New Policy', slug: 'new-policy', content: cinematicTemplate }]);
+                                setActiveLegalPageId(newId);
+                            }} 
+                            className="text-[#D4AF37] text-sm font-bold bg-[#D4AF37]/20 px-3 py-1 rounded hover:bg-[#D4AF37] hover:text-black transition-colors"
+                        >
+                            + Add Page
+                        </button>
                      </div>
                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {legalPages.map((page) => (
-                           <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/20 border-[#D4AF37]' : 'bg-black border-white/20 hover:border-gray-500'}`}>
+                           <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]' : 'bg-black border-white/20 hover:border-gray-500'}`}>
                               <div>
                                  <h4 className={`font-bold text-sm ${activeLegalPageId === page.id ? 'text-[#D4AF37]' : 'text-white'}`}>{page.title}</h4>
                                  <p className="text-xs text-gray-500 mt-1">/policies/{page.slug}</p>
                               </div>
-                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="text-red-500 p-2"><Trash2 size={16}/></button>
+                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="text-red-500 p-2 hover:bg-red-500/20 rounded"><Trash2 size={16}/></button>
                            </div>
                         ))}
                      </div>
@@ -1000,10 +1012,10 @@ function AdminDashboard() {
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Company Contact Info</h3>
                      <div className="space-y-4">
-                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Company Name" />
-                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Address" />
-                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Phone Number" />
-                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Email Address" />
+                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Company Name" />
+                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Address" />
+                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Phone Number" />
+                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Email Address" />
                      </div>
                   </div>
                 </div>
@@ -1021,16 +1033,50 @@ function AdminDashboard() {
                                <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#00F0FF] outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-policy"/>
                             </div>
                          </div>
-                         <div className="flex-1">
-                            <label className="text-xs text-gray-400 mb-2 block">Page Content (HTML allowed)</label>
-                            <textarea value={legalPages.find(p=>p.id===activeLegalPageId)?.content || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].content=e.target.value; setLegalPages(n); }} rows={15} className="w-full h-full bg-black border border-white/20 p-6 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#D4AF37] custom-scrollbar" placeholder="Write policy text here..."/>
+                         
+                         <div className="flex-1 flex flex-col">
+                            <div className="flex justify-between items-end mb-2">
+                               <label className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Cinematic HTML Editor</label>
+                               
+                               {/* 🌟 NEW: MEDIA INJECTOR TOOLBAR 🌟 */}
+                               <div className="flex items-center gap-3 bg-black border border-white/10 p-2 rounded-xl">
+                                   <span className="text-[10px] text-gray-500 uppercase font-bold ml-2">Insert Media:</span>
+                                   <div className="scale-75 origin-right h-12">
+                                       <PremiumUploadNode 
+                                          placeholder="IMG/VID" 
+                                          onUploadSuccess={(url: string) => {
+                                             const isVideo = url.match(/\.(mp4|webm|mov)$/i);
+                                             const mediaTag = isVideo 
+                                                 ? `\n\n\n<video src="${url}" autoplay loop muted playsinline></video>\n\n` 
+                                                 : `\n\n\n<img src="${url}" alt="Premium Media" />\n\n`;
+                                             
+                                             const n = [...legalPages];
+                                             const idx = n.findIndex(p => p.id === activeLegalPageId);
+                                             if (idx > -1) {
+                                                n[idx].content = (n[idx].content || '') + mediaTag;
+                                                setLegalPages(n);
+                                                addLog("Media injected into HTML editor.");
+                                             }
+                                          }} 
+                                       />
+                                   </div>
+                               </div>
+                            </div>
+
+                            <textarea 
+                                value={legalPages.find(p=>p.id===activeLegalPageId)?.content || ''} 
+                                onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].content=e.target.value; setLegalPages(n); }} 
+                                rows={18} 
+                                className="w-full h-full bg-black border border-white/20 p-6 rounded-2xl text-sm text-[#b3b3b3] font-mono outline-none focus:border-[#D4AF37] custom-scrollbar leading-relaxed" 
+                                placeholder="Write policy text here using HTML tags (<h1>, <p>, <ul>)..."
+                            />
                          </div>
-                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-4"><Save size={18} className="inline mr-2"/> Save Legal Page</button>
+                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Save Legal Page</button>
                       </div>
                    ) : (
-                      <div className="h-full flex items-center justify-center flex-col text-gray-500 py-32">
+                      <div className="h-full flex items-center justify-center flex-col text-gray-500 py-32 border-2 border-dashed border-white/10 rounded-2xl">
                          <FileText size={60} className="mb-4 opacity-50"/>
-                         <p>Select a page from the list to edit.</p>
+                         <p className="text-sm">Select a page from the left to edit its cinematic layout.</p>
                       </div>
                    )}
                 </div>

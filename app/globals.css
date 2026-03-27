@@ -14,3 +14,86 @@ body {
   background-color: #006039;
   color: #ffffff;
 }
+/* 🌟 ESSENTIAL RUSH LUXURY HTML FORMATTER 🌟 */
+.luxury-content {
+  color: #b3b3b3;
+  line-height: 1.8;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+}
+
+/* Main Page Title */
+.luxury-content h1 {
+  font-family: 'Georgia', serif;
+  color: #D4AF37; /* Luxury Gold */
+  font-size: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 1.5rem;
+  margin-bottom: 3rem;
+  font-weight: normal;
+}
+
+/* Section Headings */
+.luxury-content h2 {
+  font-family: 'Georgia', serif;
+  color: #ffffff;
+  font-size: 1.75rem;
+  letter-spacing: 0.05em;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+}
+
+/* Highlight important words automatically */
+.luxury-content strong, .luxury-content b {
+  color: #D4AF37;
+  font-weight: 600;
+}
+
+/* Links */
+.luxury-content a {
+  color: #D4AF37;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Lists and Bullets */
+.luxury-content ul {
+  list-style-type: square;
+  padding-left: 2rem;
+  margin-bottom: 1.5rem;
+  color: #D4AF37; /* Bullets will be gold */
+}
+
+.luxury-content ul li span, .luxury-content ul li {
+  color: #b3b3b3; /* Text stays silver */
+  margin-bottom: 0.5rem;
+}
+
+/* Paragraph spacing */
+.luxury-content p {
+  margin-bottom: 1.5rem;
+}
+/* 🌟 CINEMATIC IMAGES & VIDEOS FROM ADMIN PANEL 🌟 */
+.luxury-content img,
+.luxury-content video,
+.luxury-content iframe {
+  width: 100%; /* Hamesha full width lega apne container ki */
+  max-height: 65vh; /* Cinematic height */
+  object-fit: cover; /* Image stretch nahi hogi, crop hogi */
+  border-radius: 16px; /* Premium smooth corners */
+  margin: 3.5rem 0; /* Upar-neeche achhi breathing space */
+  border: 1px solid rgba(212, 175, 55, 0.2); /* Subtle Gold Border */
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8); /* Deep luxury shadow */
+  display: block;
+}
+
+/* Text Formatting (Already mostly done, just ensuring full width) */
+.luxury-content {
+  width: 100%;
+}
