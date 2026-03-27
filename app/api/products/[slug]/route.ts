@@ -6,29 +6,27 @@ let isConnected = false;
 const connectDB = async () => {
     if (isConnected) return;
     if (!process.env.MONGODB_URI) {
-        console.error("MONGODB_URI is missing in .env");
+        console.error("MONGODB_URI is missing");
         return;
     }
     await mongoose.connect(process.env.MONGODB_URI);
     isConnected = true;
 };
 
-// Define Schema (Strict: false taaki SEO jaisa naya data aaram se save ho jaye)
 const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
 
-// PATCH METHOD: Updates existing product data
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+// 🚨 YAHAN CHANGE HAI: params: { slug: string }
+export async function PATCH(req: Request, { params }: { params: { slug: string } }) {
     try {
         await connectDB();
         
-        // Frontend se jo naya SEO data aaya hai
         const dataToUpdate = await req.json();
         
-        // Database mein product dhoondo aur update karo
+        // 🚨 YAHAN BHI CHANGE HAI: params.slug
         const updatedProduct = await Product.findByIdAndUpdate(
-            params.id, 
+            params.slug, 
             { $set: dataToUpdate }, 
-            { new: true } // Ye true rakhne se updated data wapas milta hai
+            { new: true }
         );
 
         if (!updatedProduct) {
