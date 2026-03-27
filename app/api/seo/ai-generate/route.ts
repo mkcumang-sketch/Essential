@@ -1,19 +1,18 @@
-    import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(req: Request) {
     try {
         const { name, description, type = 'product', brand, category } = await req.json();
 
+        // 1. Check if Key exists in Vercel
         if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json({ success: false, error: "GEMINI_API_KEY is missing in .env" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "GEMINI_API_KEY is missing in Vercel Variables!" }, { status: 500 });
         }
 
-        // Initialize Gemini AI (Using flash for instant response time)
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-        // 🎯 THE LUXURY PROMPT ENGINEERING
         const prompt = `
         You are a world-class luxury SEO copywriter for an ultra-premium watch brand called "Essential".
         Task: Generate highly converting, SEO-optimized metadata for the following ${type}.
@@ -40,14 +39,14 @@ export async function POST(req: Request) {
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
         
-        // Clean up formatting in case AI returns markdown ticks (```json)
         const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const seoData = JSON.parse(cleanJson);
 
         return NextResponse.json({ success: true, data: seoData });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("AI SEO Generation Error:", error);
-        return NextResponse.json({ success: false, error: "Failed to generate AI content" }, { status: 500 });
+        // Ab agar fail hoga, toh exact reason alert mein dikhega!
+        return NextResponse.json({ success: false, error: error.message || "Failed to parse AI response" }, { status: 500 });
     }
 }
