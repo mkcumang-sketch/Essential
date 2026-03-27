@@ -8,17 +8,19 @@ const connectDB = async () => {
 
 const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
 
-export async function PATCH(req: Request, { params }: { params: { slug: string } }) {
+// 🚨 Any type lagaya taaki TypeScript pareshan na kare
+export async function PATCH(req: Request, { params }: { params: any }) {
     try {
-        // 1. Check if Vercel has MongoDB URI
         if (!process.env.MONGODB_URI) {
             return NextResponse.json({ success: false, error: "MONGODB_URI missing in Vercel" }, { status: 500 });
         }
 
         await connectDB();
         
-        // 2. Check if slug exists
-        const slug = params?.slug;
+        // 🚨 THE FIX: Next.js 15 requires AWAITING params! (Dabbe ko kholna zaroori hai)
+        const resolvedParams = await params;
+        const slug = resolvedParams.slug;
+        
         if (!slug) {
             return NextResponse.json({ success: false, error: "Product ID missing in URL" }, { status: 400 });
         }
@@ -32,7 +34,7 @@ export async function PATCH(req: Request, { params }: { params: { slug: string }
             { new: true }
         );
 
-        // 4. Fallback (Agar ID ki jagah string ho)
+        // 4. Fallback Update
         if (!updatedProduct) {
             updatedProduct = await Product.findOneAndUpdate(
                 { $or: [{ id: slug }, { slug: slug }] },
