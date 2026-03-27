@@ -14,68 +14,48 @@ body {
   background-color: #006039;
   color: #ffffff;
 }
-/* 🌟 ESSENTIAL RUSH LUXURY HTML FORMATTER 🌟 */
-.luxury-content {
+/* 💎 ESSENTIAL RUSH LUXURY VIEWER ENGINE 💎 */
+.luxury-viewer-engine {
   color: #b3b3b3;
   line-height: 1.8;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 16px;
+  font-size: 17px;
 }
 
-/* Main Page Title */
-.luxury-content h1 {
+/* Headings from Admin Panel */
+.luxury-viewer-engine h1 {
   font-family: 'Georgia', serif;
-  color: #D4AF37; /* Luxury Gold */
-  font-size: 3rem;
+  color: #D4AF37;
+  font-size: clamp(2.5rem, 5vw, 4rem);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-align: center;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  padding-bottom: 1.5rem;
-  margin-bottom: 3rem;
-  font-weight: normal;
+  margin-bottom: 4rem;
 }
 
-/* Section Headings */
-.luxury-content h2 {
-  font-family: 'Georgia', serif;
+.luxury-viewer-engine h2 {
   color: #ffffff;
-  font-size: 1.75rem;
-  letter-spacing: 0.05em;
-  margin-top: 3rem;
+  font-size: 1.8rem;
+  margin-top: 3.5rem;
   margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  font-weight: normal;
+  border-left: 3px solid #D4AF37;
+  padding-left: 20px;
 }
 
-/* Highlight important words automatically */
-.luxury-content strong, .luxury-content b {
+/* 🎥 CINEMATIC MEDIA (Images & Videos) */
+.luxury-viewer-engine img, 
+.luxury-viewer-engine video {
+  width: 100%;
+  max-height: 75vh;
+  object-fit: cover;
+  border-radius: 24px;
+  margin: 4rem 0;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+  display: block;
+}
+
+/* Luxury Highlights */
+.luxury-viewer-engine strong {
   color: #D4AF37;
   font-weight: 600;
-}
-
-/* Links */
-.luxury-content a {
-  color: #D4AF37;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-/* Lists and Bullets */
-.luxury-content ul {
-  list-style-type: square;
-  padding-left: 2rem;
-  margin-bottom: 1.5rem;
-  color: #D4AF37; /* Bullets will be gold */
-}
-
-.luxury-content ul li span, .luxury-content ul li {
-  color: #b3b3b3; /* Text stays silver */
-  margin-bottom: 0.5rem;
-}
-
-/* Paragraph spacing */
-.luxury-content p {
-  margin-bottom: 1.5rem;
 }

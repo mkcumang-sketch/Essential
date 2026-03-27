@@ -1,41 +1,40 @@
-"use client";
-
 import { notFound } from 'next/navigation';
-import Footer from '@/components/Footer'; // Aapka jo main footer component hai
+import Footer from '@/components/Footer';
 
 export default async function PolicyPage({ params }: { params: any }) {
-    const { slug } = await params;
+    const resolvedParams = await params;
+    const slug = resolvedParams.slug;
     let policyData = null;
 
     try {
-        // Backend API se page ka content uthana
-        const res = await fetch(`${process.env.NEXTAUTH_URL}/api/cms`, { cache: 'no-store' });
-        const data = await res.json();
-        const legalPages = data?.data?.legalPages || [];
-        policyData = legalPages.find((p: any) => p.slug === slug);
-    } catch (e) {
-        console.error("Fetch Error:", e);
+        const apiUrl = process.env.NEXTAUTH_URL || 'https://essential-gamma.vercel.app';
+        const res = await fetch(`${apiUrl}/api/cms`, { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            const legalPages = data?.data?.legalPages || [];
+            policyData = legalPages.find((p: any) => p.slug === slug);
+        }
+    } catch (error) {
+        console.error("Error fetching policy:", error);
     }
 
-    if (!policyData) return notFound();
+    if (!policyData || !policyData.content) {
+        return notFound();
+    }
 
     return (
-        <div className="min-h-screen bg-[#050505] flex flex-col">
-            {/* Main Content Area */}
-            <main className="flex-grow pt-32 pb-20 px-6 md:px-12">
-                <div className="max-w-5xl mx-auto w-full">
-                    
-                    {/* 🌟 LUXURY CONTENT RENDERER 🌟 */}
-                    {/* Ye class backend se aayi images/videos ko handle karegi */}
+        <div className="min-h-screen bg-[#050505] flex flex-col w-full">
+            <main className="flex-grow pt-32 pb-24 px-4 md:px-8">
+                <div className="w-full max-w-5xl mx-auto">
+                    {/* 🌟 MAGIC CLASS APPLIED HERE 🌟 */}
                     <div 
-                        className="luxury-viewer-engine"
+                        className="luxury-viewer-engine w-full" 
                         dangerouslySetInnerHTML={{ __html: policyData.content }} 
                     />
-
                 </div>
             </main>
-
-            {/* 🏁 MAIN WEBSITE FOOTER 🏁 */}
+            
+            {/* Main Website Footer */}
             <Footer />
         </div>
     );
