@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, RefreshCcw, ShieldCheck } from 'lucide-react';
-import SeoPanel from '@/components/admin/SeoPanel';
-import ImageSeoPanel from '@/components/admin/ImageSeoPanel';
+import SeoPanel from '@/components/Admin/SeoPanel';
+import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
 
 export default function EditProductSeoPage() {
     const params = useParams();

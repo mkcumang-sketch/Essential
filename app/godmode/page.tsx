@@ -13,13 +13,13 @@ import {
   Terminal, Radar, Fingerprint, Cpu, Network
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
-import RedirectManager from '@/components/admin/RedirectManager';
+import RedirectManager from '@/components/Admin/RedirectManager';
 import dynamic from 'next/dynamic';
 
 // 🌟 SEO COMPONENTS IMPORTED 🌟
-import SeoPanel from '@/components/admin/SeoPanel';
-import ImageSeoPanel from '@/components/admin/ImageSeoPanel';
-import SeoAnalyticsDashboard from '@/components/admin/SeoAnalyticsDashboard';
+import SeoPanel from '@/components/Admin/SeoPanel';
+import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
+import SeoAnalyticsDashboard from '@/components/Admin/SeoAnalyticsDashboard';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
