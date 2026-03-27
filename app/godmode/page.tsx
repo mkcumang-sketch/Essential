@@ -974,6 +974,55 @@ function AdminDashboard() {
       <RedirectManager /> 
   </motion.div>
 )}
+{/* 🌟 LIVE MEDIA VAULT (Parses HTML to find images/videos) 🌟 */}
+<div className="mt-8 p-6 bg-[#0a0a0a] border border-[#D4AF37]/20 rounded-2xl">
+    <h4 className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+        <ImageIcon size={16} /> Attached Cinematic Media
+    </h4>
+    
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {(() => {
+            // HTML se saare image/video URLs extract karne ka magic engine
+            const currentContent = legalPages.find(p=>p.id===activeLegalPageId)?.content || '';
+            const urls: string[] = [];
+            const regex = /src="(https?:\/\/[^"]+)"/g;
+            let match;
+            while ((match = regex.exec(currentContent)) !== null) {
+                urls.push(match[1]);
+            }
+
+            if (urls.length === 0) return <p className="text-xs text-gray-600 col-span-full uppercase">No media injected yet.</p>;
+
+            return urls.map((url, idx) => (
+                <div key={idx} className="group relative rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
+                    {url.match(/\.(mp4|webm|mov)$/i) ? (
+                        <video src={url} className="w-full h-full object-cover" />
+                    ) : (
+                        <img src={url} className="w-full h-full object-cover" />
+                    )}
+                    
+                    {/* 🚨 THE DELETE BUTTON 🚨 */}
+                    <button 
+                        onClick={() => {
+                            const n = [...legalPages];
+                            const pageIndex = n.findIndex(p => p.id === activeLegalPageId);
+                            if(pageIndex > -1) {
+                                // HTML se poora <img> ya <video> tag uda dega
+                                const tagRegex = new RegExp(`<img[^>]*src="${url}"[^>]*>|<video[^>]*src="${url}"[^>]*>[^<]*</video>`, 'g');
+                                n[pageIndex].content = n[pageIndex].content.replace(tagRegex, '');
+                                setLegalPages(n);
+                            }
+                        }}
+                        className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                    >
+                        <Trash2 size={24} className="mb-1"/>
+                        Remove Media
+                    </button>
+                </div>
+            ));
+        })()}
+    </div>
+</div>
 
        
         {/* ================= 9. LEGAL POLICIES ================= */}
