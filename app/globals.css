@@ -79,24 +79,3 @@ body {
 .luxury-content p {
   margin-bottom: 1.5rem;
 }
-/* 🌟 ESSENTIAL RUSH LUXURY CMS CONTENT FORMATTER 🌟 */
-.luxury-content img,
-.luxury-content video,
-.luxury-content iframe {
-  width: 100%; /* Hamesha full width लेगा */
-  max-height: 70vh; /* Cinematic height */
-  object-fit: cover; /* Image stretch nahi hogi, cinematic crop hogi */
-  border-radius: 20px; /* Smooth, rounded corners */
-  margin: 4rem 0; /* Text aur image ke beech space */
-  border: 1px solid rgba(212, 175, 55, 0.2); /* Subtle Gold border */
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7); /* Deep luxury shadow */
-  display: block;
-}
-
-/* Base text styling inside cinematic pages */
-.luxury-content p {
-  color: #b3b3b3;
-  line-height: 1.8;
-  margin-bottom: 2rem;
-  font-size: 16px;
-}
