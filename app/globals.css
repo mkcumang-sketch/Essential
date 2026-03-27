@@ -16,45 +16,47 @@ body {
 }
 /* app/globals.css - in sb rules ko file ke end mein daal do */
 
-/* 💎 ESSENTIAL RUSH LUXURY VIEWER ENGINE 💎 */
+/* 💎 BRIGHT LUXURY VIEWER ENGINE (For White/Light Backgrounds) 💎 */
 .luxury-viewer-engine {
-  color: #e0e0e0; /* Bright Silver, black background par readble hai */
-  line-height: 1.9;
+  color: #333333; /* Dark gray text for readability */
+  line-height: 1.8;
   font-size: 17px;
-  width: 100%;
 }
 
-/* Headings from Admin Panel */
 .luxury-viewer-engine h1 {
   font-family: 'Georgia', serif;
-  color: #D4AF37; /* Luxury Gold */
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  color: #000000; /* Solid Black */
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-align: center;
-  margin-bottom: 4rem;
-  font-weight: normal;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 20px;
 }
 
 .luxury-viewer-engine h2 {
-  color: #ffffff;
-  font-size: 1.8rem;
+  color: #111111; /* Almost black */
+  font-size: 1.6rem;
   margin-top: 3.5rem;
   margin-bottom: 1.5rem;
-  border-left: 3px solid #D4AF37;
+  border-left: 3px solid #D4AF37; /* Luxury Gold accent */
   padding-left: 20px;
-  font-weight: normal;
 }
 
-/* 🎥 CINEMATIC MEDIA (Images & Videos) from Backend */
 .luxury-viewer-engine img, 
 .luxury-viewer-engine video {
   width: 100%;
-  max-height: 75vh;
+  max-height: 60vh;
   object-fit: cover;
-  border-radius: 24px;
-  margin: 4rem 0;
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+  border-radius: 16px;
+  margin: 3rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   display: block;
+}
+
+.luxury-viewer-engine strong {
+  color: #000000;
+  font-weight: 700;
 }

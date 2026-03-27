@@ -29,7 +29,7 @@ const MODULES = [
   { id: 'MARKETING', icon: Gift, label: 'Coupons & Marketing' },
   { id: 'PAGE_BUILDER', icon: Layout, label: 'Website Builder' },
   { id: 'AMBASSADORS', icon: Award, label: 'Brand Ambassadors' }, 
-  { id: 'SEO_ENGINE', icon: Globe, label: 'SEO Command Center' }, // 🌟 NAYA SEO MODULE
+  { id: 'SEO_ENGINE', icon: Globe, label: 'SEO Command Center' }, 
   { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Policies' },
   { id: 'REVIEWS', icon: Star, label: 'Customer Reviews' },
   { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliates & Partners' },
@@ -46,6 +46,7 @@ const DEFAULT_GALLERY = [
   "https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1000"
 ];
 
+// Note: Kept this here because it's still used in Page Builder, Reviews, and Ambassadors
 const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) => {
     const [dragging, setDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -614,28 +615,64 @@ function AdminDashboard() {
                             <div><label className="text-xs text-gray-500 mb-1 block">Total Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
                         </div>
 
-                        <div className="space-y-4">
-                           <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                               <label className="text-sm font-bold text-white flex items-center gap-2"><ImageIcon size={16}/> Product Images</label>
-                           </div>
-                           <input value={watchForm.imageUrl} onChange={e=>setWatchForm({...watchForm, imageUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Main Image URL (Required)"/>
-                           <div className="flex flex-wrap gap-3 items-center">
-                              {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').map((img, i) => (
-                                <div key={i} className="w-16 h-16 rounded-lg overflow-hidden group relative border border-white/20">
-                                    <img src={img} className="w-full h-full object-cover" />
-                                    <button onClick={()=>setWatchForm({...watchForm, images: watchForm.images.filter(x => x !== img)})} className="absolute top-1 right-1 p-1 bg-red-500 rounded-md text-white opacity-0 group-hover:opacity-100"><X size={10}/></button>
+                        {/* 🌟 URL TYPING/PASTING INSTEAD OF DRAG AND DROP 🌟 */}
+                        <div className="space-y-6 pt-4 border-t border-white/10">
+                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                <label className="text-sm font-bold text-white flex items-center gap-2">
+                                    <ImageIcon size={16}/> Product Image URLs
+                                </label>
+                            </div>
+                            
+                            {/* Main Image URL Input */}
+                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
+                                <label className="text-xs text-gray-400 block mb-2 font-bold uppercase tracking-widest">Main Image URL (Required)</label>
+                                <input 
+                                    value={watchForm.imageUrl} 
+                                    onChange={e => setWatchForm({...watchForm, imageUrl: e.target.value})} 
+                                    className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-[#D4AF37] font-mono" 
+                                    placeholder="Paste direct image link here (https://...)"
+                                />
+                                {/* Preview Box */}
+                                {watchForm.imageUrl && (
+                                    <div className="mt-4 w-24 h-24 rounded-lg overflow-hidden border border-white/20">
+                                        <img src={watchForm.imageUrl} alt="Main Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Additional Images URL Input */}
+                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
+                                <label className="text-xs text-gray-400 block mb-2 font-bold uppercase tracking-widest">Additional Images (Comma Separated)</label>
+                                <textarea 
+                                    value={watchForm.images.join(', ')} 
+                                    onChange={(e) => {
+                                        const urls = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+                                        setWatchForm({...watchForm, images: urls.slice(0, 6)});
+                                    }}
+                                    rows={3}
+                                    className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white font-mono custom-scrollbar" 
+                                    placeholder="Link 1, Link 2, Link 3..."
+                                />
+                                {/* Preview Thumbnails */}
+                                <div className="flex flex-wrap gap-3 mt-4">
+                                    {watchForm.images.map((img, i) => (
+                                        <div key={i} className="w-16 h-16 rounded-lg overflow-hidden relative group border border-white/20">
+                                            <img src={img} className="w-full h-full object-cover" />
+                                            <button 
+                                                onClick={() => setWatchForm({...watchForm, images: watchForm.images.filter((_, idx) => idx !== i)})} 
+                                                className="absolute top-1 right-1 p-1 bg-red-600 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X size={12}/>
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                              ))}
-                              {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').length < 8 && (
-                                  <div className="scale-75 origin-left">
-                                      <PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>{ const newGallery = [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== '')]; newGallery.push(url); setWatchForm({...watchForm, images: newGallery}); }} />
-                                  </div>
-                              )}
-                           </div>
-                           <div className="grid grid-cols-2 gap-4 pt-2">
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2">
                                <div><label className="text-xs text-gray-500 mb-1 block">Video Link (Optional)</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="Video URL"/></div>
                                <div><label className="text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="3D File URL"/></div>
-                           </div>
+                            </div>
                         </div>
 
                         <div className="space-y-4 pt-4 border-t border-white/10">
@@ -975,66 +1012,14 @@ function AdminDashboard() {
           )}
 
           {/* ================= 8. SEO ENGINE (NEW) ================= */}
-          {/* ================= 8. SEO ENGINE ================= */}
-{activeTab === 'SEO_ENGINE' && (
-  <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8">
-      <SeoAnalyticsDashboard />
-      {/* Naya Redirect Manager yahan daal do! */}
-      <RedirectManager /> 
-  </motion.div>
-)}
-{/* 🌟 LIVE MEDIA VAULT (Parses HTML to find images/videos) 🌟 */}
-<div className="mt-8 p-6 bg-[#0a0a0a] border border-[#D4AF37]/20 rounded-2xl">
-    <h4 className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-        <ImageIcon size={16} /> Attached Cinematic Media
-    </h4>
-    
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {(() => {
-            // HTML se saare image/video URLs extract karne ka magic engine
-            const currentContent = legalPages.find(p=>p.id===activeLegalPageId)?.content || '';
-            const urls: string[] = [];
-            const regex = /src="(https?:\/\/[^"]+)"/g;
-            let match;
-            while ((match = regex.exec(currentContent)) !== null) {
-                urls.push(match[1]);
-            }
+          {activeTab === 'SEO_ENGINE' && (
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8">
+                <SeoAnalyticsDashboard />
+                <RedirectManager /> 
+            </motion.div>
+          )}
 
-            if (urls.length === 0) return <p className="text-xs text-gray-600 col-span-full uppercase">No media injected yet.</p>;
-
-            return urls.map((url, idx) => (
-                <div key={idx} className="group relative rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
-                    {url.match(/\.(mp4|webm|mov)$/i) ? (
-                        <video src={url} className="w-full h-full object-cover" />
-                    ) : (
-                        <img src={url} className="w-full h-full object-cover" />
-                    )}
-                    
-                    {/* 🚨 THE DELETE BUTTON 🚨 */}
-                    <button 
-                        onClick={() => {
-                            const n = [...legalPages];
-                            const pageIndex = n.findIndex(p => p.id === activeLegalPageId);
-                            if(pageIndex > -1) {
-                                // HTML se poora <img> ya <video> tag uda dega
-                                const tagRegex = new RegExp(`<img[^>]*src="${url}"[^>]*>|<video[^>]*src="${url}"[^>]*>[^<]*</video>`, 'g');
-                                n[pageIndex].content = n[pageIndex].content.replace(tagRegex, '');
-                                setLegalPages(n);
-                            }
-                        }}
-                        className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
-                    >
-                        <Trash2 size={24} className="mb-1"/>
-                        Remove Media
-                    </button>
-                </div>
-            ));
-        })()}
-    </div>
-</div>
-
-       
-        {/* ================= 9. LEGAL POLICIES ================= */}
+          {/* ================= 9. LEGAL POLICIES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
              <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
                 <div className="lg:col-span-4 space-y-8">
@@ -1043,7 +1028,6 @@ function AdminDashboard() {
                         <h3 className="text-lg font-bold text-white">Pages</h3>
                         <button 
                             onClick={() => {
-                                // 🌟 NEW: Default Cinematic Template for new pages
                                 const cinematicTemplate = `<h1>New Premium Policy</h1>\n\n<p>Welcome to <strong>ESSENTIAL RUSH</strong>. Replace this text with your legal or brand content.</p>\n\n<h2>01. First Section Heading</h2>\n<p>Write your detailed policy here. Use the media uploader on the right to insert cinematic images or videos.</p>`;
                                 const newId = Date.now().toString();
                                 setLegalPages([...legalPages, { id: newId, title: 'New Policy', slug: 'new-policy', content: cinematicTemplate }]);
@@ -1096,7 +1080,6 @@ function AdminDashboard() {
                             <div className="flex justify-between items-end mb-2">
                                <label className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Cinematic HTML Editor</label>
                                
-                               {/* 🌟 NEW: MEDIA INJECTOR TOOLBAR 🌟 */}
                                <div className="flex items-center gap-3 bg-black border border-white/10 p-2 rounded-xl">
                                    <span className="text-[10px] text-gray-500 uppercase font-bold ml-2">Insert Media:</span>
                                    <div className="scale-75 origin-right h-12">
@@ -1129,6 +1112,55 @@ function AdminDashboard() {
                                 placeholder="Write policy text here using HTML tags (<h1>, <p>, <ul>)..."
                             />
                          </div>
+
+                         {/* 🌟 LIVE MEDIA VAULT (Parses HTML to find images/videos) 🌟 */}
+                         <div className="mt-8 p-6 bg-[#0a0a0a] border border-[#D4AF37]/20 rounded-2xl">
+                             <h4 className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                                 <ImageIcon size={16} /> Attached Cinematic Media
+                             </h4>
+                             
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                 {(() => {
+                                     const currentContent = legalPages.find(p=>p.id===activeLegalPageId)?.content || '';
+                                     const urls: string[] = [];
+                                     const regex = /src="(https?:\/\/[^"]+)"/g;
+                                     let match;
+                                     while ((match = regex.exec(currentContent)) !== null) {
+                                         urls.push(match[1]);
+                                     }
+
+                                     if (urls.length === 0) return <p className="text-xs text-gray-600 col-span-full uppercase">No media injected yet.</p>;
+
+                                     return urls.map((url, idx) => (
+                                         <div key={idx} className="group relative rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
+                                             {url.match(/\.(mp4|webm|mov)$/i) ? (
+                                                 <video src={url} className="w-full h-full object-cover" />
+                                             ) : (
+                                                 <img src={url} className="w-full h-full object-cover" />
+                                             )}
+                                             
+                                             {/* 🚨 THE DELETE BUTTON 🚨 */}
+                                             <button 
+                                                 onClick={() => {
+                                                     const n = [...legalPages];
+                                                     const pageIndex = n.findIndex(p => p.id === activeLegalPageId);
+                                                     if(pageIndex > -1) {
+                                                         const tagRegex = new RegExp(`<img[^>]*src="${url}"[^>]*>|<video[^>]*src="${url}"[^>]*>[^<]*</video>`, 'g');
+                                                         n[pageIndex].content = n[pageIndex].content.replace(tagRegex, '');
+                                                         setLegalPages(n);
+                                                     }
+                                                 }}
+                                                 className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                                             >
+                                                 <Trash2 size={24} className="mb-1"/>
+                                                 Remove Media
+                                             </button>
+                                         </div>
+                                     ));
+                                 })()}
+                             </div>
+                         </div>
+
                          <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Save Legal Page</button>
                       </div>
                    ) : (
