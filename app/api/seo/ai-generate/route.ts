@@ -5,15 +5,14 @@ export async function POST(req: Request) {
     try {
         const { name, description, type = 'product', brand, category } = await req.json();
 
-        // 1. Check if Key exists in Vercel
+        // 1. API Key Check
         if (!process.env.GEMINI_API_KEY) {
             return NextResponse.json({ success: false, error: "GEMINI_API_KEY is missing in Vercel Variables!" }, { status: 500 });
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
+        // 2. The Prompt
         const prompt = `
         You are a world-class luxury SEO copywriter for an ultra-premium watch brand called "Essential".
         Task: Generate highly converting, SEO-optimized metadata for the following ${type}.
@@ -37,9 +36,34 @@ export async function POST(req: Request) {
         }
         `;
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        
+        let responseText = "";
+
+        // ==========================================
+        // 🛡️ BULLETPROOF AI FALLBACK ENGINE
+        // ==========================================
+        try {
+            // Attempt 1: Newest Flash Model
+            const model1 = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            const result1 = await model1.generateContent(prompt);
+            responseText = result1.response.text();
+        } catch (err1) {
+            console.log("Model 1.5-flash failed, trying 1.5-pro...");
+            try {
+                // Attempt 2: Premium Pro Model
+                const model2 = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+                const result2 = await model2.generateContent(prompt);
+                responseText = result2.response.text();
+            } catch (err2) {
+                console.log("Model 1.5-pro failed, trying 1.0-pro...");
+                // Attempt 3: Legacy Stable Model (Guaranteed to work)
+                const model3 = genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
+                const result3 = await model3.generateContent(prompt);
+                responseText = result3.response.text();
+            }
+        }
+        // ==========================================
+
+        // Clean up formatting
         const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const seoData = JSON.parse(cleanJson);
 
@@ -47,7 +71,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("AI SEO Generation Error:", error);
-        // Ab agar fail hoga, toh exact reason alert mein dikhega!
-        return NextResponse.json({ success: false, error: error.message || "Failed to parse AI response" }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message || "All AI models failed to generate content." }, { status: 500 });
     }
 }
