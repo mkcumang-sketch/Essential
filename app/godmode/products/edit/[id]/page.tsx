@@ -47,6 +47,8 @@ export default function EditProductSeoPage() {
     const handleSaveChanges = async () => {
         setIsSaving(true);
         try {
+            console.log("Sending Update for ID:", productId);
+            
             const res = await fetch(`/api/products/${productId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -54,18 +56,19 @@ export default function EditProductSeoPage() {
             });
 
             if (res.ok) {
-                alert("SEO Settings Updated Successfully!");
-                router.push('/godmode'); // Send back to Godmode dashboard
+                alert("✅ SEO Settings Updated Successfully!");
+                router.push('/godmode'); 
             } else {
-                alert("Failed to save changes. Make sure your Update API is ready.");
+                // 🚨 NAYA LOGIC: Ye asli error nikal kar layega
+                const errorData = await res.json().catch(() => ({}));
+                alert(`❌ API Error (${res.status}): ${errorData.error || res.statusText}`);
             }
-        } catch (error) {
-            alert("Network Error!");
+        } catch (error: any) {
+            alert(`🌐 Network Error: ${error.message}`);
         } finally {
             setIsSaving(false);
         }
     };
-
     if (isLoading) return <div className="h-screen bg-[#050505] flex items-center justify-center text-[#D4AF37]"><RefreshCcw className="animate-spin" size={30}/></div>;
     if (!productData) return <div className="h-screen bg-[#050505] flex items-center justify-center text-red-500">Product not found.</div>;
 
