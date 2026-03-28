@@ -1,27 +1,25 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  // ... aapke baaki icons
-  AlignJustify 
-} from 'lucide-react';
+
 import { 
   BarChart3, Package, BrainCircuit, Landmark, Users, RefreshCcw, Trash2, Layout, Video, 
   AlignCenter, AlignLeft, AlignRight, PlusCircle, Link as LinkIcon, ShieldCheck, Eye, Save, 
   Image as ImageIcon, Box, Zap, AlertTriangle, Truck, MapPin, BellRing, Edit3, Plus, X, 
   CheckCircle, Bot, Star, TrendingUp, Wallet, Activity, ShieldAlert, Download, MessageSquare, 
   FileText, Search, ChevronRight, Gift, Shield, Globe, Lock, ChevronUp, ChevronDown, Award, UploadCloud,
-  Terminal, Radar, Fingerprint
+  Instagram, Facebook, Twitter, Youtube, Phone, Mail, Linkedin, AlignJustify,
+  Terminal, Radar, Fingerprint, Cpu, Network
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
+import RedirectManager from '@/components/Admin/RedirectManager';
 import dynamic from 'next/dynamic';
 
-// SEO Components (Ensure these files exist in your project)
+// 🌟 SEO COMPONENTS IMPORTED 🌟
 import SeoPanel from '@/components/Admin/SeoPanel';
 import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
 import SeoAnalyticsDashboard from '@/components/Admin/SeoAnalyticsDashboard';
-import RedirectManager from '@/components/Admin/RedirectManager';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
@@ -38,6 +36,9 @@ const MODULES = [
   { id: 'AI_ENGINE', icon: Zap, label: 'Smart Pricing AI' },
   { id: 'SECURITY', icon: ShieldAlert, label: 'Security & Maintenance' }
 ];
+
+// 🚨 FIX: Removed hardcoded Unsplash images. Start with empty production state.
+const DEFAULT_GALLERY: string[] = [];
 
 const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) => {
     const [dragging, setDragging] = useState(false);
@@ -56,8 +57,8 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) 
             if (data.success && data.url) {
                 setPreview(data.url);
                 onUploadSuccess(data.url);
-            } else { alert(`Upload failed: Check Cloudinary Keys`); }
-        } catch(e) { alert("Upload failed. Check connection."); } 
+            } else { alert(`Upload failed: ${data.error || 'Check Cloudinary Keys'}`); }
+        } catch(e) { alert("Upload failed. Is your server running?"); } 
         finally { setUploading(false); }
     };
 
@@ -86,9 +87,9 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('FULL_DASHBOARD');
   const [dashboardView, setDashboardView] = useState<'orders' | 'abandoned'>('orders');
   const [isSyncing, setIsSyncing] = useState(false);
+
   const [systemLogs, setSystemLogs] = useState<string[]>(["System initialized. Production environment connected."]);
 
-  // Data States
   const [leads, setLeads] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
@@ -97,22 +98,25 @@ function AdminDashboard() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [fullAnalytics, setFullAnalytics] = useState<any>(null);
-  const [celebs, setCelebs] = useState<any[]>([]);
 
-  // Form States
+  const [celebs, setCelebs] = useState<any[]>([]);
   const [newCeleb, setNewCeleb] = useState({ name: '', title: '', imageUrl: '' });
+
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
-  const [galleryImages, setGalleryImages] = useState<string[]>([]); 
+  const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
   const [promoVideos, setPromoVideos] = useState<string[]>(["", "", "", "", ""]); 
+
   const [uiConfig, setUiConfig] = useState({ primaryColor: '#D4AF37', bgColor: '#050505', fontFamily: 'serif', buttonRadius: 'full' });
   const [categories, setCategories] = useState(["Investment Grade", "Rare Vintage", "Modern Complications"]);
   const [newCategory, setNewCategory] = useState("");
   const [faqs, setFaqs] = useState([{ q: 'Are these authentic?', a: 'Yes, 100% verified.' }]);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', twitter: '', youtube: '', linkedin: '' });
+  
   const [corporateInfo, setCorporateInfo] = useState({ companyName: 'Essential Rush Pvt Ltd', address: '', phone1: '', phone2: '', email: '' });
   const [legalPages, setLegalPages] = useState([{ id: '1', title: 'Privacy Policy', slug: 'privacy-policy', content: '' }]);
   const [activeLegalPageId, setActiveLegalPageId] = useState('1');
+
   const [manualReview, setManualReview] = useState<{userName: string, comment: string, rating: number, product: string, visibility: string, isAdminGenerated: boolean, media: string[]}>({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
   
   const [watchForm, setWatchForm] = useState({ 
@@ -134,7 +138,10 @@ function AdminDashboard() {
   };
 
   const fetchDashboardData = async (silent = false) => {
-    if (!silent) setIsSyncing(true);
+    if (!silent) {
+        setIsSyncing(true);
+        if(systemLogs.length === 1) addLog("Syncing real-time database modules...");
+    }
     try {
       const ts = new Date().getTime();
       const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust, resCelebs] = await Promise.all([
@@ -262,27 +269,52 @@ function AdminDashboard() {
     finally { setIsSyncing(false); }
   };
 
-  // 🚨 DELETE OPERATIONS 🚨
+  // 🚀 🚨 INSTANT DELETION OPERATIONS (OPTIMISTIC UI UPDATES) 🚨 🚀
+  
   const handleDeleteProduct = async (id: string) => {
     if(!confirm("Delete this product from vault?")) return;
-    addLog(`Deleting product...`);
-    setLiveWatches(prev => prev.filter(w => w._id !== id));
+    setLiveWatches(prev => prev.filter(w => w._id !== id)); // INSTANT UI ERASE
     try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   const handleDeleteCoupon = async (id: string) => {
       if(!confirm("Delete this coupon code?")) return;
-      try { await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); fetchDashboardData(true); } catch(e) { alert("Failed to delete coupon."); }
+      setCoupons(prev => prev.filter(c => c._id !== id)); // INSTANT UI ERASE
+      try { await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); } catch(e) {}
   };
 
   const handleDeleteAffiliate = async (id: string) => {
       if(!confirm("Remove this affiliate partner?")) return;
-      try { await fetch(`/api/agents/${id}`, { method: 'DELETE' }); fetchDashboardData(true); } catch(e) { alert("Failed to delete affiliate."); }
+      setAgents(prev => prev.filter(a => a._id !== id)); // INSTANT UI ERASE
+      try { await fetch(`/api/agents/${id}`, { method: 'DELETE' }); } catch(e) {}
   };
 
   const handleDeleteReview = async (id: string) => {
       if(!confirm("Permanently delete this review?")) return;
-      try { await fetch(`/api/reviews/${id}`, { method: 'DELETE' }); fetchDashboardData(true); } catch(e) { alert("Failed to delete review."); }
+      setAllReviews(prev => prev.filter(r => r._id !== id)); // INSTANT UI ERASE
+      try { await fetch(`/api/reviews/${id}`, { method: 'DELETE' }); } catch(e) {}
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+      if(!confirm("Permanently delete this order?")) return;
+      setOrders(prev => prev.filter(o => o._id !== id)); // INSTANT UI ERASE
+      try { await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
+  };
+
+  const handleDeleteLead = async (id: string) => {
+      if(!confirm("Permanently erase this client record?")) return;
+      setLeads(prev => prev.filter(l => l._id !== id)); // INSTANT UI ERASE
+      try { await fetch(`/api/admin/users/${id}`, { method: 'DELETE' }); } catch(e) {}
+  };
+
+  // --------------------------------------------------------
+
+  const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
+    setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
+    try {
+        const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: newStatus }) });
+        if(res.ok) fetchDashboardData();
+    } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
   };
 
   const handleUpdateReviewStatus = async (reviewId: string, visibility: string) => {
@@ -331,13 +363,10 @@ function AdminDashboard() {
 
   const handleDeleteCeleb = async (id: string) => {
       if(!confirm("Remove this ambassador?")) return;
-      try { 
-          await fetch(`/api/celebrity/${id}`, { method: 'DELETE' }); 
-          setCelebs(celebs.filter(c => c._id !== id));
-      } catch(e) { alert("Failed to delete."); }
+      setCelebs(prev => prev.filter(c => c._id !== id)); // INSTANT UI ERASE
+      try { await fetch(`/api/celebrity/${id}`, { method: 'DELETE' }); } catch(e) {}
   };
 
-  // 🚨 NEW EXPORT & DELETE ORDERS LOGIC 🚨
   const exportToCSV = () => {
     if(orders.length === 0) return alert("No orders to export");
     const headers = ["Order ID, Customer Name, Phone, Email, Total Amount, Status, Date"];
@@ -351,22 +380,6 @@ function AdminDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handleDeleteOrder = async (id: string) => {
-      if(!confirm("Permanently delete this order?")) return;
-      try {
-          await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
-          fetchDashboardData(true);
-      } catch(e) { alert("Failed to delete order."); }
-  };
-
-  const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
-    setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
-    try {
-        const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: newStatus }) });
-        if(res.ok) fetchDashboardData();
-    } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
   };
 
 
@@ -399,7 +412,7 @@ function AdminDashboard() {
                  <select value={agentForm.tier} onChange={(e) => setAgentForm({...agentForm, tier: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-400 outline-none focus:border-[#D4AF37] appearance-none">
                     <option className="bg-black">Partner</option><option className="bg-black">Premium Agent</option><option className="bg-black">Brand Ambassador</option>
                  </select>
-                 <button onClick={handleAddAffiliate} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-xs tracking-widest hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Zap size={16}/> Provision Partner</button>
+                 <button onClick={handleAddAffiliate} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl text-xs hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Zap size={16}/> Provision Partner</button>
                </div>
             </motion.div>
           </motion.div>
@@ -664,12 +677,12 @@ function AdminDashboard() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                               <div><label className="text-xs text-gray-500 mb-1 block">Cinematic Video URL</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Video URL"/></div>
-                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model URL</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="3D File URL"/></div>
+                               <div><label className="text-xs text-gray-500 mb-1 block">Cinematic Video URL</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Paste Video URL"/></div>
+                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Paste 3D File URL"/></div>
                             </div>
                         </div>
 
-                        {/* 🌟 🚨 FIX: UNLIMITED SPECIFICATIONS (Removed max-h-32) 🚨 🌟 */}
+                        {/* 🌟 UNLIMITED SPECIFICATIONS 🌟 */}
                         <div className="space-y-4 pt-4 border-t border-white/10">
                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                <label className="text-sm font-bold text-white flex items-center gap-2"><AlignJustify size={16}/> Specifications</label>
@@ -694,6 +707,7 @@ function AdminDashboard() {
                                        <button 
                                           onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} 
                                           className="text-red-500 p-3 hover:bg-red-500/20 rounded-lg transition-colors"
+                                          title="Remove row"
                                        >
                                           <X size={16}/>
                                        </button>
@@ -756,6 +770,7 @@ function AdminDashboard() {
                             </div>
                         </div>
 
+                        {/* 🚀 SEO ENGINE 🚀 */}
                         <div className="mt-8 pt-8 border-t border-white/10 space-y-8">
                             <SeoPanel entityData={watchForm} setEntityData={setWatchForm} />
                             <ImageSeoPanel entityData={watchForm} setEntityData={setWatchForm} />
@@ -808,7 +823,6 @@ function AdminDashboard() {
                        <p className="text-sm text-gray-400">Track and fulfill global acquisitions.</p>
                     </div>
                   </div>
-                  {/* 🚨 FIX: ADDED EXCEL EXPORT BUTTON 🚨 */}
                   <button onClick={exportToCSV} className="bg-green-600 text-white px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-green-500 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)]">
                       <Download size={18}/> Export Excel
                   </button>
@@ -837,7 +851,6 @@ function AdminDashboard() {
                             <option className="text-red-500" value="CANCELLED">Aborted</option>
                           </select>
                           
-                          {/* 🚨 FIX: DELETE ORDER BUTTON ADDED 🚨 */}
                           <button onClick={() => handleDeleteOrder(o._id)} className="p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
                               <Trash2 size={18}/>
                           </button>
@@ -863,10 +876,12 @@ function AdminDashboard() {
                           <th className="p-6 text-center">Access Vector</th>
                           <th className="p-6 text-center">Vault Credits</th>
                           <th className="p-6 text-right pr-10">Portfolio Value</th>
+                          {/* 🚨 NEW ACTIONS COLUMN 🚨 */}
+                          <th className="p-6 text-center pr-10">Actions</th>
                         </tr>
                      </thead>
                      <tbody>
-                        {leads.length === 0 ? <tr><td colSpan={4} className="p-20 text-center text-gray-600 font-bold uppercase tracking-widest">Database Empty</td></tr> : leads.map((c:any, i:number) => (
+                        {leads.length === 0 ? <tr><td colSpan={5} className="p-20 text-center text-gray-600 font-bold uppercase tracking-widest">Database Empty</td></tr> : leads.map((c:any, i:number) => (
                            <tr key={i} className="border-b border-white/10 hover:bg-white/5 transition-colors">
                               <td className="p-6 pl-10">
                                  <div className="flex items-center gap-4">
@@ -880,6 +895,12 @@ function AdminDashboard() {
                               <td className="p-6 text-center text-sm text-gray-300">{c.referralCode || 'Organic'}</td>
                               <td className="p-6 text-center text-[#D4AF37] font-bold text-lg">₹{c.walletBalance || 0}</td>
                               <td className="p-6 text-right pr-10"><p className="font-bold text-xl text-green-400">₹{(c.cartTotal || 0).toLocaleString()}</p></td>
+                              {/* 🚨 NEW ERASE LEAD BUTTON 🚨 */}
+                              <td className="p-6 text-center pr-10">
+                                  <button onClick={() => handleDeleteLead(c._id)} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                                      <Trash2 size={16}/>
+                                  </button>
+                              </td>
                            </tr>
                         ))}
                      </tbody>
@@ -909,7 +930,7 @@ function AdminDashboard() {
                               <input value={couponForm.minOrder} onChange={e=>setCouponForm({...couponForm, minOrder: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="50000"/>
                            </div>
                         </div>
-                        <button onClick={handleCreateCoupon} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4 tracking-widest">Execute Rule</button>
+                        <button onClick={handleCreateCoupon} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl text-sm hover:bg-white transition-all mt-4">Execute Rule</button>
                      </div>
                   </div>
                </div>
@@ -965,7 +986,7 @@ function AdminDashboard() {
                         ))}
                       </div>
                   </div>
-                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6 tracking-widest">Commit UI Overrides</button>
+                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-6">Commit UI Overrides</button>
                </div>
 
                <div className="space-y-8">
