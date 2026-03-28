@@ -1,32 +1,45 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
+// 1. 🔐 Authenticate with your exact .env keys
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_KEY,
-  api_secret: process.env.CLOUDINARY_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export async function POST(req: Request) {
   try {
+    // 2. 📦 Get the file from the frontend request
     const formData = await req.formData();
-    const file = formData.get("file") as File;
-    
+    const file = formData.get('file') as File | null;
+
     if (!file) {
-      return NextResponse.json({ success: false, error: "No file found" }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'No file detected' }, { status: 400 });
     }
 
+    // 3. 🔄 Convert the file into a Base64 string (Required for Next.js Serverless Uploads)
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const fileStr = `data:${file.type};base64,${buffer.toString('base64')}`;
+    const fileBase64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-    const uploadResponse = await cloudinary.uploader.upload(fileStr, {
-      upload_preset: 'essential_rush_preset', // Ensure this preset exists in Cloudinary
+    // 4. 🚀 Upload directly to your Cloudinary Vault
+    const uploadResponse = await cloudinary.uploader.upload(fileBase64, {
+      folder: 'essential_rush_vault', // Ye Cloudinary me ek folder bana dega taaki sab saaf rahe
+      resource_type: 'auto',          // 'auto' dono Images aur Cinematic Videos ko support karega
     });
 
-    return NextResponse.json({ success: true, url: uploadResponse.secure_url });
-  } catch (error) {
-    console.error("Upload Error:", error);
-    return NextResponse.json({ success: false, error: "Backend Upload Failed" }, { status: 500 });
+    // 5. ✅ Return the secure Cloudinary URL back to Admin Panel / Frontend
+    return NextResponse.json({ 
+        success: true, 
+        url: uploadResponse.secure_url 
+    });
+
+  } catch (error: any) {
+    console.error('Cloudinary Upload Engine Error:', error);
+    return NextResponse.json({ 
+        success: false, 
+        error: error.message || 'Upload failed. Please check Cloudinary keys in Vercel/Local.' 
+    }, { status: 500 });
   }
 }
