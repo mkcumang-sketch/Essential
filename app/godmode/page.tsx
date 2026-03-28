@@ -1,25 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import { 
+  // ... aapke baaki icons
+  AlignJustify 
+} from 'lucide-react';
 import { 
   BarChart3, Package, BrainCircuit, Landmark, Users, RefreshCcw, Trash2, Layout, Video, 
   AlignCenter, AlignLeft, AlignRight, PlusCircle, Link as LinkIcon, ShieldCheck, Eye, Save, 
   Image as ImageIcon, Box, Zap, AlertTriangle, Truck, MapPin, BellRing, Edit3, Plus, X, 
   CheckCircle, Bot, Star, TrendingUp, Wallet, Activity, ShieldAlert, Download, MessageSquare, 
   FileText, Search, ChevronRight, Gift, Shield, Globe, Lock, ChevronUp, ChevronDown, Award, UploadCloud,
-  Instagram, Facebook, Twitter, Youtube, Phone, Mail, Linkedin, AlignJustify,
-  Terminal, Radar, Fingerprint, Cpu, Network
+  Terminal, Radar, Fingerprint
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
-import RedirectManager from '@/components/Admin/RedirectManager';
 import dynamic from 'next/dynamic';
 
-// 🌟 SEO COMPONENTS IMPORTED 🌟
+// SEO Components (Ensure these files exist in your project)
 import SeoPanel from '@/components/Admin/SeoPanel';
 import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
 import SeoAnalyticsDashboard from '@/components/Admin/SeoAnalyticsDashboard';
+import RedirectManager from '@/components/Admin/RedirectManager';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
@@ -37,16 +39,6 @@ const MODULES = [
   { id: 'SECURITY', icon: ShieldAlert, label: 'Security & Maintenance' }
 ];
 
-const DEFAULT_GALLERY = [
-  "https://images.unsplash.com/photo-1587836374828-cb4387df3c56?q=80&w=1000",
-  "https://images.unsplash.com/photo-1508685096489-77a46807e604?q=80&w=1000",
-  "https://images.unsplash.com/photo-1533139502658-0198f920d8e8?q=80&w=1000",
-  "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=1000",
-  "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=1000",
-  "https://images.unsplash.com/photo-1547996160-81dfa63595dd?q=80&w=1000"
-];
-
-// Note: Kept this here because it's still used in Page Builder, Reviews, and Ambassadors
 const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) => {
     const [dragging, setDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -64,8 +56,8 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) 
             if (data.success && data.url) {
                 setPreview(data.url);
                 onUploadSuccess(data.url);
-            } else { alert(`Upload failed: ${data.error || 'Check Cloudinary Keys'}`); }
-        } catch(e) { alert("Upload failed. Is your server running?"); } 
+            } else { alert(`Upload failed: Check Cloudinary Keys`); }
+        } catch(e) { alert("Upload failed. Check connection."); } 
         finally { setUploading(false); }
     };
 
@@ -94,9 +86,9 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('FULL_DASHBOARD');
   const [dashboardView, setDashboardView] = useState<'orders' | 'abandoned'>('orders');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [systemLogs, setSystemLogs] = useState<string[]>(["System initialized. Production environment connected."]);
 
-  const [systemLogs, setSystemLogs] = useState<string[]>(["System starting...", "Connected to database successfully."]);
-
+  // Data States
   const [leads, setLeads] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
@@ -105,36 +97,30 @@ function AdminDashboard() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [fullAnalytics, setFullAnalytics] = useState<any>(null);
-
   const [celebs, setCelebs] = useState<any[]>([]);
-  const [newCeleb, setNewCeleb] = useState({ name: '', title: '', imageUrl: '' });
 
+  // Form States
+  const [newCeleb, setNewCeleb] = useState({ name: '', title: '', imageUrl: '' });
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
-  const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
+  const [galleryImages, setGalleryImages] = useState<string[]>([]); 
   const [promoVideos, setPromoVideos] = useState<string[]>(["", "", "", "", ""]); 
-
   const [uiConfig, setUiConfig] = useState({ primaryColor: '#D4AF37', bgColor: '#050505', fontFamily: 'serif', buttonRadius: 'full' });
   const [categories, setCategories] = useState(["Investment Grade", "Rare Vintage", "Modern Complications"]);
   const [newCategory, setNewCategory] = useState("");
   const [faqs, setFaqs] = useState([{ q: 'Are these authentic?', a: 'Yes, 100% verified.' }]);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', twitter: '', youtube: '', linkedin: '' });
-  
-  const [corporateInfo, setCorporateInfo] = useState({ companyName: 'Essential Rush Pvt Ltd', address: 'Ground Floor, Corporate Drive, Mumbai - 400001', phone1: '+91 98765 43210', phone2: '+91 98765 12345', email: 'support@essentialrush.com' });
-  const [legalPages, setLegalPages] = useState([{ id: '1', title: 'Privacy Policy', slug: 'privacy-policy', content: 'Our privacy policy details...' }]);
+  const [corporateInfo, setCorporateInfo] = useState({ companyName: 'Essential Rush Pvt Ltd', address: '', phone1: '', phone2: '', email: '' });
+  const [legalPages, setLegalPages] = useState([{ id: '1', title: 'Privacy Policy', slug: 'privacy-policy', content: '' }]);
   const [activeLegalPageId, setActiveLegalPageId] = useState('1');
-
-  const [fakeReview, setFakeReview] = useState<{userName: string, comment: string, rating: number, product: string, visibility: string, isAdminGenerated: boolean, media: string[]}>({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
+  const [manualReview, setManualReview] = useState<{userName: string, comment: string, rating: number, product: string, visibility: string, isAdminGenerated: boolean, media: string[]}>({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
   
-  // 🌟 NEW: INVENTORY STATE WITH VAULT PRICING RULES AND SEO 🌟
   const [watchForm, setWatchForm] = useState({ 
-      name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', 
+      name: '', brand: '', category: categories[0] || '', price: '', offerPrice: '', stock: '', 
       imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', 
       description: '', seoTags: '', specifications: '', priority: 0, badge: 'New Arrival', 
       amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
-      // 👑 VIP PRICING DEFAULTS 👑
       vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
-      // 🌟 NEW: SEO ENGINE STATE 🌟
       seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
   });
 
@@ -148,10 +134,7 @@ function AdminDashboard() {
   };
 
   const fetchDashboardData = async (silent = false) => {
-    if (!silent) {
-        setIsSyncing(true);
-        addLog("Loading latest dashboard data...");
-    }
+    if (!silent) setIsSyncing(true);
     try {
       const ts = new Date().getTime();
       const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust, resCelebs] = await Promise.all([
@@ -200,9 +183,8 @@ function AdminDashboard() {
         if(resCms.data.corporateInfo) setCorporateInfo(resCms.data.corporateInfo); 
         if(resCms.data.legalPages) setLegalPages(resCms.data.legalPages); 
       }
-      if (!silent) addLog("Data load complete.");
     } catch (e) { 
-        if (!silent) addLog("Error: Could not connect to server."); 
+        if (!silent) addLog("Error: Database connection disrupted."); 
     } finally { 
         if (!silent) setIsSyncing(false); 
     }
@@ -212,66 +194,46 @@ function AdminDashboard() {
       if (session?.user?.role === 'SUPER_ADMIN') fetchDashboardData(); 
   }, [session]);
 
-  useEffect(() => {
-      if (session?.user?.role !== 'SUPER_ADMIN') return;
-      const interval = setInterval(() => fetchDashboardData(true), 15000);
-      return () => clearInterval(interval);
-  }, [session]);
-
-  useEffect(() => {
-      const interval = setInterval(() => {
-          const fakeEvents = [
-              "Security monitor active.",
-              "Checking delivery partners...",
-              "Website backup saved.",
-              "Updating analytics..."
-          ];
-          addLog(fakeEvents[Math.floor(Math.random() * fakeEvents.length)]);
-      }, 20000);
-      return () => clearInterval(interval);
-  }, []);
-
   const handleAddHeroSlide = () => setHeroSlides([...heroSlides, { id: Date.now(), type: 'video', url: '', heading: 'New Banner' }]);
   const handleRemoveHeroSlide = (id: number) => setHeroSlides(heroSlides.filter(s => s.id !== id));
+  
   const handleSaveCMS = async () => {
-    setIsSyncing(true); addLog("Saving website changes...");
+    setIsSyncing(true); addLog("Pushing UI configuration to database...");
     try {
       await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ heroSlides, aboutConfig, galleryImages, promotionalVideos: promoVideos, uiConfig, categories, faqs, socialLinks, corporateInfo, legalPages }) });
-      alert("Website Settings Saved Successfully!"); addLog("Website updated successfully.");
+      alert("Settings Saved Successfully!"); addLog("CMS sync complete.");
     } catch (e) { alert("Failed to save settings."); } finally { setIsSyncing(false); }
   };
 
   const handleSaveAIRules = async () => {
-    setIsSyncing(true); addLog("Saving pricing rules...");
+    setIsSyncing(true); addLog("Pushing pricing algorithms...");
     try {
       await fetch('/api/ai/rules', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pricingRules) });
-      alert("Pricing Rules Updated Successfully!"); addLog("Pricing rules saved.");
+      alert("Pricing Rules Updated Successfully!"); addLog("Rules updated.");
     } catch (e) { alert("Failed to save pricing rules."); } finally { setIsSyncing(false); }
   };
 
-  const handleAddFakeReview = async () => {
-    if (!fakeReview.userName || !fakeReview.comment) return alert("Please fill name and review comment.");
-    setIsSyncing(true); addLog(`Adding review for ${fakeReview.userName}...`);
+  const handleAddManualReview = async () => {
+    if (!manualReview.userName || !manualReview.comment) return alert("Please fill name and review comment.");
+    setIsSyncing(true); addLog(`Saving admin review...`);
     try {
-      await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fakeReview) });
-      setFakeReview({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
+      await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(manualReview) });
+      setManualReview({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
       fetchDashboardData();
       alert("Review Added Successfully!");
     } catch (e) { alert("Failed to add review."); } finally { setIsSyncing(false); }
   };
 
-  // 🌟 NEW: PRODUCT SAVE HANDLER WITH PRICING RULES AND SEO 🌟
   const handleSaveProduct = async () => {
     if (!watchForm.name.trim() || !watchForm.price.toString().trim() || !watchForm.imageUrl.trim()) {
         return alert("⚠️ Missing Fields! Product Name, Base Price, and Main Image URL are mandatory.");
     }
-    setIsSyncing(true); addLog("Saving new product to database...");
+    setIsSyncing(true); addLog("Encrypting product data...");
     try {
       const validAmazonDetails = watchForm.amazonDetails.filter(d => d.key.trim() !== '' && d.value.trim() !== '');
       const tagsArray = watchForm.seoTags.split(',').map(s=>s.trim()).filter(s=>s);
       const additionalImages = watchForm.images.filter(img => typeof img === 'string' && img.trim() !== "");
 
-      // Use the Custom SEO Slug if available, otherwise generate one
       const generatedSlug = watchForm.seo.slug || watchForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
       const generatedSku = `PRD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
 
@@ -280,15 +242,7 @@ function AdminDashboard() {
           price: Number(watchForm.price) || 0, offerPrice: Number(watchForm.offerPrice) || Number(watchForm.price) || 0, stock: Number(watchForm.stock) || 0,
           imageUrl: watchForm.imageUrl, images: additionalImages, videoUrl: watchForm.videoUrl, model3DUrl: watchForm.model3DUrl,
           description: watchForm.description, tags: tagsArray, priority: Number(watchForm.priority) || 0, badge: watchForm.badge, amazonDetails: validAmazonDetails,
-          
-          // 👑 INJECTING VAULT PRICING RULES 👑
-          vipVaultKey: watchForm.vipVaultKey.toUpperCase(),
-          vipDiscount: Number(watchForm.vipDiscount) || 0,
-          transitFee: Number(watchForm.transitFee) || 0,
-          taxPercentage: Number(watchForm.taxPercentage) || 18,
-          taxInclusive: watchForm.taxInclusive,
-          
-          // 🌟 INJECTING SEO ENGINE DATA 🌟
+          vipVaultKey: watchForm.vipVaultKey.toUpperCase(), vipDiscount: Number(watchForm.vipDiscount) || 0, transitFee: Number(watchForm.transitFee) || 0, taxPercentage: Number(watchForm.taxPercentage) || 18, taxInclusive: watchForm.taxInclusive,
           seo: watchForm.seo
       };
 
@@ -296,34 +250,39 @@ function AdminDashboard() {
       const data = await res.json();
 
       if (res.ok && data.success) { 
-          alert("Product Saved Successfully!"); addLog("Product added to website inventory.");
-          // Reset complete form including pricing rules & SEO
+          alert("Product Saved Successfully!"); addLog("Product live.");
           setWatchForm({ 
-              name: '', brand: '', category: categories[0] || 'Investment Grade', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
+              name: '', brand: '', category: categories[0] || '', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
               vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
               seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
           });
           fetchDashboardData(); 
-      } else {
-          alert(`Error saving product: ${data.error || 'Check fields and try again'}`); addLog(`Error: ${data.error || 'Server error'}`);
-      }
-    } catch (e) { alert("Network Error!"); addLog("Error: Network connection failed"); } 
+      } else { alert(`Error saving product: ${data.error || 'Check fields and try again'}`); }
+    } catch (e) { alert("Network Error!"); } 
     finally { setIsSyncing(false); }
   };
 
+  // 🚨 DELETE OPERATIONS 🚨
   const handleDeleteProduct = async (id: string) => {
-    if(!confirm("Are you sure you want to delete this product?")) return;
+    if(!confirm("Delete this product from vault?")) return;
     addLog(`Deleting product...`);
     setLiveWatches(prev => prev.filter(w => w._id !== id));
     try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
-  const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
-    setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
-    try {
-        const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: newStatus }) });
-        if(res.ok) fetchDashboardData();
-    } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
+  const handleDeleteCoupon = async (id: string) => {
+      if(!confirm("Delete this coupon code?")) return;
+      try { await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); fetchDashboardData(true); } catch(e) { alert("Failed to delete coupon."); }
+  };
+
+  const handleDeleteAffiliate = async (id: string) => {
+      if(!confirm("Remove this affiliate partner?")) return;
+      try { await fetch(`/api/agents/${id}`, { method: 'DELETE' }); fetchDashboardData(true); } catch(e) { alert("Failed to delete affiliate."); }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+      if(!confirm("Permanently delete this review?")) return;
+      try { await fetch(`/api/reviews/${id}`, { method: 'DELETE' }); fetchDashboardData(true); } catch(e) { alert("Failed to delete review."); }
   };
 
   const handleUpdateReviewStatus = async (reviewId: string, visibility: string) => {
@@ -336,7 +295,7 @@ function AdminDashboard() {
 
   const handleAddAffiliate = async () => {
     if (!agentForm.name || !agentForm.email) return alert("Name and Email are required.");
-    setIsSyncing(true); addLog("Creating new affiliate partner...");
+    setIsSyncing(true); addLog("Creating secure affiliate profile...");
     try {
       const res = await fetch('/api/agents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(agentForm) });
       const data = await res.json();
@@ -349,7 +308,7 @@ function AdminDashboard() {
 
   const handleCreateCoupon = async () => {
       if(!couponForm.code || !couponForm.discountValue) return alert("Code and Discount Value are required.");
-      setIsSyncing(true); addLog(`Saving coupon ${couponForm.code}...`);
+      setIsSyncing(true); addLog(`Saving marketing rule...`);
       try {
           await fetch('/api/admin/marketing', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(couponForm)});
           setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchDashboardData();
@@ -378,9 +337,41 @@ function AdminDashboard() {
       } catch(e) { alert("Failed to delete."); }
   };
 
+  // 🚨 NEW EXPORT & DELETE ORDERS LOGIC 🚨
+  const exportToCSV = () => {
+    if(orders.length === 0) return alert("No orders to export");
+    const headers = ["Order ID, Customer Name, Phone, Email, Total Amount, Status, Date"];
+    const rows = orders.map(o => `${o.orderId || 'N/A'},"${o.customer?.name || 'Guest'}","${o.customer?.phone || ''}","${o.customer?.email || ''}",${o.totalAmount},${o.status},${new Date(o.createdAt).toLocaleDateString()}`);
+    const csvContent = headers.concat(rows).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Essential_Orders_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-  if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">LOADING ADMIN...</p></div></div>;
-  if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Login to Admin Panel</button></div>;
+  const handleDeleteOrder = async (id: string) => {
+      if(!confirm("Permanently delete this order?")) return;
+      try {
+          await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+          fetchDashboardData(true);
+      } catch(e) { alert("Failed to delete order."); }
+  };
+
+  const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
+    setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
+    try {
+        const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: newStatus }) });
+        if(res.ok) fetchDashboardData();
+    } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
+  };
+
+
+  if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">AUTHENTICATING...</p></div></div>;
+  if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Login to Vault</button></div>;
 
   return (
     <div className="flex h-screen bg-[#050505] text-white overflow-hidden selection:bg-[#D4AF37] selection:text-black relative font-sans">
@@ -397,7 +388,7 @@ function AdminDashboard() {
             <motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="bg-black/80 border border-[#D4AF37]/50 p-10 rounded-[30px] w-full max-w-xl relative shadow-2xl backdrop-blur-2xl">
                <button onClick={() => setIsAgentModalOpen(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"><X size={24}/></button>
                <h3 className="text-2xl font-bold mb-2 text-[#D4AF37]">Add Affiliate Partner</h3>
-               <p className="text-xs uppercase tracking-widest text-gray-500 mb-8">Create a new partner to track sales.</p>
+               <p className="text-xs uppercase tracking-widest text-gray-500 mb-8">Securely assign tracking credentials.</p>
                <div className="space-y-4">
                  <input value={agentForm.name} onChange={(e) => setAgentForm({...agentForm, name: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Partner Name"/>
                  <input value={agentForm.email} onChange={(e) => setAgentForm({...agentForm, email: e.target.value})} type="email" className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Partner Email Address"/>
@@ -408,7 +399,7 @@ function AdminDashboard() {
                  <select value={agentForm.tier} onChange={(e) => setAgentForm({...agentForm, tier: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-400 outline-none focus:border-[#D4AF37] appearance-none">
                     <option className="bg-black">Partner</option><option className="bg-black">Premium Agent</option><option className="bg-black">Brand Ambassador</option>
                  </select>
-                 <button onClick={handleAddAffiliate} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-xs tracking-widest hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Zap size={16}/> Save Partner</button>
+                 <button onClick={handleAddAffiliate} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-xs tracking-widest hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Zap size={16}/> Provision Partner</button>
                </div>
             </motion.div>
           </motion.div>
@@ -422,7 +413,7 @@ function AdminDashboard() {
              <ShieldCheck size={20}/>
           </div>
           <div className="overflow-hidden">
-             <p className="text-[9px] text-[#00F0FF] font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><Activity size={10} className="animate-pulse"/> Admin Active</p>
+             <p className="text-[9px] text-[#00F0FF] font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><Activity size={10} className="animate-pulse"/> System Secured</p>
              <h1 className="text-sm font-bold text-white truncate">{session.user?.name}</h1>
           </div>
         </div>
@@ -440,7 +431,7 @@ function AdminDashboard() {
         </nav>
 
         <div className="p-6 border-t border-white/10 bg-black/40">
-            <button onClick={() => signOut()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Logout</button>
+            <button onClick={() => signOut()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Close Vault</button>
         </div>
       </aside>
 
@@ -459,7 +450,7 @@ function AdminDashboard() {
                {leads.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">{leads.length}</span>}
              </button>
              <button onClick={() => fetchDashboardData(false)} className="px-5 py-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                <RefreshCcw size={16} className={isSyncing ? "animate-spin" : ""}/> Refresh Data
+                <RefreshCcw size={16} className={isSyncing ? "animate-spin" : ""}/> Sync Database
              </button>
           </div>
         </header>
@@ -467,20 +458,19 @@ function AdminDashboard() {
         <AnimatePresence mode="wait">
           
           {/* ================= 1. COMMAND CENTER (DASHBOARD) ================= */}
-          {activeTab === 'FULL_DASHBOARD' && fullAnalytics && (
+          {activeTab === 'FULL_DASHBOARD' && (
              <motion.div initial={{opacity:0}} animate={{opacity:1}} key="dash" className="space-y-8">
-               
                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                  <div className="lg:col-span-2 bg-[#111] border border-white/10 p-8 rounded-[30px] relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
                    <div className="absolute -right-10 -top-10 text-[#D4AF37] opacity-5 group-hover:opacity-10 transition-opacity"><BarChart3 size={200}/></div>
-                   <p className="text-gray-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"><Wallet size={16}/> Total Revenue</p>
-                   <p className="text-4xl md:text-5xl font-bold text-white">₹{(fullAnalytics.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
+                   <p className="text-gray-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"><Wallet size={16}/> Total Vault Revenue</p>
+                   <p className="text-4xl md:text-5xl font-bold text-white">₹{(fullAnalytics?.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
                  </div>
 
                  <div onClick={() => setDashboardView('orders')} className={`bg-[#111] border p-8 rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'orders' ? 'border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
                    <p className="text-gray-400 text-xs font-bold uppercase flex items-center gap-2"><Package size={16}/> Total Orders</p>
                    <div>
-                     <p className="text-4xl font-bold text-[#00F0FF]">{fullAnalytics.metrics?.totalOrders || 0}</p>
+                     <p className="text-4xl font-bold text-[#00F0FF]">{fullAnalytics?.metrics?.totalOrders || 0}</p>
                      <p className="text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
                    </div>
                  </div>
@@ -498,13 +488,13 @@ function AdminDashboard() {
                  <div className="lg:col-span-2 bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
                     <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
                        <h3 className="text-xl font-bold text-white">
-                          {dashboardView === 'orders' ? 'Recent Orders' : 'Customers Who Did Not Buy (Abandoned)'}
+                          {dashboardView === 'orders' ? 'Recent Dispatches' : 'Abandoned Acquisitions'}
                        </h3>
                     </div>
 
                     <div className="space-y-4">
                        {dashboardView === 'orders' && (
-                          orders.length === 0 ? <p className="text-gray-500">No recent orders found.</p> :
+                          orders.length === 0 ? <p className="text-gray-600 text-sm uppercase tracking-widest text-center py-10 font-bold">No Records Found</p> :
                           orders.slice(0, 8).map((o: any, i: number) => (
                              <div key={i} className="flex justify-between items-center p-4 bg-black border border-white/10 rounded-xl hover:border-[#D4AF37]/50 transition-colors">
                                 <div className="flex items-center gap-4">
@@ -525,19 +515,18 @@ function AdminDashboard() {
                        )}
 
                        {dashboardView === 'abandoned' && (
-                          leads.length === 0 ? <p className="text-gray-500">No abandoned carts found.</p> :
+                          leads.length === 0 ? <p className="text-gray-600 text-sm uppercase tracking-widest text-center py-10 font-bold">Vault is Clear</p> :
                           leads.map((lead: any, i: number) => (
                              <div key={i} className="flex justify-between items-center p-4 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors">
                                 <div className="flex items-center gap-4">
                                    <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><AlertTriangle size={16} /></div>
                                    <div>
-                                      <p className="font-bold text-white text-sm">{lead.phone || lead.email || 'Guest'}</p>
-                                      <p className="text-xs text-red-400">Cart Value: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
+                                      <p className="font-bold text-white text-sm">{lead.phone || lead.email || 'Guest User'}</p>
+                                      <p className="text-xs text-red-400">Value in Cart: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
                                    </div>
                                 </div>
                                 <div className="flex gap-2">
-                                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=Hi!%20We%20noticed%20you%20left%20something%20in%20your%20cart...`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-xs font-bold rounded-lg hover:bg-green-500 hover:text-black">WhatsApp</a>}
-                                   {lead.email && <a href={`mailto:${lead.email}?subject=Complete Your Purchase`} className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-lg hover:bg-white hover:text-black">Email</a>}
+                                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=We%20secured%20your%20timepiece%20in%20the%20vault...`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-xs font-bold rounded-lg hover:bg-green-500 hover:text-black">WhatsApp</a>}
                                 </div>
                              </div>
                           ))
@@ -545,7 +534,6 @@ function AdminDashboard() {
                     </div>
                  </div>
 
-                 {/* SYSTEM LOGS */}
                  <div className="bg-[#111] border border-white/10 rounded-[30px] p-8 flex flex-col">
                     <h3 className="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2"><Terminal size={16}/> System Logs</h3>
                     <div className="flex-1 overflow-hidden flex flex-col justify-end space-y-2">
@@ -565,11 +553,10 @@ function AdminDashboard() {
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="inv" className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                <div className="xl:col-span-5 space-y-8 h-max sticky top-0">
                  
-                 {/* CATEGORIES */}
                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2"><Layout size={18} className="text-[#D4AF37]"/> Manage Categories</h3>
                      <div className="flex gap-3 mb-4">
-                        <input value={newCategory} onChange={e=>setNewCategory(e.target.value)} className="flex-1 bg-black border border-white/20 p-3 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Add new category..." />
+                        <input value={newCategory} onChange={e=>setNewCategory(e.target.value)} className="flex-1 bg-black border border-white/20 p-3 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="New category..." />
                         <button onClick={() => { if(newCategory){ setCategories([...categories, newCategory]); setNewCategory(""); } }} className="px-6 bg-[#D4AF37] text-black font-bold text-xs rounded-xl hover:bg-white transition-all">Add</button>
                      </div>
                      <div className="flex flex-wrap gap-2">
@@ -582,121 +569,150 @@ function AdminDashboard() {
                      </div>
                  </div>
 
-                 {/* ADD PRODUCT FORM */}
                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10 shadow-lg relative overflow-hidden">
-                     <h3 className="text-2xl font-bold text-white mb-6">Add New Product</h3>
+                     <h3 className="text-2xl font-bold text-white mb-6">Vault Product Addition</h3>
                      <div className="space-y-5 relative z-10">
                         <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
                         
                          <div className="grid grid-cols-2 gap-4">
-  <input 
-    value={watchForm.brand} 
-    onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} 
-    className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
-    placeholder="Brand Name"
-  />
-  
-  {/* 🚨 DROPDOWN HATA KAR SIMPLE TYPE INPUT LAGA DIYA 🚨 */}
-  <input 
-    value={watchForm.category} 
-    onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
-    className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
-    placeholder="Category Name (e.g. Vintage, Modern)"
-  />
-</div>
+                          <input 
+                            value={watchForm.brand} 
+                            onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} 
+                            className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+                            placeholder="Brand Name"
+                          />
+                          <input 
+                            value={watchForm.category} 
+                            onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
+                            className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+                            placeholder="Category Name"
+                          />
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
-                           <div><label className="text-xs text-gray-500 mb-1 block">Display Order (Higher = Top)</label><input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="100" /></div>
-                           <div><label className="text-xs text-gray-500 mb-1 block">Product Tag/Badge</label><input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Best Seller" /></div>
+                           <div><label className="text-xs text-gray-500 mb-1 block">Display Order</label><input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="100" /></div>
+                           <div><label className="text-xs text-gray-500 mb-1 block">Product Badge</label><input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Limited" /></div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-4 border-y border-white/10 py-5">
-                            <div><label className="text-xs text-gray-500 mb-1 block">Regular Price (₹)</label><input value={watchForm.price} onChange={(e) => setWatchForm({...watchForm, price: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
+                            <div><label className="text-xs text-gray-500 mb-1 block">Base Price (₹)</label><input value={watchForm.price} onChange={(e) => setWatchForm({...watchForm, price: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
                             <div><label className="text-xs text-[#00F0FF] mb-1 block">Sale Price (₹)</label><input value={watchForm.offerPrice} onChange={(e) => setWatchForm({...watchForm, offerPrice: e.target.value})} type="number" className="w-full bg-black border border-[#00F0FF]/30 p-3 rounded-lg text-sm outline-none focus:border-[#00F0FF] text-white" /></div>
-                            <div><label className="text-xs text-gray-500 mb-1 block">Total Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
+                            <div><label className="text-xs text-gray-500 mb-1 block">Available Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
                         </div>
 
-                        {/* 🌟 URL TYPING/PASTING INSTEAD OF DRAG AND DROP 🌟 */}
+                        {/* 🌟 DEVICE UPLOAD 🌟 */}
                         <div className="space-y-6 pt-4 border-t border-white/10">
                             <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                 <label className="text-sm font-bold text-white flex items-center gap-2">
-                                    <ImageIcon size={16}/> Product Image URLs
+                                    <ImageIcon size={16}/> Media Acquisition
                                 </label>
                             </div>
                             
-                            {/* Main Image URL Input */}
-                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
-                                <label className="text-xs text-gray-400 block mb-2 font-bold uppercase tracking-widest">Main Image URL (Required)</label>
-                                <input 
-                                    value={watchForm.imageUrl} 
-                                    onChange={e => setWatchForm({...watchForm, imageUrl: e.target.value})} 
-                                    className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-[#D4AF37] font-mono" 
-                                    placeholder="Paste direct image link here (https://...)"
-                                />
-                                {/* Preview Box */}
-                                {watchForm.imageUrl && (
-                                    <div className="mt-4 w-24 h-24 rounded-lg overflow-hidden border border-white/20">
-                                        <img src={watchForm.imageUrl} alt="Main Preview" className="w-full h-full object-cover" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Additional Images URL Input */}
-                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
-                                <label className="text-xs text-gray-400 block mb-2 font-bold uppercase tracking-widest">Additional Images (Comma Separated)</label>
-                                <textarea 
-                                    value={watchForm.images.join(', ')} 
-                                    onChange={(e) => {
-                                        const urls = e.target.value.split(',').map(s => s.trim()).filter(s => s);
-                                        setWatchForm({...watchForm, images: urls.slice(0, 6)});
-                                    }}
-                                    rows={3}
-                                    className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white font-mono custom-scrollbar" 
-                                    placeholder="Link 1, Link 2, Link 3..."
-                                />
-                                {/* Preview Thumbnails */}
-                                <div className="flex flex-wrap gap-3 mt-4">
-                                    {watchForm.images.map((img, i) => (
-                                        <div key={i} className="w-16 h-16 rounded-lg overflow-hidden relative group border border-white/20">
-                                            <img src={img} className="w-full h-full object-cover" />
+                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center gap-8">
+                                <div className="flex-1 w-full">
+                                    <label className="text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest">Main Product Image (Required)</label>
+                                    <PremiumUploadNode 
+                                        placeholder="Main Image" 
+                                        onUploadSuccess={(url: string) => setWatchForm({...watchForm, imageUrl: url})} 
+                                    />
+                                </div>
+                                <div className="w-40 h-40 rounded-xl overflow-hidden border-2 border-dashed border-white/20 flex items-center justify-center bg-black shrink-0 relative group">
+                                    {watchForm.imageUrl ? (
+                                        <>
+                                            <img src={watchForm.imageUrl} alt="Main Preview" className="w-full h-full object-cover" />
                                             <button 
-                                                onClick={() => setWatchForm({...watchForm, images: watchForm.images.filter((_, idx) => idx !== i)})} 
-                                                className="absolute top-1 right-1 p-1 bg-red-600 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => setWatchForm({...watchForm, imageUrl: ''})}
+                                                className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase"
                                             >
-                                                <X size={12}/>
+                                                <Trash2 size={16} /> Remove
                                             </button>
-                                        </div>
-                                    ))}
+                                        </>
+                                    ) : (
+                                        <span className="text-xs text-gray-600 font-bold uppercase">No Source</span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-2">
-                               <div><label className="text-xs text-gray-500 mb-1 block">Video Link (Optional)</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="Video URL"/></div>
-                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="3D File URL"/></div>
+                            <div className="bg-[#1a1a1a] p-5 rounded-xl border border-white/10">
+                                <label className="text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest">Additional Gallery (Max 6)</label>
+                                
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').map((img, i) => (
+                                        <div key={i} className="w-24 h-24 rounded-xl overflow-hidden relative group border border-white/20 shadow-lg">
+                                            <img src={img} className="w-full h-full object-cover" />
+                                            <button 
+                                                onClick={() => setWatchForm({...watchForm, images: watchForm.images.filter((_, idx) => idx !== i)})} 
+                                                className="absolute top-1 right-1 p-1.5 bg-red-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X size={14}/>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    
+                                    {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').length < 6 && (
+                                        <div className="scale-90 origin-left">
+                                            <PremiumUploadNode 
+                                                placeholder="Add Details" 
+                                                onUploadSuccess={(url: string) => { 
+                                                    const newGallery = [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== '')]; 
+                                                    newGallery.push(url); 
+                                                    setWatchForm({...watchForm, images: newGallery}); 
+                                                }} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                               <div><label className="text-xs text-gray-500 mb-1 block">Cinematic Video URL</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Video URL"/></div>
+                               <div><label className="text-xs text-gray-500 mb-1 block">3D Model URL</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="3D File URL"/></div>
                             </div>
                         </div>
 
+                        {/* 🌟 🚨 FIX: UNLIMITED SPECIFICATIONS (Removed max-h-32) 🚨 🌟 */}
                         <div className="space-y-4 pt-4 border-t border-white/10">
                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                <label className="text-sm font-bold text-white flex items-center gap-2"><AlignJustify size={16}/> Specifications</label>
-                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] text-xs font-bold hover:text-white">+ Add Row</button>
+                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] text-xs font-bold hover:text-white px-3 py-1 bg-[#D4AF37]/10 rounded-lg transition-colors">+ Add Row</button>
                            </div>
-                           <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                           
+                           <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                                {watchForm.amazonDetails.map((detail, i) => (
-                                   <div key={i} className="flex gap-2 items-center">
-                                       <input value={detail.key} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="w-1/3 bg-black border border-white/20 p-2 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Dial Color"/>
-                                       <input value={detail.value} onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} className="flex-1 bg-black border border-white/20 p-2 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Black"/>
-                                       <button onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} className="text-red-500 p-2 hover:bg-red-500/20 rounded"><X size={14}/></button>
+                                   <div key={i} className="flex gap-3 items-center">
+                                       <input 
+                                          value={detail.key} 
+                                          onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} 
+                                          className="w-1/3 bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" 
+                                          placeholder="e.g. Dial Color"
+                                       />
+                                       <input 
+                                          value={detail.value} 
+                                          onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} 
+                                          className="flex-1 bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" 
+                                          placeholder="e.g. Matte Black"
+                                       />
+                                       <button 
+                                          onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} 
+                                          className="text-red-500 p-3 hover:bg-red-500/20 rounded-lg transition-colors"
+                                       >
+                                          <X size={16}/>
+                                       </button>
                                    </div>
                                ))}
                            </div>
-                           <div className="pt-2">
-                              <label className="text-xs text-gray-500 mb-1 block">Quick Tags (comma separated)</label>
-                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none text-white" placeholder="luxury, watch, men..." />
+
+                           <div className="pt-4 border-t border-white/5">
+                              <label className="text-xs text-gray-500 mb-2 block font-bold uppercase tracking-widest">Quick Tags</label>
+                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="luxury, watch, automatic..." />
                            </div>
-                           <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={3} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar" placeholder="Product Description..."/>
+                           
+                           <div>
+                               <label className="text-xs text-gray-500 mb-2 block font-bold uppercase tracking-widest">Detailed Description</label>
+                               <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar leading-relaxed" placeholder="Describe the masterpiece..."/>
+                           </div>
                         </div>
 
-                        {/* 👑 ENTERPRISE PRICING ENGINE SECTION 👑 */}
+                        {/* 👑 ENTERPRISE PRICING ENGINE 👑 */}
                         <div className="mt-8 p-6 bg-black/40 border border-[#D4AF37]/30 rounded-2xl shadow-inner relative overflow-hidden">
                             <div className="absolute -right-10 -top-10 opacity-5 pointer-events-none"><ShieldCheck size={120} className="text-[#D4AF37]"/></div>
                             <h3 className="text-lg font-serif font-bold mb-6 flex items-center gap-2 text-white relative z-10">
@@ -725,29 +741,27 @@ function AdminDashboard() {
                                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Tax Bracket (GST %)</label>
                                     <select value={watchForm.taxPercentage} onChange={(e) => setWatchForm({...watchForm, taxPercentage: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white appearance-none">
                                         <option className="bg-black" value="0">0% (Exempt)</option>
-                                        <option className="bg-black" value="3">3% (Bullion/Gold)</option>
+                                        <option className="bg-black" value="3">3% (Bullion)</option>
                                         <option className="bg-black" value="12">12%</option>
                                         <option className="bg-black" value="18">18% (Standard)</option>
                                         <option className="bg-black" value="28">28% (Luxury)</option>
                                     </select>
                                 </div>
                                 <div className="p-4 bg-black rounded-xl border border-white/10 flex flex-col justify-center items-center cursor-pointer transition-all hover:border-[#D4AF37]/50" onClick={() => setWatchForm({...watchForm, taxInclusive: !watchForm.taxInclusive})}>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block text-center">Tax Type</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block text-center">Tax Configuration</label>
                                     <div className={`px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors w-full text-center ${watchForm.taxInclusive ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                                        {watchForm.taxInclusive ? 'Inclusive (In-Price)' : 'Exclusive (+ Extra)'}
+                                        {watchForm.taxInclusive ? 'Inclusive' : 'Exclusive'}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        {/* 👑 END ENTERPRISE PRICING ENGINE 👑 */}
 
-                        {/* 🚀 NEW: SEO & IMAGE OPTIMIZATION ENGINE 🚀 */}
                         <div className="mt-8 pt-8 border-t border-white/10 space-y-8">
                             <SeoPanel entityData={watchForm} setEntityData={setWatchForm} />
                             <ImageSeoPanel entityData={watchForm} setEntityData={setWatchForm} />
                         </div>
 
-                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6 flex justify-center items-center gap-2"><Save size={18}/> Save Product to Vault</button>
+                        <button onClick={handleSaveProduct} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Push to Live Inventory</button>
                      </div>
                   </div>
                </div>
@@ -755,15 +769,15 @@ function AdminDashboard() {
                {/* PRODUCT LIST */}
                <div className="xl:col-span-7">
                   <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                     <h3 className="text-2xl font-serif text-white">Live Products List</h3>
-                     <span className="text-xs font-bold bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg">{liveWatches.length} Products Active</span>
+                     <h3 className="text-2xl font-serif text-white">Live Assets</h3>
+                     <span className="text-xs font-bold bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg">{liveWatches.length} Active</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                     {liveWatches.map((watch, idx) => (
+                     {liveWatches.length === 0 ? <p className="col-span-2 text-center text-gray-600 py-20 font-bold uppercase tracking-widest">Vault is Empty</p> : liveWatches.map((watch, idx) => (
                        <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} transition={{delay: idx*0.05}} key={watch._id || idx} className="bg-[#111] p-6 rounded-[20px] border border-white/10 flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all shadow-lg relative overflow-hidden">
                           <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
                              {watch.badge && <span className="bg-[#D4AF37] text-black text-[10px] font-bold px-2 py-1 rounded uppercase">{watch.badge}</span>}
-                             {watch.stock < 3 && <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Low Stock: {watch.stock}</span>}
+                             {watch.stock < 3 && <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Low: {watch.stock}</span>}
                           </div>
                           <div className="h-48 bg-black rounded-xl flex items-center justify-center p-4 relative mb-4 border border-white/10">
                              <img src={watch.imageUrl || (watch.images && watch.images[0])} className="h-full object-contain transition-transform group-hover:scale-105 duration-500" />
@@ -786,37 +800,47 @@ function AdminDashboard() {
           {/* ================= 3. MANAGE ORDERS ================= */}
           {activeTab === 'ORDER_TRACKER' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="orders" className="space-y-8">
-               <div className="bg-[#111] p-10 rounded-[30px] border border-blue-500/30 flex items-center gap-6">
-                  <div className="p-5 bg-blue-500/20 rounded-2xl text-blue-400"><Truck size={30}/></div>
-                  <div>
-                     <h3 className="text-3xl font-bold text-white mb-1">Order Logistics</h3>
-                     <p className="text-sm text-gray-400">Manage and track customer shipments.</p>
+               <div className="bg-[#111] p-10 rounded-[30px] border border-blue-500/30 flex items-center justify-between gap-6">
+                  <div className="flex items-center gap-6">
+                    <div className="p-5 bg-blue-500/20 rounded-2xl text-blue-400"><Truck size={30}/></div>
+                    <div>
+                       <h3 className="text-3xl font-bold text-white mb-1">Order Logistics</h3>
+                       <p className="text-sm text-gray-400">Track and fulfill global acquisitions.</p>
+                    </div>
                   </div>
+                  {/* 🚨 FIX: ADDED EXCEL EXPORT BUTTON 🚨 */}
+                  <button onClick={exportToCSV} className="bg-green-600 text-white px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-green-500 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+                      <Download size={18}/> Export Excel
+                  </button>
                </div>
                
                <div className="space-y-4">
-                 {orders.length === 0 ? <p className="text-center py-20 text-gray-500">No orders found.</p> : orders.map((o: any, i: number) => (
+                 {orders.length === 0 ? <p className="text-center py-20 text-gray-600 font-bold tracking-widest uppercase">No Active Operations</p> : orders.map((o: any, i: number) => (
                     <div key={i} className="p-6 bg-[#111] border border-white/10 rounded-[20px] flex flex-col md:flex-row items-center justify-between hover:border-blue-500/50 transition-colors shadow-lg">
                        <div className="flex items-center gap-6 mb-6 md:mb-0 w-full md:w-auto">
                           <div className="w-16 h-16 rounded-xl bg-black border border-white/20 flex items-center justify-center text-white font-bold text-sm">#{o.orderId?.slice(-4) || 'UKN'}</div>
                           <div>
-                             <h4 className="font-bold text-xl text-white mb-1">{o.customer?.name || 'Guest User'}</h4>
-                             <p className="text-xs text-gray-400 flex items-center gap-2"><MapPin size={12}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-2 text-white/20">|</span> <Package size={12}/> {o.items?.length || 1} Item(s)</p>
+                             <h4 className="font-bold text-xl text-white mb-1">{o.customer?.name || 'Guest'}</h4>
+                             <p className="text-xs text-gray-400 flex items-center gap-2"><MapPin size={12}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-2 text-white/20">|</span> <Package size={12}/> {o.items?.length || 1} Unit(s)</p>
                           </div>
                        </div>
                        <div className="flex flex-wrap md:flex-nowrap items-center gap-8 w-full md:w-auto justify-between md:justify-end">
                           <div className="text-left md:text-right">
-                            <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                            <p className="text-xs text-gray-500 mb-1">Clearance Value</p>
                             <p className="font-bold text-green-400 text-2xl">₹{(o.totalAmount || 0).toLocaleString()}</p>
                           </div>
                           <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-48 bg-black border border-white/30 text-white font-bold uppercase rounded-xl p-4 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center">
-                            <option value="PENDING">Pending</option>
-                            <option value="PROCESSING">Processing</option>
-                            <option value="DISPATCHED">Dispatched</option>
-                            <option value="TRANSIT">In Transit</option>
-                            <option className="text-green-500" value="DELIVERED">Delivered</option>
-                            <option className="text-red-500" value="CANCELLED">Cancelled</option>
+                            <option value="PENDING">Clearance Pending</option>
+                            <option value="PROCESSING">Processing Vault</option>
+                            <option value="DISPATCHED">In Transit</option>
+                            <option className="text-green-500" value="DELIVERED">Secured Delivery</option>
+                            <option className="text-red-500" value="CANCELLED">Aborted</option>
                           </select>
+                          
+                          {/* 🚨 FIX: DELETE ORDER BUTTON ADDED 🚨 */}
+                          <button onClick={() => handleDeleteOrder(o._id)} className="p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                              <Trash2 size={18}/>
+                          </button>
                        </div>
                     </div>
                  ))}
@@ -828,32 +852,32 @@ function AdminDashboard() {
           {activeTab === 'CRM' && (
              <motion.div initial={{opacity:0}} animate={{opacity:1}} key="crm" className="bg-[#111] border border-white/10 rounded-[30px] overflow-hidden shadow-2xl">
                 <div className="p-8 border-b border-white/10 flex justify-between items-center">
-                   <h3 className="text-2xl font-bold text-white">Customer Details</h3>
-                   <span className="bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg text-xs font-bold">{leads.length} Customers</span>
+                   <h3 className="text-2xl font-bold text-white">Client Roster</h3>
+                   <span className="bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg text-xs font-bold">{leads.length} Identified</span>
                 </div>
                 <div className="overflow-x-auto">
                    <table className="w-full text-left">
                      <thead className="bg-black/50 text-xs font-bold uppercase text-gray-400 border-b border-white/10">
                         <tr>
-                          <th className="p-6 pl-10">Customer Info</th>
-                          <th className="p-6 text-center">Referral Source</th>
-                          <th className="p-6 text-center">Wallet Balance</th>
-                          <th className="p-6 text-right pr-10">Total Value</th>
+                          <th className="p-6 pl-10">Client Identity</th>
+                          <th className="p-6 text-center">Access Vector</th>
+                          <th className="p-6 text-center">Vault Credits</th>
+                          <th className="p-6 text-right pr-10">Portfolio Value</th>
                         </tr>
                      </thead>
                      <tbody>
-                        {leads.length === 0 && customers.length === 0 ? <tr><td colSpan={4} className="p-20 text-center text-gray-500">No customers found.</td></tr> : leads.slice(0,15).map((c:any, i:number) => (
+                        {leads.length === 0 ? <tr><td colSpan={4} className="p-20 text-center text-gray-600 font-bold uppercase tracking-widest">Database Empty</td></tr> : leads.map((c:any, i:number) => (
                            <tr key={i} className="border-b border-white/10 hover:bg-white/5 transition-colors">
                               <td className="p-6 pl-10">
                                  <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-black border border-white/20 flex items-center justify-center text-sm font-bold text-white">{c.phone?.slice(-2) || 'XX'}</div>
                                     <div>
-                                       <p className="font-bold text-white">{c.phone || 'Guest'}</p>
-                                       <p className="text-xs text-gray-500 mt-1">{c.email || `ID: ${c._id?.slice(-8)}`}</p>
+                                       <p className="font-bold text-white">{c.phone || 'Anonymous'}</p>
+                                       <p className="text-xs text-gray-500 mt-1">{c.email || `REF: ${c._id?.slice(-8)}`}</p>
                                     </div>
                                  </div>
                               </td>
-                              <td className="p-6 text-center text-sm text-gray-300">{c.referralCode || 'Direct'}</td>
+                              <td className="p-6 text-center text-sm text-gray-300">{c.referralCode || 'Organic'}</td>
                               <td className="p-6 text-center text-[#D4AF37] font-bold text-lg">₹{c.walletBalance || 0}</td>
                               <td className="p-6 text-right pr-10"><p className="font-bold text-xl text-green-400">₹{(c.cartTotal || 0).toLocaleString()}</p></td>
                            </tr>
@@ -869,40 +893,40 @@ function AdminDashboard() {
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="marketing" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                <div className="lg:col-span-5">
                   <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
-                     <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><Gift size={24} className="text-[#D4AF37]"/> Create Coupon Code</h3>
+                     <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><Gift size={24} className="text-[#D4AF37]"/> Define Marketing Rule</h3>
                      <div className="space-y-5">
                         <div>
-                           <label className="text-xs text-gray-400 block mb-2">Coupon Code Name</label>
-                           <input value={couponForm.code} onChange={e=>setCouponForm({...couponForm, code: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm uppercase outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. SUMMER20"/>
+                           <label className="text-xs text-gray-400 block mb-2">Access Key (Code)</label>
+                           <input value={couponForm.code} onChange={e=>setCouponForm({...couponForm, code: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm uppercase outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. VIP20"/>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                            <div>
-                              <label className="text-xs text-gray-400 block mb-2">Discount (%)</label>
+                              <label className="text-xs text-gray-400 block mb-2">Yield (%)</label>
                               <input value={couponForm.discountValue} onChange={e=>setCouponForm({...couponForm, discountValue: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="15"/>
                            </div>
                            <div>
-                              <label className="text-xs text-gray-400 block mb-2">Minimum Order (₹)</label>
-                              <input value={couponForm.minOrder} onChange={e=>setCouponForm({...couponForm, minOrder: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="5000"/>
+                              <label className="text-xs text-gray-400 block mb-2">Floor Value (₹)</label>
+                              <input value={couponForm.minOrder} onChange={e=>setCouponForm({...couponForm, minOrder: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="50000"/>
                            </div>
                         </div>
-                        <button onClick={handleCreateCoupon} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4">Save Coupon</button>
+                        <button onClick={handleCreateCoupon} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4 tracking-widest">Execute Rule</button>
                      </div>
                   </div>
                </div>
 
                <div className="lg:col-span-7 bg-[#111] p-10 rounded-[30px] border border-white/10">
-                  <h4 className="text-white font-bold text-xl mb-6 border-b border-white/10 pb-4">Active Coupons</h4>
+                  <h4 className="text-white font-bold text-xl mb-6 border-b border-white/10 pb-4">Active Market Logic</h4>
                   <div className="space-y-4">
-                     {coupons.length === 0 ? <p className="text-center py-20 text-gray-500">No active coupons.</p> : coupons.map((c, i) => (
+                     {coupons.length === 0 ? <p className="text-center py-20 text-gray-600 font-bold uppercase tracking-widest">No Rules Defined</p> : coupons.map((c, i) => (
                         <div key={i} className="p-6 bg-black border border-white/20 rounded-2xl flex justify-between items-center group hover:border-[#D4AF37] transition-colors">
                            <div className="flex items-center gap-6">
                               <div className="w-16 h-16 bg-[#D4AF37]/20 rounded-xl flex items-center justify-center text-[#D4AF37] font-bold text-2xl">{c.discountValue}%</div>
                               <div>
-                                 <p className="font-bold text-2xl text-white mb-1">{c.code}</p>
-                                 <p className="text-xs text-gray-400">Used: {c.usedCount || 0} times | Min Order: ₹{c.minOrderValue?.toLocaleString() || 0}</p>
+                                 <p className="font-bold text-2xl text-white mb-1 tracking-widest">{c.code}</p>
+                                 <p className="text-xs text-gray-400">Triggered: {c.usedCount || 0} times | Threshold: ₹{c.minOrderValue?.toLocaleString() || 0}</p>
                               </div>
                            </div>
-                           <button className="p-3 bg-red-500/20 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={20}/></button>
+                           <button onClick={() => handleDeleteCoupon(c._id)} className="p-3 bg-red-500/20 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"><Trash2 size={20}/></button>
                         </div>
                      ))}
                   </div>
@@ -915,64 +939,72 @@ function AdminDashboard() {
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="builder" className="grid grid-cols-1 xl:grid-cols-2 gap-10 pb-20">
                
                <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 space-y-10 h-max">
-                  <h3 className="text-[#D4AF37] text-lg font-bold mb-4 border-b border-white/10 pb-4 flex items-center gap-2"><Layout size={20}/> Design Settings</h3>
+                  <h3 className="text-[#D4AF37] text-lg font-bold mb-4 border-b border-white/10 pb-4 flex items-center gap-2"><Layout size={20}/> UI Configuration</h3>
                   <div className="grid grid-cols-2 gap-8">
-                    <div><label className="text-xs text-gray-400 block mb-2">Primary Color</label><div className="flex gap-3"><input type="color" value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1"/><input value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div></div>
-                    <div><label className="text-xs text-gray-400 block mb-2">Background Color</label><div className="flex gap-3"><input type="color" value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1"/><input value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none"/></div></div>
+                    <div><label className="text-xs text-gray-400 block mb-2">Brand Accent</label><div className="flex gap-3"><input type="color" value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1 cursor-pointer"/><input value={uiConfig.primaryColor} onChange={(e)=>setUiConfig({...uiConfig, primaryColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none font-mono"/></div></div>
+                    <div><label className="text-xs text-gray-400 block mb-2">Base Canvas</label><div className="flex gap-3"><input type="color" value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-12 h-12 rounded-lg bg-black border border-white/20 p-1 cursor-pointer"/><input value={uiConfig.bgColor} onChange={(e)=>setUiConfig({...uiConfig, bgColor: e.target.value})} className="w-full bg-black border border-white/20 rounded-lg p-3 text-sm text-white outline-none font-mono"/></div></div>
                   </div>
                   
                   <div className="space-y-6 pt-8 border-t border-white/10">
-                      <h3 className="text-[#D4AF37] text-sm font-bold uppercase">Image Gallery (Home Page)</h3>
+                      <h3 className="text-[#D4AF37] text-sm font-bold uppercase">Dynamic Lookbook</h3>
                       <div className="grid grid-cols-3 gap-4">
-                        {[1, 2, 3, 4, 5, 6].map((slot, i) => (
-                            <div key={slot} className="p-4 bg-black border border-white/20 rounded-xl relative group flex flex-col items-center">
-                                <span className="absolute top-2 left-2 text-[10px] text-gray-500 font-bold z-20">Slot {slot}</span>
-                                {galleryImages[i] ? (
-                                    <div className="w-full h-24 rounded-lg overflow-hidden relative mt-4"><img src={galleryImages[i]} className="w-full h-full object-cover" /><button onClick={()=>setGalleryImages(galleryImages.filter((_,idx)=>idx!==i))} className="absolute top-1 right-1 p-1.5 bg-red-500 rounded text-white opacity-0 group-hover:opacity-100"><Trash2 size={12}/></button></div>
-                                ) : ( <div className="mt-4"><PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>{ const newGallery = [...galleryImages]; newGallery[i] = url; setGalleryImages(newGallery); }} /></div> )}
+                        {[0, 1, 2, 3, 4, 5].map((idx) => (
+                            <div key={idx} className="p-4 bg-black border border-white/20 rounded-xl relative group flex flex-col items-center min-h-[140px] justify-center">
+                                <span className="absolute top-2 left-2 text-[10px] text-gray-500 font-bold z-20">Matrix {idx + 1}</span>
+                                {galleryImages[idx] ? (
+                                    <div className="absolute inset-2 rounded-lg overflow-hidden mt-6">
+                                        <img src={galleryImages[idx]} className="w-full h-full object-cover" />
+                                        <button onClick={()=>{ const arr=[...galleryImages]; arr.splice(idx,1); setGalleryImages(arr); }} className="absolute top-1 right-1 p-1.5 bg-red-500 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12}/></button>
+                                    </div>
+                                ) : ( 
+                                    <div className="mt-4 scale-75 origin-center">
+                                        <PremiumUploadNode placeholder="Push" onUploadSuccess={(url: string)=>{ const arr=[...galleryImages]; arr[idx]=url; setGalleryImages(arr); }} />
+                                    </div> 
+                                )}
                             </div>
                         ))}
                       </div>
                   </div>
-                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6">Save Builder Settings</button>
+                  <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6 tracking-widest">Commit UI Overrides</button>
                </div>
 
                <div className="space-y-8">
                  <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
-                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">Home Page Banners</h3>
+                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">Hero Projection Matrix</h3>
                     <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mb-4">
-                       {heroSlides.map((slide, i) => (
+                       {heroSlides.length === 0 ? <p className="text-gray-600 text-xs font-bold tracking-widest uppercase py-4">No Projections Active</p> : heroSlides.map((slide, i) => (
                           <div key={slide.id || i} className="p-6 bg-black border border-white/20 rounded-2xl space-y-4 relative">
-                             <div className="flex justify-between items-center"><span className="text-xs font-bold text-gray-500">Banner {i+1}</span><button onClick={() => handleRemoveHeroSlide(slide.id)} className="text-red-500 text-xs font-bold">Remove</button></div>
-                             <select value={slide.type} onChange={(e) => { const n = [...heroSlides]; n[i].type = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white"><option value="video">Video</option><option value="image">Image</option></select>
-                             <input value={slide.url} onChange={(e) => { const n = [...heroSlides]; n[i].url = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-blue-400" placeholder="Media URL"/>
-                             <input value={slide.heading} onChange={(e) => { const n = [...heroSlides]; n[i].heading = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white" placeholder="Banner Text"/>
+                             <div className="flex justify-between items-center"><span className="text-xs font-bold text-[#D4AF37]">Sequence {i+1}</span><button onClick={() => handleRemoveHeroSlide(slide.id)} className="text-red-500 text-xs font-bold hover:underline">Erase</button></div>
+                             <select value={slide.type} onChange={(e) => { const n = [...heroSlides]; n[i].type = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none"><option value="video">Cinematic Video</option><option value="image">Static Image</option></select>
+                             <input value={slide.url} onChange={(e) => { const n = [...heroSlides]; n[i].url = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-blue-400 outline-none font-mono" placeholder="Target Source URL"/>
+                             <input value={slide.heading} onChange={(e) => { const n = [...heroSlides]; n[i].heading = e.target.value; setHeroSlides(n); }} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none" placeholder="Overlay Typography"/>
                           </div>
                        ))}
                     </div>
-                    <button onClick={handleAddHeroSlide} className="w-full bg-white/5 border border-white/20 py-3 rounded-xl text-sm hover:bg-white hover:text-black transition-colors">+ Add New Banner</button>
+                    <button onClick={handleAddHeroSlide} className="w-full bg-white/5 border border-white/20 py-4 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors">+ Append Sequence</button>
                  </div>
 
-                 {/* 🌟 CINEMATIC VIDEO BREAKS MODULE 🌟 */}
                  <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30">
-                    <h3 className="text-[#00F0FF] text-lg font-bold mb-2 border-b border-white/10 pb-4 flex items-center gap-2"><Video size={20}/> Cinematic Video Breaks</h3>
-                    <p className="text-xs text-gray-400 mb-6">These videos will auto-play as full-width separators between sections on the home page.</p>
+                    <h3 className="text-[#00F0FF] text-lg font-bold mb-2 border-b border-white/10 pb-4 flex items-center gap-2"><Video size={20}/> Atmospheric Bridges</h3>
+                    <p className="text-xs text-gray-400 mb-6">Full-bleed transitional videos deployed between main blocks.</p>
                     
                     <div className="space-y-4">
-                        {[1, 2, 3, 4, 5].map((slot, i) => (
+                        {[0, 1, 2].map((slot) => (
                             <div key={slot} className="flex flex-col md:flex-row items-center gap-4 bg-black p-4 rounded-2xl border border-white/10">
-                                <div className="w-full md:w-32 text-xs font-bold text-gray-500">Video Slot {slot}</div>
+                                <div className="w-full md:w-24 text-xs font-bold text-gray-500">Bridge {slot + 1}</div>
                                 <input 
-                                    value={promoVideos[i] || ''} 
-                                    onChange={(e) => { const newVids = [...promoVideos]; newVids[i] = e.target.value; setPromoVideos(newVids); }} 
-                                    className="flex-1 bg-transparent border border-white/20 p-3 rounded-lg text-sm text-white outline-none w-full" 
-                                    placeholder="Paste .mp4 URL here..."
+                                    value={promoVideos[slot] || ''} 
+                                    onChange={(e) => { const newVids = [...promoVideos]; newVids[slot] = e.target.value; setPromoVideos(newVids); }} 
+                                    className="flex-1 bg-transparent border border-white/20 p-3 rounded-lg text-sm text-[#00F0FF] font-mono outline-none w-full" 
+                                    placeholder="Target .mp4 URL..."
                                 />
-                                <PremiumUploadNode placeholder="Upload" onUploadSuccess={(url:string)=>{ const newVids = [...promoVideos]; newVids[i] = url; setPromoVideos(newVids); }} />
+                                <div className="scale-75 origin-right">
+                                    <PremiumUploadNode placeholder="Push" onUploadSuccess={(url:string)=>{ const newVids = [...promoVideos]; newVids[slot] = url; setPromoVideos(newVids); }} />
+                                </div>
                             </div>
                         ))}
                     </div>
-                    <button onClick={handleSaveCMS} className="w-full py-4 bg-[#00F0FF] text-black font-bold uppercase rounded-xl hover:bg-white transition-all mt-6 text-sm">Save Cinematic Videos</button>
+                    <button onClick={handleSaveCMS} className="w-full py-4 bg-[#00F0FF] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-6 text-sm">Commit Bridges</button>
                  </div>
                </div>
             </motion.div>
@@ -983,23 +1015,23 @@ function AdminDashboard() {
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ambassadors" className="space-y-8">
                <div className="bg-[#111] p-10 rounded-[30px] border border-white/10 flex flex-col md:flex-row gap-8">
                   <div className="flex-1 space-y-4">
-                     <h3 className="text-2xl font-serif text-white mb-6 flex items-center gap-3"><Award size={24} className="text-[#D4AF37]"/> Add Brand Ambassador</h3>
-                     <input value={newCeleb.name} onChange={e=>setNewCeleb({...newCeleb, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Celebrity Name"/>
-                     <input value={newCeleb.title} onChange={e=>setNewCeleb({...newCeleb, title: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Title (e.g. Actor / Athlete)"/>
-                     <button onClick={handleAddCelebrity} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-4">Save Ambassador</button>
+                     <h3 className="text-2xl font-serif text-white mb-6 flex items-center gap-3"><Award size={24} className="text-[#D4AF37]"/> Secure New Identity</h3>
+                     <input value={newCeleb.name} onChange={e=>setNewCeleb({...newCeleb, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Designation Name"/>
+                     <input value={newCeleb.title} onChange={e=>setNewCeleb({...newCeleb, title: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Role (e.g. Architect / Collector)"/>
+                     <button onClick={handleAddCelebrity} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl text-sm hover:bg-white transition-all mt-4">Append Profile</button>
                   </div>
                   <div className="flex flex-col gap-4 items-center justify-center border-l border-white/10 pl-8">
-                     <PremiumUploadNode placeholder="Photo" onUploadSuccess={(url:string)=>setNewCeleb({...newCeleb, imageUrl: url})} />
+                     <PremiumUploadNode placeholder="Visual" onUploadSuccess={(url:string)=>setNewCeleb({...newCeleb, imageUrl: url})} />
                      {newCeleb.imageUrl && <div className="h-32 w-32 rounded-xl overflow-hidden border border-white/20"><img src={newCeleb.imageUrl} className="w-full h-full object-cover"/></div>}
                   </div>
                </div>
 
                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {celebs.map((c) => (
+                  {celebs.length === 0 ? <p className="col-span-full text-center text-gray-600 font-bold uppercase tracking-widest py-10">No Identities Found</p> : celebs.map((c) => (
                       <div key={c._id} className="bg-[#111] rounded-2xl border border-white/10 overflow-hidden relative group shadow-lg hover:border-[#D4AF37]/50 transition-all">
                           <div className="h-56 relative">
                               <img src={c.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                              <button onClick={() => handleDeleteCeleb(c._id)} className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+                              <button onClick={() => handleDeleteCeleb(c._id)} className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"><Trash2 size={14}/></button>
                           </div>
                           <div className="p-5 text-center">
                               <h4 className="font-bold text-lg text-white mb-1">{c.name}</h4>
@@ -1011,7 +1043,7 @@ function AdminDashboard() {
             </motion.div>
           )}
 
-          {/* ================= 8. SEO ENGINE (NEW) ================= */}
+          {/* ================= 8. SEO ENGINE ================= */}
           {activeTab === 'SEO_ENGINE' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8">
                 <SeoAnalyticsDashboard />
@@ -1025,39 +1057,39 @@ function AdminDashboard() {
                 <div className="lg:col-span-4 space-y-8">
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                        <h3 className="text-lg font-bold text-white">Pages</h3>
+                        <h3 className="text-lg font-bold text-white">Active Nodes</h3>
                         <button 
                             onClick={() => {
-                                const cinematicTemplate = `<h1>New Premium Policy</h1>\n\n<p>Welcome to <strong>ESSENTIAL RUSH</strong>. Replace this text with your legal or brand content.</p>\n\n<h2>01. First Section Heading</h2>\n<p>Write your detailed policy here. Use the media uploader on the right to insert cinematic images or videos.</p>`;
+                                const cinematicTemplate = `<h1>New Core Protocol</h1>\n\n<p>Initialization of <strong>ESSENTIAL RUSH</strong> protocol. Replace this matrix with operational guidelines.</p>\n\n<h2>01. Primary Directive</h2>\n<p>Insert data constraints here. Utilize the asset injector to map visual coordinates.</p>`;
                                 const newId = Date.now().toString();
-                                setLegalPages([...legalPages, { id: newId, title: 'New Policy', slug: 'new-policy', content: cinematicTemplate }]);
+                                setLegalPages([...legalPages, { id: newId, title: 'New Protocol', slug: 'new-protocol', content: cinematicTemplate }]);
                                 setActiveLegalPageId(newId);
                             }} 
-                            className="text-[#D4AF37] text-sm font-bold bg-[#D4AF37]/20 px-3 py-1 rounded hover:bg-[#D4AF37] hover:text-black transition-colors"
+                            className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest bg-[#D4AF37]/10 px-3 py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
                         >
-                            + Add Page
+                            + Instantiate
                         </button>
                      </div>
                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {legalPages.map((page) => (
+                        {legalPages.length === 0 ? <p className="text-gray-600 text-xs font-bold text-center uppercase tracking-widest py-4">No Nodes Active</p> : legalPages.map((page) => (
                            <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]' : 'bg-black border-white/20 hover:border-gray-500'}`}>
                               <div>
                                  <h4 className={`font-bold text-sm ${activeLegalPageId === page.id ? 'text-[#D4AF37]' : 'text-white'}`}>{page.title}</h4>
-                                 <p className="text-xs text-gray-500 mt-1">/policies/{page.slug}</p>
+                                 <p className="text-xs text-gray-500 mt-1 font-mono">/policies/{page.slug}</p>
                               </div>
-                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="text-red-500 p-2 hover:bg-red-500/20 rounded"><Trash2 size={16}/></button>
+                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="text-red-500 p-2 hover:bg-red-500/20 rounded-lg"><Trash2 size={16}/></button>
                            </div>
                         ))}
                      </div>
                   </div>
 
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
-                     <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Company Contact Info</h3>
+                     <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Entity Coordinates</h3>
                      <div className="space-y-4">
-                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Company Name" />
-                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Address" />
-                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Phone Number" />
-                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Email Address" />
+                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Corporate Entity Name" />
+                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Physical Location" />
+                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Primary Comm Channel" />
+                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Digital Comm Channel" />
                      </div>
                   </div>
                 </div>
@@ -1067,36 +1099,36 @@ function AdminDashboard() {
                       <div className="space-y-6 flex flex-col h-full">
                          <div className="grid grid-cols-2 gap-6">
                             <div>
-                               <label className="text-xs text-gray-400 mb-2 block">Page Title</label>
-                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-lg text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Privacy Policy"/>
+                               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">Node Identifier</label>
+                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-lg text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Privacy Protocol"/>
                             </div>
                             <div>
-                               <label className="text-xs text-gray-400 mb-2 block">URL Link (Slug)</label>
-                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#00F0FF] outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-policy"/>
+                               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">Routing Path</label>
+                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#00F0FF] font-mono outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-protocol"/>
                             </div>
                          </div>
                          
                          <div className="flex-1 flex flex-col">
-                            <div className="flex justify-between items-end mb-2">
-                               <label className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Cinematic HTML Editor</label>
+                            <div className="flex justify-between items-end mb-3">
+                               <label className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Structural Matrix (HTML)</label>
                                
                                <div className="flex items-center gap-3 bg-black border border-white/10 p-2 rounded-xl">
-                                   <span className="text-[10px] text-gray-500 uppercase font-bold ml-2">Insert Media:</span>
+                                   <span className="text-[10px] text-gray-500 uppercase font-bold ml-2">Inject Assets:</span>
                                    <div className="scale-75 origin-right h-12">
                                        <PremiumUploadNode 
-                                          placeholder="IMG/VID" 
+                                          placeholder="File" 
                                           onUploadSuccess={(url: string) => {
                                              const isVideo = url.match(/\.(mp4|webm|mov)$/i);
                                              const mediaTag = isVideo 
-                                                 ? `\n\n\n<video src="${url}" autoplay loop muted playsinline></video>\n\n` 
-                                                 : `\n\n\n<img src="${url}" alt="Premium Media" />\n\n`;
+                                                 ? `\n\n<video src="${url}" autoplay loop muted playsinline></video>\n\n` 
+                                                 : `\n\n<img src="${url}" alt="Vault Asset" />\n\n`;
                                              
                                              const n = [...legalPages];
                                              const idx = n.findIndex(p => p.id === activeLegalPageId);
                                              if (idx > -1) {
                                                 n[idx].content = (n[idx].content || '') + mediaTag;
                                                 setLegalPages(n);
-                                                addLog("Media injected into HTML editor.");
+                                                addLog("Asset injected into layout matrix.");
                                              }
                                           }} 
                                        />
@@ -1109,14 +1141,13 @@ function AdminDashboard() {
                                 onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].content=e.target.value; setLegalPages(n); }} 
                                 rows={18} 
                                 className="w-full h-full bg-black border border-white/20 p-6 rounded-2xl text-sm text-[#b3b3b3] font-mono outline-none focus:border-[#D4AF37] custom-scrollbar leading-relaxed" 
-                                placeholder="Write policy text here using HTML tags (<h1>, <p>, <ul>)..."
+                                placeholder="Construct layout parameters here..."
                             />
                          </div>
 
-                         {/* 🌟 LIVE MEDIA VAULT (Parses HTML to find images/videos) 🌟 */}
                          <div className="mt-8 p-6 bg-[#0a0a0a] border border-[#D4AF37]/20 rounded-2xl">
                              <h4 className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                                 <ImageIcon size={16} /> Attached Cinematic Media
+                                 <ImageIcon size={16} /> Asset Detection Stream
                              </h4>
                              
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1129,7 +1160,7 @@ function AdminDashboard() {
                                          urls.push(match[1]);
                                      }
 
-                                     if (urls.length === 0) return <p className="text-xs text-gray-600 col-span-full uppercase">No media injected yet.</p>;
+                                     if (urls.length === 0) return <p className="text-xs text-gray-600 col-span-full uppercase font-bold tracking-widest text-center py-4">Stream Clear</p>;
 
                                      return urls.map((url, idx) => (
                                          <div key={idx} className="group relative rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
@@ -1139,7 +1170,6 @@ function AdminDashboard() {
                                                  <img src={url} className="w-full h-full object-cover" />
                                              )}
                                              
-                                             {/* 🚨 THE DELETE BUTTON 🚨 */}
                                              <button 
                                                  onClick={() => {
                                                      const n = [...legalPages];
@@ -1150,10 +1180,10 @@ function AdminDashboard() {
                                                          setLegalPages(n);
                                                      }
                                                  }}
-                                                 className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                                                 className="absolute inset-0 bg-red-600/90 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm"
                                              >
                                                  <Trash2 size={24} className="mb-1"/>
-                                                 Remove Media
+                                                 Erase Target
                                              </button>
                                          </div>
                                      ));
@@ -1161,12 +1191,12 @@ function AdminDashboard() {
                              </div>
                          </div>
 
-                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Save Legal Page</button>
+                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Commit Node Overrides</button>
                       </div>
                    ) : (
                       <div className="h-full flex items-center justify-center flex-col text-gray-500 py-32 border-2 border-dashed border-white/10 rounded-2xl">
-                         <FileText size={60} className="mb-4 opacity-50"/>
-                         <p className="text-sm">Select a page from the left to edit its cinematic layout.</p>
+                         <Radar size={60} className="mb-4 opacity-50 text-[#D4AF37]"/>
+                         <p className="text-xs font-bold uppercase tracking-widest">Select a Node to Intercept</p>
                       </div>
                    )}
                 </div>
@@ -1178,63 +1208,55 @@ function AdminDashboard() {
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="rev" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                <div className="lg:col-span-4 space-y-8">
                    <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
-                      <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Add Customer Review</h3>
+                      <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Inject Manual Feedback</h3>
                       <div className="space-y-4">
-                         <input value={fakeReview.userName} onChange={e=>setFakeReview({...fakeReview, userName: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white" placeholder="Customer Name" />
-                         <select value={fakeReview.rating} onChange={e=>setFakeReview({...fakeReview, rating: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#D4AF37]"><option value={5}>5 Stars - Excellent</option><option value={4}>4 Stars - Good</option></select>
-                         <textarea value={fakeReview.comment} onChange={e=>setFakeReview({...fakeReview, comment: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white" placeholder="Write the review here..." />
+                         <input value={manualReview.userName} onChange={e=>setManualReview({...manualReview, userName: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Client Alias" />
+                         <select value={manualReview.rating} onChange={e=>setManualReview({...manualReview, rating: Number(e.target.value)})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#D4AF37] outline-none focus:border-[#D4AF37] appearance-none"><option value={5}>Tier 5 - Flawless</option><option value={4}>Tier 4 - Acceptable</option></select>
+                         <textarea value={manualReview.comment} onChange={e=>setManualReview({...manualReview, comment: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-white outline-none focus:border-[#D4AF37] custom-scrollbar" placeholder="Formulate feedback structure..." />
                          
                          <div>
-                             <label className="text-xs text-gray-400 block mb-2">Upload Review Image</label>
-                             <div className="flex gap-2 items-center">
-                                 {fakeReview.media && fakeReview.media.map((url, idx) => (
-                                     <div key={idx} className="relative w-16 h-16 rounded overflow-hidden"><img src={url} className="w-full h-full object-cover"/><button onClick={()=>setFakeReview({...fakeReview, media: fakeReview.media.filter(x => x !== url)})} className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-1"><X size={10}/></button></div>
+                             <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Upload Evidence</label>
+                             <div className="flex gap-3 items-center">
+                                 {manualReview.media && manualReview.media.map((url, idx) => (
+                                     <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/20 shadow-lg group"><img src={url} className="w-full h-full object-cover"/><button onClick={()=>setManualReview({...manualReview, media: manualReview.media.filter(x => x !== url)})} className="absolute inset-0 bg-red-600/80 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"><X size={16}/></button></div>
                                  ))}
-                                 <PremiumUploadNode placeholder="Image" onUploadSuccess={(url: string)=>setFakeReview({...fakeReview, media: [...(fakeReview.media || []), url]})} />
+                                 {manualReview.media.length < 3 && (
+                                    <div className="scale-75 origin-left">
+                                        <PremiumUploadNode placeholder="Scan" onUploadSuccess={(url: string)=>setManualReview({...manualReview, media: [...(manualReview.media || []), url]})} />
+                                    </div>
+                                 )}
                              </div>
                          </div>
-                         <button onClick={handleAddFakeReview} className="w-full py-4 bg-[#D4AF37] text-black font-bold rounded-xl mt-4">Save Review</button>
+                         <button onClick={handleAddManualReview} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl text-xs hover:bg-white transition-all mt-4">Compile Entry</button>
                       </div>
-                   </div>
-
-                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
-                        <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4"><h3 className="text-lg font-bold text-white">FAQs</h3><button onClick={() => setFaqs([...faqs, {q:'', a:''}])} className="text-[#00F0FF] text-sm">+ Add FAQ</button></div>
-                        <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                           {faqs.map((faq, i) => (
-                              <div key={i} className="p-4 bg-black border border-white/20 rounded-xl relative group space-y-2">
-                                 <input value={faq.q} onChange={e => { const n=[...faqs]; n[i].q=e.target.value; setFaqs(n); }} className="w-full bg-transparent border-b border-white/10 p-2 text-sm font-bold text-white outline-none" placeholder="Question" />
-                                 <textarea value={faq.a} onChange={e => { const n=[...faqs]; n[i].a=e.target.value; setFaqs(n); }} rows={2} className="w-full bg-transparent p-2 text-xs text-gray-400 outline-none custom-scrollbar" placeholder="Answer" />
-                                 <button onClick={()=>setFaqs(faqs.filter((_,idx)=>idx!==i))} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 p-2 bg-black rounded"><Trash2 size={14}/></button>
-                              </div>
-                           ))}
-                        </div>
                    </div>
                </div>
                
                <div className="lg:col-span-8 bg-[#111] p-10 rounded-[30px] border border-white/10">
                   <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
-                    <h3 className="text-2xl font-bold text-white">Manage Reviews</h3>
+                    <h3 className="text-2xl font-bold text-white">Feedback Stream</h3>
                   </div>
                   
                   <div className="space-y-4 max-h-[700px] overflow-y-auto custom-scrollbar pr-4">
-                     {allReviews.length === 0 ? <p className="text-gray-500">No reviews yet.</p> : allReviews.map((rev:any, i:number) => (
-                       <div key={i} className={`bg-black border p-6 rounded-2xl flex flex-col md:flex-row justify-between gap-6 transition-all ${rev.visibility === 'pending' ? 'border-[#00F0FF]' : 'border-white/10'}`}>
+                     {allReviews.length === 0 ? <p className="text-center text-gray-600 font-bold uppercase tracking-widest py-10">Stream Empty</p> : allReviews.map((rev:any, i:number) => (
+                       <div key={i} className={`bg-black border p-6 rounded-2xl flex flex-col md:flex-row justify-between gap-6 transition-all shadow-lg ${rev.visibility === 'pending' ? 'border-[#00F0FF]' : 'border-white/10 hover:border-[#D4AF37]/30'}`}>
                           <div className="flex-1">
                              <div className="flex items-center gap-3 mb-2">
                                 <h4 className="font-bold text-white text-lg">{rev.userName}</h4>
-                                <span className={`text-xs font-bold px-2 py-1 rounded border ${rev.visibility === 'public' ? 'bg-green-500/20 text-green-500' : rev.visibility === 'pending' ? 'bg-[#00F0FF]/20 text-[#00F0FF]' : 'bg-red-500/20 text-red-500'}`}>{rev.visibility || 'PENDING'}</span>
+                                <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded border ${rev.visibility === 'public' ? 'bg-green-500/10 text-green-500 border-green-500/20' : rev.visibility === 'pending' ? 'bg-[#00F0FF]/10 text-[#00F0FF] border-[#00F0FF]/20 animate-pulse' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>{rev.visibility || 'STANDBY'}</span>
                              </div>
-                             <div className="flex gap-1 text-[#D4AF37] mb-3">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={14} fill="currentColor"/>)}</div>
-                             <p className="text-gray-400 text-sm mb-3">"{rev.comment}"</p>
+                             <div className="flex gap-1 text-[#D4AF37] mb-4">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={14} fill="currentColor"/>)}</div>
+                             <p className="text-gray-300 text-sm leading-relaxed mb-4">"{rev.comment}"</p>
                              {rev.media && rev.media.length > 0 && (
-                                <div className="flex gap-2 mt-2">
-                                   {rev.media.map((m:string, idx:number) => m.match(/\.(mp4|webm|mov)$/i) ? <video key={idx} src={m} className="w-16 h-16 object-cover rounded-lg border border-white/20" controls/> : <img key={idx} src={m} className="w-16 h-16 object-cover rounded-lg border border-white/20"/>)}
+                                <div className="flex gap-3">
+                                   {rev.media.map((m:string, idx:number) => m.match(/\.(mp4|webm|mov)$/i) ? <video key={idx} src={m} className="w-20 h-20 object-cover rounded-xl border border-white/10" controls/> : <img key={idx} src={m} className="w-20 h-20 object-cover rounded-xl border border-white/10"/>)}
                                 </div>
                              )}
                           </div>
-                          <div className={`flex md:flex-col gap-3 justify-center min-w-[120px]`}>
-                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'public')} className="w-full py-2 bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white rounded-lg text-xs font-bold transition-all">Approve</button>
-                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'rejected')} className="w-full py-2 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-lg text-xs font-bold transition-all">Hide</button>
+                          <div className={`flex md:flex-col gap-3 justify-center min-w-[140px]`}>
+                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'public')} className="w-full py-3 bg-green-500/10 border border-green-500/20 text-green-500 hover:bg-green-500 hover:text-black rounded-xl text-xs font-bold uppercase tracking-widest transition-all">Validate</button>
+                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'rejected')} className="w-full py-3 bg-orange-500/10 border border-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-black rounded-xl text-xs font-bold uppercase tracking-widest transition-all">Suppress</button>
+                             <button onClick={()=>handleDeleteReview(rev._id)} className="w-full py-3 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all mt-auto flex items-center justify-center gap-2"><Trash2 size={14}/> Erase</button>
                           </div>
                        </div>
                      ))}
@@ -1247,37 +1269,38 @@ function AdminDashboard() {
           {activeTab === 'SALES_FORCE' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="salesforce" className="space-y-8">
                <div className="bg-[#111] p-10 rounded-[40px] border border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
-                  <div><h3 className="text-3xl font-bold text-white mb-2">Affiliate Partners</h3><p className="text-gray-400 text-sm">Manage sales partners and their tracking codes.</p></div>
-                  <button onClick={() => setIsAgentModalOpen(true)} className="bg-[#D4AF37] text-black px-8 py-4 rounded-xl font-bold hover:bg-white transition-all flex items-center gap-2"><PlusCircle size={18}/> Add Partner</button>
+                  <div><h3 className="text-3xl font-bold text-white mb-2">Network Terminals</h3><p className="text-gray-400 text-sm">Oversee registered referral vectors.</p></div>
+                  <button onClick={() => setIsAgentModalOpen(true)} className="bg-[#D4AF37] text-black px-8 py-4 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2"><PlusCircle size={18}/> Provision Terminal</button>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-gray-400 text-xs font-bold uppercase mb-2">Total Partners</p><h2 className="text-4xl font-bold text-white">{agents.length}</h2></div>
-                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-[#00F0FF] text-xs font-bold uppercase mb-2">Total Clicks/Visits</p><h2 className="text-4xl font-bold text-white">{agents.reduce((acc, a) => acc + (a.clicks || 0), 0).toLocaleString()}</h2></div>
-                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-green-500 text-xs font-bold uppercase mb-2">Revenue Generated</p><h2 className="text-4xl font-bold text-white">₹{agents.reduce((acc, a) => acc + (a.revenue || 0), 0).toLocaleString()}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Active Nodes</p><h2 className="text-4xl font-bold text-white">{agents.length}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-[#00F0FF] text-xs font-bold uppercase tracking-widest mb-2">Total Packets</p><h2 className="text-4xl font-bold text-white">{agents.reduce((acc, a) => acc + (a.clicks || 0), 0).toLocaleString()}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-green-500 text-xs font-bold uppercase tracking-widest mb-2">Total Output</p><h2 className="text-4xl font-bold text-white">₹{agents.reduce((acc, a) => acc + (a.revenue || 0), 0).toLocaleString()}</h2></div>
                </div>
 
-               <div className="bg-[#111] rounded-[30px] border border-white/10 overflow-hidden">
-                  <div className="p-8 border-b border-white/10"><h4 className="text-lg font-bold text-white">Partner List</h4></div>
+               <div className="bg-[#111] rounded-[30px] border border-white/10 overflow-hidden shadow-2xl">
+                  <div className="p-8 border-b border-white/10"><h4 className="text-lg font-bold text-white">Terminal Ledger</h4></div>
                   <div className="overflow-x-auto">
                       <table className="w-full text-left">
-                         <thead className="bg-black/50 text-xs font-bold uppercase text-gray-500 border-b border-white/10">
-                            <tr><th className="p-6 pl-8">Partner Name</th><th className="p-6 text-center">Clicks</th><th className="p-6 text-center">Orders</th><th className="p-6 text-right pr-8">Revenue</th></tr>
+                         <thead className="bg-black/50 text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/10">
+                            <tr><th className="p-6 pl-8">Identity</th><th className="p-6 text-center">Pings</th><th className="p-6 text-center">Conversions</th><th className="p-6 text-right">Yield</th><th className="p-6 text-center pr-8">Actions</th></tr>
                          </thead>
                          <tbody>
                             {agents.length === 0 ? (
-                                <tr><td colSpan={4} className="p-16 text-center text-gray-500">No partners added yet.</td></tr>
+                                <tr><td colSpan={5} className="p-16 text-center text-gray-600 font-bold uppercase tracking-widest">No Active Vectors.</td></tr>
                             ) : agents.map((agent, i) => (
-                               <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                               <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                   <td className="p-6 pl-8">
                                      <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-black border border-white/20 rounded-full flex items-center justify-center text-white font-bold">{agent.name?.charAt(0) || 'P'}</div>
-                                        <div><p className="font-bold text-white">{agent.name}</p><p className="text-xs text-[#00F0FF] font-mono mt-1">Code: {agent.code}</p></div>
+                                        <div className="w-12 h-12 bg-black border border-white/20 rounded-full flex items-center justify-center text-white font-bold">{agent.name?.charAt(0) || 'U'}</div>
+                                        <div><p className="font-bold text-white text-sm">{agent.name}</p><p className="text-[10px] text-[#00F0FF] uppercase tracking-widest mt-1">Key: {agent.code}</p></div>
                                      </div>
                                   </td>
-                                  <td className="p-6 text-center text-white font-bold">{agent.clicks || 0}</td>
-                                  <td className="p-6 text-center font-bold text-green-400">{agent.sales || 0}</td>
-                                  <td className="p-6 text-right pr-8 font-bold text-white">₹{(agent.revenue || 0).toLocaleString()}</td>
+                                  <td className="p-6 text-center text-gray-300 font-mono">{agent.clicks || 0}</td>
+                                  <td className="p-6 text-center font-bold text-green-400 font-mono">{agent.sales || 0}</td>
+                                  <td className="p-6 text-right font-bold text-white font-mono">₹{(agent.revenue || 0).toLocaleString()}</td>
+                                  <td className="p-6 text-center pr-8"><button onClick={() => handleDeleteAffiliate(agent._id)} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"><Trash2 size={16}/></button></td>
                                </tr>
                             ))}
                          </tbody>
@@ -1291,36 +1314,36 @@ function AdminDashboard() {
           {activeTab === 'AI_ENGINE' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ai" className="max-w-3xl mx-auto space-y-10">
                <div className="text-center mb-10">
-                   <Zap size={50} className="text-[#00F0FF] mx-auto mb-4"/>
-                   <h2 className="text-3xl font-bold text-white mb-2">Smart Pricing Rules</h2>
-                   <p className="text-gray-400 text-sm">Automatically adjust prices based on demand.</p>
+                   <BrainCircuit size={60} className="text-[#00F0FF] mx-auto mb-6"/>
+                   <h2 className="text-3xl font-bold text-white mb-2">Algorithmic Valuation</h2>
+                   <p className="text-gray-400 text-sm">Dynamic fluctuation based on market velocity.</p>
                </div>
 
-               <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30 space-y-8">
+               <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30 space-y-8 shadow-[0_0_50px_rgba(0,240,255,0.05)]">
                   <div className="flex justify-between items-center border-b border-white/10 pb-6">
                      <div>
-                        <h4 className="text-lg font-bold text-white">Enable Auto-Pricing</h4>
-                        <p className="text-xs text-gray-500 mt-1">Let the system change prices slightly for high-demand items.</p>
+                        <h4 className="text-lg font-bold text-white">Enable Deep Learning</h4>
+                        <p className="text-xs text-gray-500 mt-1">Permit automatic price recalibration for limited stock assets.</p>
                      </div>
                      <div className="flex items-center gap-3">
-                        <span className={`text-xs font-bold uppercase ${pricingRules.isAiPricingActive ? 'text-[#00F0FF]' : 'text-gray-500'}`}>{pricingRules.isAiPricingActive ? 'ON' : 'OFF'}</span>
-                        <button onClick={() => setPricingRules({...pricingRules, isAiPricingActive: !pricingRules.isAiPricingActive})} className={`w-14 h-8 rounded-full p-1 transition-colors ${pricingRules.isAiPricingActive ? 'bg-[#00F0FF]' : 'bg-gray-700'}`}>
-                           <div className={`w-6 h-6 bg-white rounded-full transition-transform ${pricingRules.isAiPricingActive ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        <span className={`text-xs font-bold uppercase tracking-widest ${pricingRules.isAiPricingActive ? 'text-[#00F0FF]' : 'text-gray-600'}`}>{pricingRules.isAiPricingActive ? 'ONLINE' : 'OFFLINE'}</span>
+                        <button onClick={() => setPricingRules({...pricingRules, isAiPricingActive: !pricingRules.isAiPricingActive})} className={`w-16 h-8 rounded-full p-1 transition-colors ${pricingRules.isAiPricingActive ? 'bg-[#00F0FF]' : 'bg-gray-800'}`}>
+                           <div className={`w-6 h-6 bg-white rounded-full transition-transform ${pricingRules.isAiPricingActive ? 'translate-x-8' : 'translate-x-0'}`}></div>
                         </button>
                      </div>
                   </div>
 
                   <div>
                      <div className="flex justify-between items-end mb-4">
-                        <label className="text-sm font-bold text-white">Max Price Increase Limit</label>
-                        <span className="text-xl font-bold text-[#00F0FF]">{pricingRules.maxMarkupPercent}%</span>
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Absolute Price Ceiling</label>
+                        <span className="text-2xl font-mono text-[#00F0FF]">{pricingRules.maxMarkupPercent}%</span>
                      </div>
-                     <input type="range" min="0" max="50" value={pricingRules.maxMarkupPercent} onChange={(e) => setPricingRules({...pricingRules, maxMarkupPercent: Number(e.target.value)})} className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer" style={{accentColor: '#00F0FF'}} />
-                     <p className="text-xs text-gray-500 mt-3">The maximum percentage the price can go up automatically.</p>
+                     <input type="range" min="0" max="50" value={pricingRules.maxMarkupPercent} onChange={(e) => setPricingRules({...pricingRules, maxMarkupPercent: Number(e.target.value)})} className="w-full h-2 bg-gray-800 rounded-full appearance-none cursor-pointer" style={{accentColor: '#00F0FF'}} />
+                     <p className="text-xs text-gray-600 mt-4">Restricts the maximum allowable deviation from the base coordinate.</p>
                   </div>
 
-                  <button onClick={handleSaveAIRules} className="w-full py-5 bg-[#00F0FF] text-black font-bold uppercase rounded-xl text-sm hover:bg-white transition-all mt-6">
-                     Save Pricing Rules
+                  <button onClick={handleSaveAIRules} className="w-full py-5 bg-[#00F0FF] text-black font-bold uppercase tracking-widest rounded-xl text-sm hover:bg-white transition-all mt-6 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+                     Compile Algorithm
                   </button>
                </div>
             </motion.div>
@@ -1329,12 +1352,12 @@ function AdminDashboard() {
           {/* ================= 13. SECURITY ================= */}
           {activeTab === 'SECURITY' && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} className="max-w-2xl mx-auto mt-20">
-               <div className="bg-[#111] border border-red-500/30 p-12 rounded-[40px] flex flex-col items-center text-center">
-                  <ShieldAlert size={60} className="text-red-500 mb-6" />
-                  <h3 className="text-3xl font-bold text-white mb-4">Website Security</h3>
-                  <p className="text-gray-400 text-sm mb-10">Your database and admin panel are fully secured.</p>
-                  <button className="px-10 py-5 bg-red-600 text-white text-sm font-bold uppercase rounded-xl hover:bg-red-500 transition-all flex items-center gap-2">
-                     <Lock size={18}/> Turn On Maintenance Mode
+               <div className="bg-[#111] border border-red-500/30 p-16 rounded-[40px] flex flex-col items-center text-center shadow-[0_0_100px_rgba(239,68,68,0.1)]">
+                  <div className="p-6 bg-red-500/10 rounded-full mb-8"><Fingerprint size={60} className="text-red-500" /></div>
+                  <h3 className="text-4xl font-bold text-white mb-4">System Integrity</h3>
+                  <p className="text-gray-400 text-sm mb-12">All external nodes are secure. Execute full lockdown in case of breach.</p>
+                  <button className="px-10 py-5 bg-red-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-red-500 transition-all flex items-center gap-3 shadow-[0_0_40px_rgba(239,68,68,0.3)] hover:scale-105">
+                     <AlertTriangle size={18}/> Initiate Lockdown
                   </button>
                </div>
             </motion.div>

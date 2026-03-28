@@ -37,9 +37,9 @@ export default function CheckoutPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
 
-    // 🎟️ PROMO STATES (Handles both Product-Specific & Global Referrals)
+    // 🎟️ PROMO & MLM REFERRAL STATES
     const [vaultKeyInput, setVaultKeyInput] = useState('');
-    const [promoDetails, setPromoDetails] = useState<{code: string, type: 'product'|'global', discountValue: number} | null>(null);
+    const [promoDetails, setPromoDetails] = useState<{code: string, type: 'product'|'global'|'referral', discountValue: number} | null>(null);
     const [isVerifying, setIsVerifying] = useState(false);
     
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -84,8 +84,8 @@ export default function CheckoutPage() {
             }
         });
 
-        // 2. Global Referral/Coupon Math (Percentage Based)
-        if (promoDetails?.type === 'global') {
+        // 2. Global Referral/Coupon Math (Percentage Based - Usually 10% for MLM)
+        if (promoDetails?.type === 'global' || promoDetails?.type === 'referral') {
             const globalDisc = (sub * promoDetails.discountValue) / 100;
             disc += globalDisc;
         }
@@ -99,7 +99,7 @@ export default function CheckoutPage() {
         setIsVerifying(true);
         
         try {
-            // 1. Check Product-Specific Code First (Local Cart Check)
+            // 1. Check Product-Specific Code First
             const isProductCode = cart.some(item => item.vipVaultKey?.toUpperCase() === code);
             if (isProductCode) {
                 setPromoDetails({ code, type: 'product', discountValue: 0 }); 
@@ -108,7 +108,7 @@ export default function CheckoutPage() {
                 return;
             }
 
-            // 2. If not local, ask Database (Referrals & Coupons)
+            // 2. If not local, ask Database (Check if it's a Customer Referral or Marketing Coupon)
             const res = await fetch('/api/verify-promo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -117,8 +117,10 @@ export default function CheckoutPage() {
             const data = await res.json();
 
             if (data.success) {
-                setPromoDetails({ code, type: 'global', discountValue: data.discountValue });
-                showLuxuryToast(`Code Applied: ${data.discountValue}% Off!`, 'success');
+                // If it's an MLM Referral, standard is 10%
+                const type = data.isReferral ? 'referral' : 'global';
+                setPromoDetails({ code, type, discountValue: data.discountValue || 10 });
+                showLuxuryToast(data.isReferral ? `Referral Applied: 10% Off!` : `Code Applied: ${data.discountValue}% Off!`, 'success');
             } else {
                 setPromoDetails(null);
                 showLuxuryToast("Invalid Vault Key or Referral Code.", "error");
@@ -143,7 +145,9 @@ export default function CheckoutPage() {
                     items: cart,
                     totalAmount: grandTotal,
                     financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
-                    appliedVaultKey: promoDetails?.code || '',
+                    // 🚨 Backend receives the referral code here to credit the referrer
+                    appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
+                    appliedVaultKey: promoDetails?.type === 'product' ? promoDetails.code : null,
                     customer: shippingData,
                     paymentMethod: 'COD'
                 })
@@ -151,6 +155,8 @@ export default function CheckoutPage() {
 
             if (res.ok) {
                 localStorage.removeItem('luxury_cart');
+                // Remove guest tracking cookie if exists
+                localStorage.removeItem('guest_lead_captured');
                 setOrderPlaced(true); 
             } else {
                 showLuxuryToast("Acquisition failed. Please verify details.", "error");
@@ -234,9 +240,9 @@ export default function CheckoutPage() {
 
                         {/* --- PROMO & REFERRAL BOX --- */}
                         <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200">
-                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Referral / Vault Key</label>
+                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Friend's Referral Code / Vault Key</label>
                             <div className="flex gap-2">
-                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: VIP-BK7S" />
+                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: REFER-A9B2" />
                                 <button onClick={handleApplyPromoCode} disabled={isVerifying} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
                                     {isVerifying ? '...' : 'Apply'}
                                 </button>
@@ -247,7 +253,7 @@ export default function CheckoutPage() {
                             <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
                             
                             {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest">
-                                <span>{promoDetails?.type === 'global' ? 'Referral Benefit' : 'Vault Benefit'}</span>
+                                <span>{promoDetails?.type === 'referral' ? 'Friend Referral (10% OFF)' : 'Vault Benefit'}</span>
                                 <span>-₹{totalDiscount.toLocaleString()}</span>
                             </div>}
                             

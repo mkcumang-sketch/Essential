@@ -6,14 +6,82 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
     ShoppingBag, ArrowLeft, Star, Box, Video as VideoIcon, CheckCircle, User, X, Camera, UploadCloud, RefreshCcw, 
-    ShieldCheck, Truck, Clock, ChevronDown, Award
+    ShieldCheck, Truck, Clock, ChevronDown, Award, Lock
 } from 'lucide-react';
-import { useToast } from '@/context/ToastContext'; // 🌟 GLOBAL LUXURY TOAST
-import { optimizeImage } from '@/utils/optimizeimage'; // 🌟 IMAGE COMPRESSION
+import { useSession } from 'next-auth/react';
+import { useToast } from '@/context/ToastContext'; 
+import { optimizeImage } from '@/utils/optimizeimage'; 
+
+// 🌟 GUEST LEAD CAPTURE MODAL 🌟
+const GuestLeadModal = ({ isOpen, onClose, onSubmit, productPrice }: any) => {
+    const [phone, setPhone] = useState('');
+    const [name, setName] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: any) => {
+        e.preventDefault();
+        if (!phone) return;
+        setLoading(true);
+        
+        try {
+            // Sends lead to abandoned cart analytics database
+            await fetch('/api/admin/analytics', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, name, cartTotal: productPrice }) 
+            });
+            // Marks browser so we don't ask again for this specific user
+            localStorage.setItem("guest_lead_captured", "true");
+            onSubmit(); 
+        } catch (error) {
+            onSubmit(); // Still proceed to cart even if analytics fail silently
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <motion.div 
+                        initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+                        animate={{ scale: 1, opacity: 1, y: 0 }} 
+                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                        className="bg-white rounded-[40px] p-8 md:p-12 max-w-md w-full relative shadow-[0_0_50px_rgba(212,175,55,0.15)]"
+                    >
+                        <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors bg-gray-100 p-2 rounded-full"><X size={18}/></button>
+                        
+                        <div className="w-16 h-16 bg-black text-[#D4AF37] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"><Lock size={24}/></div>
+                        
+                        <h3 className="text-3xl font-serif font-bold text-center text-black mb-2">Secure Your Slot</h3>
+                        <p className="text-[10px] text-center text-gray-500 uppercase tracking-widest mb-8 font-black">Pre-register to acquire this limited asset.</p>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Identity</label>
+                                <input required value={name} onChange={e=>setName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-sm outline-none focus:border-black transition-colors" placeholder="Full Name" />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Direct Contact</label>
+                                <input required value={phone} onChange={e=>setPhone(e.target.value)} type="tel" className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-sm outline-none focus:border-black transition-colors" placeholder="Phone Number / WhatsApp" />
+                            </div>
+                            <button type="submit" disabled={loading} className="w-full py-5 bg-black text-[#D4AF37] font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-[#D4AF37] hover:text-black transition-all mt-6 shadow-xl disabled:opacity-50">
+                                {loading ? 'Securing...' : 'Continue to Vault'}
+                            </button>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 
 export default function ProductClientPage({ initialProduct, slug }: { initialProduct: any, slug: string }) {
     const router = useRouter();
     const { showToast } = useToast();
+    const { data: session } = useSession();
     
     const [product, setProduct] = useState<any>(initialProduct);
     const [cart, setCart] = useState<any[]>([]);
@@ -21,6 +89,9 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
     const [validImages, setValidImages] = useState<string[]>([]);
     const [activeAccordion, setActiveAccordion] = useState<string | null>('description');
     
+    // Lead Capture State
+    const [showLeadModal, setShowLeadModal] = useState(false);
+
     const [productReviews, setProductReviews] = useState<any[]>([]);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewForm, setReviewForm] = useState({ userName: '', comment: '', rating: 5 });
@@ -49,7 +120,22 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         fetchReviews();
     }, [initialProduct]);
 
-    const addToCart = () => {
+    // 🚨 MODIFIED: Handle Pre-Capture Check
+    const handleAddToCartClick = () => {
+        const isGuestTracked = localStorage.getItem("guest_lead_captured");
+        
+        // Ensure user is not logged in AND hasn't given info yet
+        if (!session?.user && !isGuestTracked) {
+            setShowLeadModal(true);
+            return;
+        }
+
+        executeFinalAddToCart();
+    };
+
+    // 🚨 ORIGINAL CART LOGIC MOVED HERE
+    const executeFinalAddToCart = () => {
+        // Track AI action silently
         const sessionId = localStorage.getItem('er_session');
         fetch('/api/ai/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, action: 'CART', productId: product._id, category: product.category }) }).catch(()=>{});
 
@@ -57,7 +143,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         setCart(newCart); 
         localStorage.setItem('luxury_cart', JSON.stringify(newCart)); 
         
-        // 🌟 LUXURY TOAST FIRED 🌟
+        setShowLeadModal(false); // Close modal if it was open
         showToast("Asset added to your Vault Collection!", "success");
         setTimeout(() => router.push('/cart'), 500);
     };
@@ -218,7 +304,8 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                     </div>
 
                     <div className="mt-auto">
-                        <button onClick={addToCart} className="w-full py-6 bg-black text-white rounded-[20px] font-black uppercase text-sm tracking-[4px] hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3">
+                        {/* 🚨 MODIFIED CART BUTTON 🚨 */}
+                        <button onClick={handleAddToCartClick} className="w-full py-6 bg-black text-white rounded-[20px] font-black uppercase text-sm tracking-[4px] hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3">
                             <ShoppingBag size={18}/> Secure Acquisition
                         </button>
                     </div>
@@ -339,6 +426,15 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* 🌟 MOUNTING THE PRE-CAPTURE LEAD MODAL 🌟 */}
+            <GuestLeadModal 
+                isOpen={showLeadModal} 
+                onClose={() => setShowLeadModal(false)} 
+                onSubmit={executeFinalAddToCart} 
+                productPrice={product.offerPrice || product.price} 
+            />
+
         </div>
     );
 }
