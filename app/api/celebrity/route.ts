@@ -40,3 +40,18 @@ export async function GET() {
         return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
     }
 }
+// Add this at the bottom of the file
+export async function DELETE(req: Request) {
+    try {
+        const body = await req.json();
+        const { id } = body;
+        if (!id) return NextResponse.json({ success: false, error: "ID missing" });
+
+        const Celebrity = mongoose.models.Celebrity || mongoose.model('Celebrity', new mongoose.Schema({}, { strict: false }));
+        await Celebrity.findByIdAndDelete(id);
+
+        return NextResponse.json({ success: true, message: "Ambassador Deleted from Database" });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
+    }
+}

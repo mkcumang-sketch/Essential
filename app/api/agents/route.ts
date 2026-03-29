@@ -37,3 +37,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: "Failed to create agent" });
   }
 }
+// Add this at the bottom of the file
+export async function DELETE(req: Request) {
+    try {
+        const body = await req.json();
+        const { id } = body;
+        if (!id) return NextResponse.json({ success: false, error: "ID missing" });
+
+        const Agent = mongoose.models.Agent || mongoose.model('Agent', new mongoose.Schema({}, { strict: false }));
+        await Agent.findByIdAndDelete(id);
+
+        return NextResponse.json({ success: true, message: "Affiliate Deleted from Database" });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
+    }
+}

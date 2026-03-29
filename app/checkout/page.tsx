@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShieldCheck, ArrowLeft, CheckCircle, Tag, Info, ShoppingBag, X } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, CheckCircle, Tag, Info, ShoppingBag, X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -59,6 +59,19 @@ export default function CheckoutPage() {
     const showLuxuryToast = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ show: true, message: msg, type });
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+    };
+
+    // 🚨 NEW LOGIC: Remove Item from Cart
+    const handleRemoveItem = (indexToRemove: number) => {
+        const updatedCart = cart.filter((_, index) => index !== indexToRemove);
+        setCart(updatedCart);
+        localStorage.setItem('luxury_cart', JSON.stringify(updatedCart));
+        showLuxuryToast("Item removed from Vault", "success");
+
+        // If cart becomes empty, maybe redirect back to shop or let them see empty cart
+        if(updatedCart.length === 0) {
+             setPromoDetails(null); // Clear promos if cart is empty
+        }
     };
 
     // 👑 THE MASTER PRICING CALCULATOR
@@ -117,7 +130,6 @@ export default function CheckoutPage() {
             const data = await res.json();
 
             if (data.success) {
-                // If it's an MLM Referral, standard is 10%
                 const type = data.isReferral ? 'referral' : 'global';
                 setPromoDetails({ code, type, discountValue: data.discountValue || 10 });
                 showLuxuryToast(data.isReferral ? `Referral Applied: 10% Off!` : `Code Applied: ${data.discountValue}% Off!`, 'success');
@@ -145,7 +157,6 @@ export default function CheckoutPage() {
                     items: cart,
                     totalAmount: grandTotal,
                     financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
-                    // 🚨 Backend receives the referral code here to credit the referrer
                     appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
                     appliedVaultKey: promoDetails?.type === 'product' ? promoDetails.code : null,
                     customer: shippingData,
@@ -155,7 +166,6 @@ export default function CheckoutPage() {
 
             if (res.ok) {
                 localStorage.removeItem('luxury_cart');
-                // Remove guest tracking cookie if exists
                 localStorage.removeItem('guest_lead_captured');
                 setOrderPlaced(true); 
             } else {
@@ -223,19 +233,35 @@ export default function CheckoutPage() {
                         <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4">Vault Summary</h3>
                         
                         <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                            {cart.map((item, i) => (
-                                <div key={i} className="flex gap-4">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center"><img src={item.imageUrl} className="max-h-full mix-blend-multiply" /></div>
-                                    <div className="flex-1">
-                                        <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1">{item.name}</h4>
-                                        <p className="text-[10px] text-gray-400 font-mono mt-1">QTY: {item.qty}</p>
-                                        <p className="font-bold text-sm mt-1">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
-                                        {promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase() && (
-                                            <span className="inline-block bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
-                                        )}
+                            {cart.length === 0 ? (
+                                <p className="text-sm text-gray-500 italic text-center py-4">Your vault is currently empty.</p>
+                            ) : (
+                                cart.map((item, i) => (
+                                    <div key={i} className="flex gap-4 relative group">
+                                        <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center shrink-0">
+                                            <img src={item.imageUrl} className="max-h-full mix-blend-multiply" />
+                                        </div>
+                                        <div className="flex-1 pr-8">
+                                            <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1 pr-2">{item.name}</h4>
+                                            <p className="text-[10px] text-gray-400 font-mono mt-1">QTY: {item.qty}</p>
+                                            <p className="font-bold text-sm mt-1">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
+                                            {promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase() && (
+                                                <span className="inline-block bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* 🚨 THE REMOVE BUTTON 🚨 */}
+                                        <button 
+                                            type="button"
+                                            onClick={() => handleRemoveItem(i)} 
+                                            className="absolute top-0 right-0 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+                                            title="Remove Item"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
 
                         {/* --- PROMO & REFERRAL BOX --- */}
@@ -243,7 +269,7 @@ export default function CheckoutPage() {
                             <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Friend's Referral Code / Vault Key</label>
                             <div className="flex gap-2">
                                 <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: REFER-A9B2" />
-                                <button onClick={handleApplyPromoCode} disabled={isVerifying} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
+                                <button onClick={handleApplyPromoCode} disabled={isVerifying || cart.length === 0} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
                                     {isVerifying ? '...' : 'Apply'}
                                 </button>
                             </div>

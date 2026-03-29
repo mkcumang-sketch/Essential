@@ -1,38 +1,29 @@
+export const dynamic = 'force-dynamic'; // 🚨 KILLS FAKE CACHE
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
-// Minimal Order Schema just to calculate totals
-const orderSchema = new mongoose.Schema({
-    totalAmount: { type: Number, default: 0 },
-    status: { type: String, default: 'PROCESSING' }
-}, { strict: false });
-
-const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
-
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
-    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (e) {}
+    await mongoose.connect(process.env.MONGODB_URI as string);
 };
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         await connectDB();
-
-        // 1. Get all successful orders
-        const orders = await Order.find({ status: { $ne: 'CANCELLED' } });
+        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         
-        // 2. Calculate Math
-        const totalOrders = orders.length;
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        // Fetch ONLY real orders
+        const allOrders = await Order.find({ status: { $nin: ['CANCELLED', 'PENDING'] } });
+        const totalRevenue = allOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
 
         return NextResponse.json({
             success: true,
             metrics: {
-                totalOrders: totalOrders,
-                totalRevenue: totalRevenue,
+                totalOrders: allOrders.length, // REAL COUNT
+                totalRevenue: totalRevenue     // REAL REVENUE
             }
         });
     } catch (error) {
-        return NextResponse.json({ success: false, error: "Failed to compile matrix metrics" }, { status: 500 });
+        return NextResponse.json({ success: false, metrics: { totalOrders: 0, totalRevenue: 0 } });
     }
 }

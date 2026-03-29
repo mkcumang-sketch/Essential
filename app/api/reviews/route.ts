@@ -64,3 +64,18 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ success: true, data: updatedReview });
     } catch (error) { return NextResponse.json({ success: false, error: "Failed to update review" }, { status: 500 }); }
 }
+// Add this at the bottom of the file
+export async function DELETE(req: Request) {
+    try {
+        const body = await req.json();
+        const { id } = body;
+        if (!id) return NextResponse.json({ success: false, error: "ID missing" });
+
+        const Review = mongoose.models.Review || mongoose.model('Review', new mongoose.Schema({}, { strict: false }));
+        await Review.findByIdAndDelete(id);
+
+        return NextResponse.json({ success: true, message: "Review Deleted from Database" });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
+    }
+}

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
     ShoppingBag, ArrowLeft, Star, Box, Video as VideoIcon, CheckCircle, User, X, Camera, UploadCloud, RefreshCcw, 
-    ShieldCheck, Truck, Clock, ChevronDown, Award, Lock
+    ShieldCheck, Truck, Clock, ChevronDown, Lock
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useToast } from '@/context/ToastContext'; 
@@ -34,7 +34,7 @@ const GuestLeadModal = ({ isOpen, onClose, onSubmit, productPrice }: any) => {
             localStorage.setItem("guest_lead_captured", "true");
             onSubmit(); 
         } catch (error) {
-            onSubmit(); // Still proceed to cart even if analytics fail silently
+            onSubmit(); // Proceed to cart even if analytics fail
         } finally {
             setLoading(false);
         }
@@ -92,6 +92,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
     // Lead Capture State
     const [showLeadModal, setShowLeadModal] = useState(false);
 
+    // Reviews State
     const [productReviews, setProductReviews] = useState<any[]>([]);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewForm, setReviewForm] = useState({ userName: '', comment: '', rating: 5 });
@@ -120,22 +121,35 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         fetchReviews();
     }, [initialProduct]);
 
-    // 🚨 MODIFIED: Handle Pre-Capture Check
+    // 🚨 MODIFIED: Enterprise Pre-Capture Logic (SILENT & POPUP) 🚨
     const handleAddToCartClick = () => {
         const isGuestTracked = localStorage.getItem("guest_lead_captured");
         
-        // Ensure user is not logged in AND hasn't given info yet
-        if (!session?.user && !isGuestTracked) {
+        if (session?.user) {
+            // LOGGED IN USER: Silently capture data in background using Gmail data
+            fetch('/api/admin/analytics', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    name: session.user.name, 
+                    email: session.user.email,
+                    phone: (session.user as any).phone || '', 
+                    cartTotal: product.offerPrice || product.price 
+                }) 
+            }).catch(() => {}); // Catch silent errors so UI doesn't break
+            
+            executeFinalAddToCart();
+        } else if (!isGuestTracked) {
+            // GUEST USER: Show Modal for the first time to get phone number
             setShowLeadModal(true);
-            return;
+        } else {
+            // GUEST USER: Already provided info previously, just add to cart
+            executeFinalAddToCart();
         }
-
-        executeFinalAddToCart();
     };
 
-    // 🚨 ORIGINAL CART LOGIC MOVED HERE
+    // ORIGINAL CART LOGIC
     const executeFinalAddToCart = () => {
-        // Track AI action silently
         const sessionId = localStorage.getItem('er_session');
         fetch('/api/ai/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, action: 'CART', productId: product._id, category: product.category }) }).catch(()=>{});
 
@@ -143,7 +157,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         setCart(newCart); 
         localStorage.setItem('luxury_cart', JSON.stringify(newCart)); 
         
-        setShowLeadModal(false); // Close modal if it was open
+        setShowLeadModal(false); 
         showToast("Asset added to your Vault Collection!", "success");
         setTimeout(() => router.push('/cart'), 500);
     };
@@ -304,7 +318,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                     </div>
 
                     <div className="mt-auto">
-                        {/* 🚨 MODIFIED CART BUTTON 🚨 */}
+                        {/* 🚨 THE SECURE ACQUISITION BUTTON 🚨 */}
                         <button onClick={handleAddToCartClick} className="w-full py-6 bg-black text-white rounded-[20px] font-black uppercase text-sm tracking-[4px] hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3">
                             <ShoppingBag size={18}/> Secure Acquisition
                         </button>

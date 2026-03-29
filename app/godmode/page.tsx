@@ -37,7 +37,6 @@ const MODULES = [
   { id: 'SECURITY', icon: ShieldAlert, label: 'Security & Maintenance' }
 ];
 
-// 🚨 FIX: Removed hardcoded Unsplash images. Start with empty production state.
 const DEFAULT_GALLERY: string[] = [];
 
 const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) => {
@@ -273,41 +272,39 @@ function AdminDashboard() {
   
   const handleDeleteProduct = async (id: string) => {
     if(!confirm("Delete this product from vault?")) return;
-    setLiveWatches(prev => prev.filter(w => w._id !== id)); // INSTANT UI ERASE
+    setLiveWatches(prev => prev.filter(w => w._id !== id)); 
     try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   const handleDeleteCoupon = async (id: string) => {
       if(!confirm("Delete this coupon code?")) return;
-      setCoupons(prev => prev.filter(c => c._id !== id)); // INSTANT UI ERASE
+      setCoupons(prev => prev.filter(c => c._id !== id)); 
       try { await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); } catch(e) {}
   };
 
   const handleDeleteAffiliate = async (id: string) => {
       if(!confirm("Remove this affiliate partner?")) return;
-      setAgents(prev => prev.filter(a => a._id !== id)); // INSTANT UI ERASE
-      try { await fetch(`/api/agents/${id}`, { method: 'DELETE' }); } catch(e) {}
+      setAgents(prev => prev.filter(a => a._id !== id)); 
+      try { await fetch(`/api/agents`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   const handleDeleteReview = async (id: string) => {
       if(!confirm("Permanently delete this review?")) return;
-      setAllReviews(prev => prev.filter(r => r._id !== id)); // INSTANT UI ERASE
-      try { await fetch(`/api/reviews/${id}`, { method: 'DELETE' }); } catch(e) {}
+      setAllReviews(prev => prev.filter(r => r._id !== id)); 
+      try { await fetch(`/api/reviews`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   const handleDeleteOrder = async (id: string) => {
       if(!confirm("Permanently delete this order?")) return;
-      setOrders(prev => prev.filter(o => o._id !== id)); // INSTANT UI ERASE
+      setOrders(prev => prev.filter(o => o._id !== id)); 
       try { await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   const handleDeleteLead = async (id: string) => {
       if(!confirm("Permanently erase this client record?")) return;
-      setLeads(prev => prev.filter(l => l._id !== id)); // INSTANT UI ERASE
+      setLeads(prev => prev.filter(l => l._id !== id)); 
       try { await fetch(`/api/admin/users/${id}`, { method: 'DELETE' }); } catch(e) {}
   };
-
-  // --------------------------------------------------------
 
   const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
     setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
@@ -363,8 +360,8 @@ function AdminDashboard() {
 
   const handleDeleteCeleb = async (id: string) => {
       if(!confirm("Remove this ambassador?")) return;
-      setCelebs(prev => prev.filter(c => c._id !== id)); // INSTANT UI ERASE
-      try { await fetch(`/api/celebrity/${id}`, { method: 'DELETE' }); } catch(e) {}
+      setCelebs(prev => prev.filter(c => c._id !== id)); 
+      try { await fetch(`/api/celebrity`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
   const exportToCSV = () => {
@@ -527,23 +524,52 @@ function AdminDashboard() {
                           ))
                        )}
 
+                       {/* 🚨 VIP WHATSAPP RETARGETING BUTTONS IN ABANDONED VIEW 🚨 */}
                        {dashboardView === 'abandoned' && (
                           leads.length === 0 ? <p className="text-gray-600 text-sm uppercase tracking-widest text-center py-10 font-bold">Vault is Clear</p> :
-                          leads.map((lead: any, i: number) => (
-                             <div key={i} className="flex justify-between items-center p-4 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors">
-                                <div className="flex items-center gap-4">
-                                   <div className="w-10 h-10 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center"><AlertTriangle size={16} /></div>
-                                   <div>
-                                      <p className="font-bold text-white text-sm">{lead.phone || lead.email || 'Guest User'}</p>
-                                      <p className="text-xs text-red-400">Value in Cart: ₹{lead.cartTotal?.toLocaleString() || '---'}</p>
-                                   </div>
-                                </div>
-                                <div className="flex gap-2">
-                                   {lead.phone && <a href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=We%20secured%20your%20timepiece%20in%20the%20vault...`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-xs font-bold rounded-lg hover:bg-green-500 hover:text-black">WhatsApp</a>}
-                                </div>
-                             </div>
-                          ))
-                       )}
+                          leads.map((lead: any, i: number) => {
+                              const phoneClean = lead.phone?.replace(/[^0-9]/g, '') || '';
+                              const msg1Hr = encodeURIComponent(`Dear ${lead.name || 'Client'},\n\nYour Vault is still open. Your selected timepiece is reserved for the next 24 hours. Please let us know if you need assistance completing your acquisition.\n\n- Essential Rush Concierge`);
+                              const msg24Hr = encodeURIComponent(`Update from Essential Rush Vault:\n\n${lead.name ? `Mr/Ms ${lead.name}` : 'Dear Client'}, we currently have only 2 pieces remaining for the asset you selected. Secure your acquisition before the vault closes.\n\nResume Checkout: https://essential-ivory.vercel.app/cart`);
+                              const msg48Hr = encodeURIComponent(`Exclusive Access, ${lead.name || 'Client'}.\n\nWe deeply value your taste. Use Vault Key *VIP10* at checkout to receive a 10% privilege on your pending cart value of ₹${lead.cartTotal?.toLocaleString()}.\n\nSecure here: https://essential-ivory.vercel.app/cart`);
+
+                              return (
+                                 <div key={i} className="flex flex-col xl:flex-row justify-between xl:items-center p-5 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors gap-4 shadow-lg">
+                                    <div className="flex items-center gap-4">
+                                       <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center shrink-0"><AlertTriangle size={20} /></div>
+                                       <div>
+                                          <p className="font-bold text-white text-base">{lead.name || 'Anonymous Client'}</p>
+                                          <p className="text-xs text-red-400 font-mono mt-1">Value: ₹{lead.cartTotal?.toLocaleString() || '---'} <span className="mx-2 text-white/20">|</span> {lead.phone || lead.email}</p>
+                                       </div>
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-3">
+                                       {lead.phone ? (
+                                           <div className="flex flex-wrap gap-2 justify-end">
+                                               <a href={`https://wa.me/${phoneClean}?text=${msg1Hr}`} target="_blank" className="px-4 py-2 bg-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-white hover:text-black transition-colors border border-white/10" title="Send 1 Hour After Abandonment">
+                                                   1 Hr Follow-up
+                                               </a>
+                                               <a href={`https://wa.me/${phoneClean}?text=${msg24Hr}`} target="_blank" className="px-4 py-2 bg-orange-500/20 text-orange-500 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-orange-500 hover:text-black transition-colors border border-orange-500/20" title="Send 24 Hours After Abandonment">
+                                                   24 Hr FOMO
+                                               </a>
+                                               <a href={`https://wa.me/${phoneClean}?text=${msg48Hr}`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-green-500 hover:text-black transition-colors border border-green-500/20" title="Send 48 Hours After with VIP Code">
+                                                   48 Hr VIP
+                                               </a>
+                                           </div>
+                                       ) : (
+                                           <span className="text-[10px] text-gray-500 uppercase tracking-widest text-right">Email Only Lead</span>
+                                       )}
+                                       
+                                       <div className="text-right">
+                                           <button onClick={() => handleDeleteLead(lead._id)} className="text-red-500/70 text-[10px] uppercase font-bold tracking-widest hover:text-red-500 transition-colors flex items-center justify-end gap-1 ml-auto">
+                                               <Trash2 size={12}/> Erase Lead
+                                           </button>
+                                       </div>
+                                    </div>
+                                 </div>
+                              );
+                          }
+                       ))}
                     </div>
                  </div>
 
@@ -560,6 +586,16 @@ function AdminDashboard() {
               </div>
              </motion.div>
           )}
+          <div className="bg-[#111] border border-white/10 rounded-[30px] p-8 flex flex-col">
+   <h3 className="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2"><Terminal size={16}/> System Logs</h3>
+   <div className="flex-1 overflow-hidden flex flex-col justify-end space-y-2">
+       {systemLogs.map((log, i) => (
+           <div key={i} className="text-xs text-gray-500">
+               <span className="text-[#D4AF37] mr-2">[{new Date().toLocaleTimeString()}]</span> {log}
+           </div>
+       ))}
+   </div>
+</div>
 
           {/* ================= 2. INVENTORY ================= */}
           {activeTab === 'INVENTORY' && (
@@ -612,7 +648,6 @@ function AdminDashboard() {
                             <div><label className="text-xs text-gray-500 mb-1 block">Available Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
                         </div>
 
-                        {/* 🌟 DEVICE UPLOAD 🌟 */}
                         <div className="space-y-6 pt-4 border-t border-white/10">
                             <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                 <label className="text-sm font-bold text-white flex items-center gap-2">
@@ -682,7 +717,6 @@ function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* 🌟 UNLIMITED SPECIFICATIONS 🌟 */}
                         <div className="space-y-4 pt-4 border-t border-white/10">
                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                <label className="text-sm font-bold text-white flex items-center gap-2"><AlignJustify size={16}/> Specifications</label>
@@ -726,7 +760,6 @@ function AdminDashboard() {
                            </div>
                         </div>
 
-                        {/* 👑 ENTERPRISE PRICING ENGINE 👑 */}
                         <div className="mt-8 p-6 bg-black/40 border border-[#D4AF37]/30 rounded-2xl shadow-inner relative overflow-hidden">
                             <div className="absolute -right-10 -top-10 opacity-5 pointer-events-none"><ShieldCheck size={120} className="text-[#D4AF37]"/></div>
                             <h3 className="text-lg font-serif font-bold mb-6 flex items-center gap-2 text-white relative z-10">
@@ -770,7 +803,6 @@ function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* 🚀 SEO ENGINE 🚀 */}
                         <div className="mt-8 pt-8 border-t border-white/10 space-y-8">
                             <SeoPanel entityData={watchForm} setEntityData={setWatchForm} />
                             <ImageSeoPanel entityData={watchForm} setEntityData={setWatchForm} />
@@ -781,7 +813,6 @@ function AdminDashboard() {
                   </div>
                </div>
 
-               {/* PRODUCT LIST */}
                <div className="xl:col-span-7">
                   <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                      <h3 className="text-2xl font-serif text-white">Live Assets</h3>
@@ -876,7 +907,6 @@ function AdminDashboard() {
                           <th className="p-6 text-center">Access Vector</th>
                           <th className="p-6 text-center">Vault Credits</th>
                           <th className="p-6 text-right pr-10">Portfolio Value</th>
-                          {/* 🚨 NEW ACTIONS COLUMN 🚨 */}
                           <th className="p-6 text-center pr-10">Actions</th>
                         </tr>
                      </thead>
@@ -895,7 +925,6 @@ function AdminDashboard() {
                               <td className="p-6 text-center text-sm text-gray-300">{c.referralCode || 'Organic'}</td>
                               <td className="p-6 text-center text-[#D4AF37] font-bold text-lg">₹{c.walletBalance || 0}</td>
                               <td className="p-6 text-right pr-10"><p className="font-bold text-xl text-green-400">₹{(c.cartTotal || 0).toLocaleString()}</p></td>
-                              {/* 🚨 NEW ERASE LEAD BUTTON 🚨 */}
                               <td className="p-6 text-center pr-10">
                                   <button onClick={() => handleDeleteLead(c._id)} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
                                       <Trash2 size={16}/>

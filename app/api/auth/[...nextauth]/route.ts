@@ -4,20 +4,19 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-// 🌟 DATABASE CONNECTION 🌟
 // 🌟 BULLETPROOF DATABASE CONNECTION 🌟
-let isConnected = false; // Global variable to cache connection
+let isConnected = false; 
 
 const connectDB = async () => {
     mongoose.set('strictQuery', true);
     
     if (isConnected || mongoose.connection.readyState >= 1) {
-        return; // Pehle se connected hai toh wapas mat connect karo
+        return; 
     }
     
     try {
         await mongoose.connect(process.env.MONGODB_URI as string, {
-            bufferCommands: true, // Yeh error ko suppress karne ke liye zaroori hai
+            bufferCommands: true, 
             maxPoolSize: 10,
         });
         isConnected = true;
@@ -106,36 +105,38 @@ export const authOptions: NextAuthOptions = {
                         name: user.name, 
                         email: user.email, 
                         image: user.image, 
-                        role: role 
+                        role: role,
+                        phone: null // Explicitly mark phone as null for new Google users
                     });
-                    // Attach to user object for JWT
                     (user as any).role = newUser.role;
+                    (user as any).phone = null;
                     user.id = newUser._id.toString();
                 } else {
-                    // Attach existing data to user object for JWT
                     (user as any).role = existingUser.role;
-                    (user as any).phone = existingUser.phone;
+                    (user as any).phone = existingUser.phone || null; // Fetch phone if exists
                     user.id = existingUser._id.toString();
                 }
             }
             return true;
         },
-        async jwt({ token, user }) {
-            // 🌟 FIX: NO EXTRA DB CALLS HERE. Fast and secure.
-            // 'user' only exists on the first sign-in, after that token persists.
+        async jwt({ token, user, trigger, session }) {
+            // Handle initial sign-in
             if (user) {
                 token.id = user.id;
                 token.role = (user as any).role || 'USER';
                 token.phone = (user as any).phone;
             }
+            // 🚨 NEW LOGIC: Handle manual session updates (when user adds phone via popup)
+            if (trigger === "update" && session?.phone) {
+                token.phone = session.phone;
+            }
             return token;
         },
         async session({ session, token }) {
-            // Send token data to frontend
             if (session.user) {
                 (session.user as any).id = token.id;
                 (session.user as any).role = token.role;
-                (session.user as any).phone = token.phone;
+                (session.user as any).phone = token.phone; // Now frontend will know if phone is missing
             }
             return session;
         }
@@ -147,8 +148,8 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
         signIn: '/login',
+        error: '/login', // 🚨 YE LINE ADD KARO 🚨
     }
 };
-
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

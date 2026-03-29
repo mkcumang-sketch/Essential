@@ -33,8 +33,7 @@ export default function PremiumAccountDashboard() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    phone: (session.user as any).phone || '', 
-                    email: session.user.email 
+                    email: session.user.email // 🔒 STRICTLY ONLY EMAIL
                 })
             })
             .then(res => res.json())

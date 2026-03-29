@@ -1,56 +1,40 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getServerSession } from "next-auth";
 
-// Ensure DB Connection
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
     await mongoose.connect(process.env.MONGODB_URI as string);
 };
 
-// Explicitly define the Order schema for this route to prevent 'Schema hasn't been registered' errors
-const OrderSchema = new mongoose.Schema({}, { strict: false });
-
 export async function POST(req: Request) {
     try {
         await connectDB();
-        const { phone, email } = await req.json();
-
-        if (!email && !phone) {
-            return NextResponse.json({ success: false, error: "User identity required" }, { status: 400 });
+        
+        // 🔥 SEEDHA SESSION CHECK KARO 🔥
+        const session = await getServerSession();
+        if (!session || !session.user || !session.user.email) {
+            return NextResponse.json({ success: false, data: { orders: [] } });
         }
 
-        // Initialize the model safely
-        const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
+        const REAL_EMAIL = session.user.email.toLowerCase().trim();
+        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         
-        // 1. Fetch REAL Orders for this specific user
-        const userOrders = await Order.find({ 
-            $or: [ { 'customer.email': email }, { 'customer.phone': phone } ] 
-        }).sort({ createdAt: -1 });
+        // 🚨 STRICT ISOLATION: Sirf apni email ke orders nikalega
+        const userOrders = await Order.find({ 'customer.email': REAL_EMAIL }).sort({ createdAt: -1 });
 
-        // 2. Return 100% Real Dynamic Data
-        const realData = {
-            profile: {
-                completeness: 100, 
-                loginHistory: [{ ip: 'Secure Connection' }]
-            },
-            orders: userOrders || [], // STRICTLY ONLY THEIR ORDERS
-            wallet: {
-                points: 0, 
-                totalEarned: 0,
-                referralCode: `REF-${Math.random().toString(36).substr(2, 5).toUpperCase()}` 
-            },
-            wishlist: [], 
-            savedCards: [],
-            addresses: [],
-            reviews: [],
-            tickets: [],
-            notifications: []
-        };
+        return NextResponse.json({ 
+            success: true, 
+            data: { 
+                profile: { completeness: 100 }, 
+                orders: userOrders, 
+                wallet: { points: 0, totalEarned: 0 }, 
+                wishlist: [], savedCards: [], addresses: [], reviews: [], tickets: [], notifications: [] 
+            } 
+        });
 
-        return NextResponse.json({ success: true, data: realData });
-
-    } catch (error: any) {
-        console.error("Dashboard API Error:", error.message);
-        return NextResponse.json({ success: false, error: "Server Error", details: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json({ success: false, data: { orders: [] } });
     }
 }
