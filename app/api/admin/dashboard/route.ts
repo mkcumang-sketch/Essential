@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'; // 🚨 CACHE KILLER (Bug Fix) 🚨
+export const dynamic = 'force-dynamic'; 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
@@ -10,10 +10,7 @@ const connectDB = async () => {
 export async function GET(req: Request) {
     try {
         await connectDB();
-        
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        
-        // Saare orders uthao, sabse naye wale upar
         const allOrders = await Order.find({}).sort({ createdAt: -1 });
 
         let totalRevenue = 0;
@@ -26,7 +23,8 @@ export async function GET(req: Request) {
             data: {
                 totalOrders: allOrders.length,
                 totalRevenue: totalRevenue,
-                recentOrders: allOrders, // Ye list ab frontend par poori dikhegi
+                recentOrders: allOrders, // Kuch frontend ye padhte hain
+                orders: allOrders,       // Kuch frontend ye padhte hain
                 abandonedCarts: 0
             }
         });
