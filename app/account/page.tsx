@@ -70,65 +70,6 @@ export default function PremiumAccountDashboard() {
             <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
-    {/* --- TAB 3: EMPIRE WALLET --- */}
-                        {activeTab === 'EMPIRE_WALLET' && (
-                            <motion.div key="3" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
-                                <div className="p-10 bg-gradient-to-br from-[#1a1a1a] to-black border border-[#D4AF37]/30 rounded-[40px] relative overflow-hidden shadow-2xl">
-                                    <div className="absolute right-0 bottom-0 opacity-10"><Wallet size={150} className="text-[#D4AF37]"/></div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 relative z-10">Available Balance</p>
-                                    <h3 className="text-6xl font-serif text-[#D4AF37] relative z-10">₹0</h3>
-                                    <p className="text-xs text-gray-500 italic mt-2 relative z-10">Use your wallet balance for faster seamless acquisitions.</p>
-                                    <div className="mt-8 flex gap-4 relative z-10">
-                                        <button onClick={() => showToast("Withdrawal system is currently offline.")} className="px-8 py-3 bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white transition-all shadow-lg">Withdraw Funds</button>
-                                        <button onClick={() => showToast("No recent transactions.")} className="px-8 py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white/10 transition-all">View History</button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* --- TAB 4: WISHLIST --- */}
-                        {activeTab === 'WISHLIST' && (
-                            <motion.div key="4" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}>
-                                <div className="bg-white/5 p-16 rounded-[40px] text-center border border-white/10">
-                                    <Heart size={50} className="mx-auto text-gray-600 mb-6"/>
-                                    <h3 className="text-2xl font-serif text-white mb-2">Curated Collection</h3>
-                                    <p className="text-gray-400 font-serif text-sm italic mb-8">Your wishlist is currently empty. Start curating your favorite timepieces.</p>
-                                    <Link href="/shop" className="inline-block px-10 py-4 bg-white/10 text-white border border-white/20 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white hover:text-black transition-all">Explore Collection</Link>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* --- TAB 5: SETTINGS & ADDRESSES --- */}
-                        {activeTab === 'SETTINGS' && (
-                            <motion.div key="5" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
-                                <div className="bg-white/5 p-8 rounded-[40px] border border-white/10">
-                                    <h3 className="text-lg font-serif text-white mb-6 border-b border-white/10 pb-4 flex items-center gap-3"><MapPin size={20} className="text-[#D4AF37]"/> Saved Addresses</h3>
-                                    <div className="text-center py-8">
-                                        <p className="text-sm text-gray-500 italic mb-6">No saved addresses found in your vault.</p>
-                                        <button onClick={() => showToast("Address management will be available soon.")} className="px-8 py-3 border border-[#D4AF37] text-[#D4AF37] text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-[#D4AF37] hover:text-black transition-all">+ Add New Address</button>
-                                    </div>
-                                </div>
-                                <div className="bg-white/5 p-8 rounded-[40px] border border-white/10">
-                                    <h3 className="text-lg font-serif text-white mb-6 border-b border-white/10 pb-4 flex items-center gap-3"><Shield size={20} className="text-[#D4AF37]"/> Account Security</h3>
-                                    <div className="space-y-4">
-                                        <p className="text-xs text-gray-400"><strong>Primary Email:</strong> {session?.user?.email}</p>
-                                        <button onClick={() => showToast("Google Authenticated accounts cannot change passwords here.")} className="flex items-center gap-4 text-[10px] uppercase tracking-widest font-black text-gray-500 hover:text-white transition-colors mt-4">Change Password</button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* --- TAB 6: REVIEWS & SUPPORT --- */}
-                        {activeTab === 'SUPPORT' && (
-                            <motion.div key="6" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
-                                <div className="bg-white/5 p-12 rounded-[40px] text-center border border-white/10">
-                                    <MessageSquare size={50} className="mx-auto text-[#D4AF37] mb-6"/>
-                                    <h3 className="text-3xl font-serif text-white mb-4">Concierge Support</h3>
-                                    <p className="text-gray-400 text-sm mb-8 max-w-md mx-auto italic font-serif">Our luxury concierge team is available to assist you with your acquisitions, certificates, and inquiries.</p>
-                                    <button onClick={() => showToast("Connecting to Concierge Team...")} className="px-10 py-4 bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white transition-all shadow-lg">Open Support Ticket</button>
-                                </div>
-                            </motion.div>
-                        )}
     
     // 🚨 IF THE API FAILS, SHOW THIS CLEAN ERROR INSTEAD OF FAKE DATA
     if (errorState || !dashData) return (
@@ -221,13 +162,14 @@ export default function PremiumAccountDashboard() {
 
                 <div className="flex-1 min-w-0">
                     <AnimatePresence mode="wait">
+                        
+                        {/* --- TAB 1: OVERVIEW --- */}
                         {activeTab === 'OVERVIEW' && (
                             <motion.div key="1" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
-                                
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="p-8 bg-white/5 border border-white/10 rounded-[30px] flex flex-col justify-center">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Total Orders</p>
-                                        <h3 className="text-5xl font-serif text-white">{dashData.orders?.length || 0}</h3>
+                                        <h3 className="text-5xl font-serif text-white">{dashData?.orders?.length || 0}</h3>
                                     </div>
                                     <div className="p-8 bg-gradient-to-br from-[#1a1a1a] to-black border border-[#D4AF37]/30 rounded-[30px] flex flex-col justify-center relative overflow-hidden">
                                         <div className="absolute right-[-20px] bottom-[-20px] opacity-20"><Wallet size={100} className="text-[#D4AF37]"/></div>
@@ -239,13 +181,11 @@ export default function PremiumAccountDashboard() {
                                         <h3 className="text-5xl font-serif text-white">0</h3>
                                     </div>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="bg-white/5 p-8 rounded-[40px] border border-white/10 shadow-sm">
                                         <h4 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-3"><Star size={18} className="text-[#D4AF37]"/> Curated For You</h4>
                                         <p className="text-xs text-gray-500 italic">No curations available yet.</p>
                                     </div>
-
                                     <div className="grid grid-cols-2 gap-4">
                                         <div onClick={() => showToast("Certificates are being verified. Check back later.")} className="bg-white/5 p-6 rounded-[30px] border border-white/10 flex flex-col items-center justify-center text-center hover:bg-white/10 cursor-pointer transition-all group">
                                             <div className="w-14 h-14 bg-black border border-white/20 text-white rounded-full flex items-center justify-center mb-4 group-hover:border-[#D4AF37] group-hover:text-[#D4AF37] transition-colors"><ShieldCheck size={24}/></div>
@@ -260,15 +200,16 @@ export default function PremiumAccountDashboard() {
                             </motion.div>
                         )}
 
+                        {/* --- TAB 2: ORDERS --- */}
                         {activeTab === 'ORDERS' && (
                             <motion.div key="2" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
-                                {dashData.orders?.length === 0 ? (
+                                {dashData?.orders?.length === 0 ? (
                                     <div className="bg-white/5 p-12 rounded-[40px] text-center border border-white/10">
                                         <ShoppingBag size={50} className="mx-auto text-gray-600 mb-6"/>
                                         <p className="text-gray-400 font-serif text-lg">You haven't acquired any timepieces yet.</p>
                                         <Link href="/shop" className="mt-8 inline-block px-10 py-4 bg-[#D4AF37] text-black text-xs font-black uppercase tracking-widest rounded-full hover:bg-white transition-all shadow-lg">Enter Vault</Link>
                                     </div>
-                                ) : dashData.orders?.map((order: any) => (
+                                ) : dashData?.orders?.map((order: any) => (
                                     <div key={order._id} className="bg-white/5 p-8 rounded-[40px] border border-white/10 flex flex-col gap-6 hover:border-[#D4AF37]/50 transition-colors">
                                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-white/10 pb-6">
                                             <div>
@@ -283,6 +224,67 @@ export default function PremiumAccountDashboard() {
                                 ))}
                             </motion.div>
                         )}
+
+                        {/* --- TAB 3: EMPIRE WALLET --- */}
+                        {activeTab === 'EMPIRE_WALLET' && (
+                            <motion.div key="3" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                                <div className="p-10 bg-gradient-to-br from-[#1a1a1a] to-black border border-[#D4AF37]/30 rounded-[40px] relative overflow-hidden shadow-2xl">
+                                    <div className="absolute right-0 bottom-0 opacity-10"><Wallet size={150} className="text-[#D4AF37]"/></div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 relative z-10">Available Balance</p>
+                                    <h3 className="text-6xl font-serif text-[#D4AF37] relative z-10">₹0</h3>
+                                    <p className="text-xs text-gray-500 italic mt-2 relative z-10">Use your wallet balance for faster seamless acquisitions.</p>
+                                    <div className="mt-8 flex gap-4 relative z-10">
+                                        <button onClick={() => showToast("Withdrawal system is currently offline.")} className="px-8 py-3 bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white transition-all shadow-lg">Withdraw Funds</button>
+                                        <button onClick={() => showToast("No recent transactions.")} className="px-8 py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white/10 transition-all">View History</button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* --- TAB 4: WISHLIST --- */}
+                        {activeTab === 'WISHLIST' && (
+                            <motion.div key="4" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}>
+                                <div className="bg-white/5 p-16 rounded-[40px] text-center border border-white/10">
+                                    <Heart size={50} className="mx-auto text-gray-600 mb-6"/>
+                                    <h3 className="text-2xl font-serif text-white mb-2">Curated Collection</h3>
+                                    <p className="text-gray-400 font-serif text-sm italic mb-8">Your wishlist is currently empty. Start curating your favorite timepieces.</p>
+                                    <Link href="/shop" className="inline-block px-10 py-4 bg-white/10 text-white border border-white/20 text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white hover:text-black transition-all">Explore Collection</Link>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* --- TAB 5: SETTINGS & ADDRESSES --- */}
+                        {activeTab === 'SETTINGS' && (
+                            <motion.div key="5" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                                <div className="bg-white/5 p-8 rounded-[40px] border border-white/10">
+                                    <h3 className="text-lg font-serif text-white mb-6 border-b border-white/10 pb-4 flex items-center gap-3"><MapPin size={20} className="text-[#D4AF37]"/> Saved Addresses</h3>
+                                    <div className="text-center py-8">
+                                        <p className="text-sm text-gray-500 italic mb-6">No saved addresses found in your vault.</p>
+                                        <button onClick={() => showToast("Address management will be available soon.")} className="px-8 py-3 border border-[#D4AF37] text-[#D4AF37] text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-[#D4AF37] hover:text-black transition-all">+ Add New Address</button>
+                                    </div>
+                                </div>
+                                <div className="bg-white/5 p-8 rounded-[40px] border border-white/10">
+                                    <h3 className="text-lg font-serif text-white mb-6 border-b border-white/10 pb-4 flex items-center gap-3"><Shield size={20} className="text-[#D4AF37]"/> Account Security</h3>
+                                    <div className="space-y-4">
+                                        <p className="text-xs text-gray-400"><strong>Primary Email:</strong> {session?.user?.email}</p>
+                                        <button onClick={() => showToast("Google Authenticated accounts cannot change passwords here.")} className="flex items-center gap-4 text-[10px] uppercase tracking-widest font-black text-gray-500 hover:text-white transition-colors mt-4">Change Password</button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* --- TAB 6: REVIEWS & SUPPORT --- */}
+                        {activeTab === 'SUPPORT' && (
+                            <motion.div key="6" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                                <div className="bg-white/5 p-12 rounded-[40px] text-center border border-white/10">
+                                    <MessageSquare size={50} className="mx-auto text-[#D4AF37] mb-6"/>
+                                    <h3 className="text-3xl font-serif text-white mb-4">Concierge Support</h3>
+                                    <p className="text-gray-400 text-sm mb-8 max-w-md mx-auto italic font-serif">Our luxury concierge team is available to assist you with your acquisitions, certificates, and inquiries.</p>
+                                    <button onClick={() => showToast("Connecting to Concierge Team...")} className="px-10 py-4 bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white transition-all shadow-lg">Open Support Ticket</button>
+                                </div>
+                            </motion.div>
+                        )}
+                        
                     </AnimatePresence>
                 </div>
             </main>
