@@ -1,3 +1,7 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
@@ -34,7 +38,7 @@ const ProductSchema = new mongoose.Schema({
 
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
 
-// GET: Fetch all products for the frontend
+// GET: Fetch all products for the frontend (WITH CACHE KILLER)
 export async function GET(req: Request) {
     try {
         await connectDB();
@@ -49,7 +53,12 @@ export async function GET(req: Request) {
         } : {};
 
         const products = await Product.find(query).sort({ priority: -1, createdAt: -1 });
-        return NextResponse.json({ success: true, data: products });
+        
+        // 🚨 FORCE VERCEL TO NEVER CACHE THIS RESPONSE 🚨
+        const response = NextResponse.json({ success: true, data: products });
+        response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+        return response;
+
     } catch (error) {
         console.error("Fetch Products Error:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch products" }, { status: 500 });
@@ -61,10 +70,7 @@ export async function POST(req: Request) {
     try {
         await connectDB();
         const body = await req.json();
-        
-        // Create the product with the new pricing engine fields
         const newProduct = await Product.create(body);
-        
         return NextResponse.json({ success: true, data: newProduct });
     } catch (error) {
         console.error("Add Product Error:", error);
@@ -89,17 +95,24 @@ export async function PUT(req: Request) {
     }
 }
 
-// DELETE: Remove a product
+// DELETE: Remove a product (BULLETPROOF HARD DELETE)
 export async function DELETE(req: Request) {
     try {
         await connectDB();
+        
+        // Support both URL params and Body payload for ID
         const url = new URL(req.url);
-        const id = url.searchParams.get('id');
+        let id = url.searchParams.get('id');
+        
+        if (!id) {
+            const body = await req.json().catch(() => ({}));
+            id = body.id || body._id;
+        }
 
         if (!id) return NextResponse.json({ success: false, error: "Product ID is required" }, { status: 400 });
 
         await Product.findByIdAndDelete(id);
-        return NextResponse.json({ success: true, message: "Product deleted safely" });
+        return NextResponse.json({ success: true, message: "Product deleted safely and permanently" });
     } catch (error) {
         console.error("Delete Product Error:", error);
         return NextResponse.json({ success: false, error: "Failed to delete product" }, { status: 500 });

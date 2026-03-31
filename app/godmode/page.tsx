@@ -272,7 +272,8 @@ function AdminDashboard() {
   
   const handleDeleteProduct = async (id: string) => {
     if(!confirm("Delete this product from vault?")) return;
-    setLiveWatches(prev => prev.filter(w => w._id !== id)); 
+// API call success hone ke baad ye line zaroor honi chahiye:
+setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
     try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
   };
 
