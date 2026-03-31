@@ -36,11 +36,11 @@ export async function POST(req: Request) {
 }
 
 // 🌟 3. DELETE PRODUCT (Zameen se mita dega)
+// 🌟 ADMIN SE DELETE DABANE PAR STATUS 'CANCELLED' KAREGA
 export async function DELETE(req: Request) {
     try {
-        await connectDB();
+        if (mongoose.connection.readyState < 1) await mongoose.connect(process.env.MONGODB_URI as string);
         
-        // Frontend ya toh URL parameters mein ID bhejta hai ya Body mein, hum dono handle karenge
         const url = new URL(req.url);
         let id = url.searchParams.get('id');
         
@@ -49,15 +49,15 @@ export async function DELETE(req: Request) {
             id = body.id || body._id;
         }
 
-        if (!id) {
-            return NextResponse.json({ success: false, error: "Product ID missing" }, { status: 400 });
-        }
+        if (!id) return NextResponse.json({ success: false, error: "Order ID missing" }, { status: 400 });
 
-        const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
-        await Product.findByIdAndDelete(id);
+        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         
-        return NextResponse.json({ success: true, message: "Product deleted forever" });
+        // 🚨 DELETE NAHI KARNA HAI! STATUS UPDATE KARNA HAI!
+        await Order.findByIdAndUpdate(id, { status: "CANCELLED" });
+        
+        return NextResponse.json({ success: true, message: "Order marked as Cancelled" });
     } catch (error) {
-        return NextResponse.json({ success: false, error: "Delete failed" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Failed to cancel order" }, { status: 500 });
     }
 }

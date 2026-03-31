@@ -210,16 +210,38 @@ export default function PremiumAccountDashboard() {
                                         <Link href="/shop" className="mt-8 inline-block px-10 py-4 bg-[#D4AF37] text-black text-xs font-black uppercase tracking-widest rounded-full hover:bg-white transition-all shadow-lg">Enter Vault</Link>
                                     </div>
                                 ) : dashData?.orders?.map((order: any) => (
-                                    <div key={order._id} className="bg-white/5 p-8 rounded-[40px] border border-white/10 flex flex-col gap-6 hover:border-[#D4AF37]/50 transition-colors">
+                                    <div key={order._id} className="bg-white/5 p-8 rounded-[40px] border border-white/10 flex flex-col gap-6 hover:border-[#D4AF37]/50 transition-colors shadow-lg">
                                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-white/10 pb-6">
                                             <div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Acquisition #{order._id?.slice(-6) || 'UKN'}</p>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Acquisition #{order.orderId || order._id?.slice(-6) || 'UKN'}</p>
                                                 <h4 className="font-serif text-3xl font-bold text-white">₹{(order.totalAmount || 0).toLocaleString()}</h4>
                                             </div>
-                                            <span className="px-6 py-2 border border-[#D4AF37] text-[#D4AF37] rounded-full text-[10px] font-black uppercase tracking-widest w-max">
-                                                {order.status}
+                                            <span className={`px-6 py-2 border rounded-full text-[10px] font-black uppercase tracking-widest w-max ${order.status === 'CANCELLED' ? 'border-red-500 text-red-500 bg-red-500/10' : 'border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10'}`}>
+                                                {order.status || 'PROCESSING'}
                                             </span>
                                         </div>
+                                        
+                                        {/* 🚨 ORDER ITEM DETAILS 🚨 */}
+                                        {order.items && order.items.length > 0 && (
+                                            <div className="space-y-4 pt-2">
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Acquired Assets</p>
+                                                {order.items.map((item: any, idx: number) => (
+                                                    <div key={idx} className="flex items-center gap-4 bg-black p-4 rounded-2xl border border-white/5">
+                                                        <div className="w-16 h-16 bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                                                            {(item.imageUrl || item.image) ? (
+                                                                <img src={item.imageUrl || item.image} alt="product" className="w-full h-full object-cover mix-blend-lighten" />
+                                                            ) : (
+                                                                <ShoppingBag size={20} className="text-gray-600"/>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <h5 className="text-sm font-bold text-white mb-1 line-clamp-1">{item.name || 'Premium Timepiece'}</h5>
+                                                            <p className="text-[10px] text-gray-400 font-mono">Qty: {item.qty || 1} • ₹{Number(item.offerPrice || item.price || 0).toLocaleString()}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </motion.div>
