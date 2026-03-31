@@ -1034,12 +1034,13 @@ function AdminDashboard() {
                     <button onClick={handleAddHeroSlide} className="w-full bg-white/5 border border-white/20 py-4 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors">+ Append Sequence</button>
                  </div>
 
-                 <div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30">
+<div className="bg-[#111] p-10 rounded-[30px] border border-[#00F0FF]/30">
                     <h3 className="text-[#00F0FF] text-lg font-bold mb-2 border-b border-white/10 pb-4 flex items-center gap-2"><Video size={20}/> Atmospheric Bridges</h3>
                     <p className="text-xs text-gray-400 mb-6">Full-bleed transitional videos deployed between main blocks.</p>
                     
                     <div className="space-y-4">
-                        {[0, 1, 2].map((slot) => (
+                        {/* 🚨 FIX: Array increased to [0, 1, 2, 3, 4] for 5 bridge slots 🚨 */}
+                        {[0, 1, 2, 3, 4].map((slot) => (
                             <div key={slot} className="flex flex-col md:flex-row items-center gap-4 bg-black p-4 rounded-2xl border border-white/10">
                                 <div className="w-full md:w-24 text-xs font-bold text-gray-500">Bridge {slot + 1}</div>
                                 <input 
@@ -1056,7 +1057,7 @@ function AdminDashboard() {
                     </div>
                     <button onClick={handleSaveCMS} className="w-full py-4 bg-[#00F0FF] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-6 text-sm">Commit Bridges</button>
                  </div>
-               </div>
+                                </div>
             </motion.div>
           )}
 
