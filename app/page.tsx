@@ -521,10 +521,12 @@ function FrontPageStore() {
 
       {/* 🌟 COLLECTION 🌟 */}
       <section id="ourcollection" className="py-20 md:py-32 relative overflow-hidden bg-white">
-        <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-0 opacity-[0.03] pointer-events-none">
-            <video src="https://cdn.pixabay.com/video/2020/05/24/40092-424840899_large.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
-        </div>
+        {promoVideos[2] && (
+            <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-0 opacity-[0.03] pointer-events-none">
+                <video src={promoVideos[2]} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
+            </div>
+        )}
 
         <div className="relative z-10 px-6 md:px-16 max-w-[1600px] mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 border-b border-gray-200 pb-8">
@@ -676,12 +678,14 @@ function FrontPageStore() {
         </div>
       </section>
 
-      {/* 🌟 REVIEWS 🌟 */}
+ {/* 🌟 REVIEWS 🌟 */}
       <section id="reviews" className="py-24 md:py-40 relative overflow-hidden border-t border-gray-200">
-          <div className="absolute inset-0 z-0">
-             <video src="https://cdn.pixabay.com/video/2020/02/21/32616-393246231_large.mp4" autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80" />
-             <div className="absolute inset-0 bg-white/90 backdrop-blur-xl"></div>
-          </div>
+          {promoVideos[4] && (
+              <div className="absolute inset-0 z-0">
+                 <video src={promoVideos[4]} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80" />
+                 <div className="absolute inset-0 bg-white/90 backdrop-blur-xl"></div>
+              </div>
+          )}
 
           <div className="text-center mb-20 relative z-10 px-6">
              <h2 className="text-5xl md:text-8xl font-serif mb-6 text-black tracking-tight font-bold">Customer Reviews.</h2>
