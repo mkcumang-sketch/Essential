@@ -1,15 +1,13 @@
-export const dynamic = 'force-dynamic'; 
+export const dynamic = 'force-dynamic'; // VERCEL CACHE KILLER
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    await mongoose.connect(process.env.MONGODB_URI as string);
-};
-
-export async function GET(req: Request) {
+export async function GET() {
     try {
-        await connectDB();
+        if (mongoose.connection.readyState < 1) {
+            await mongoose.connect(process.env.MONGODB_URI as string);
+        }
+        
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         const allOrders = await Order.find({}).sort({ createdAt: -1 });
 
@@ -23,13 +21,14 @@ export async function GET(req: Request) {
             data: {
                 totalOrders: allOrders.length,
                 totalRevenue: totalRevenue,
-                recentOrders: allOrders, // Kuch frontend ye padhte hain
-                orders: allOrders,       // Kuch frontend ye padhte hain
+                recentOrders: allOrders, 
+                orders: allOrders,
                 abandonedCarts: 0
             }
         });
 
-    } catch (error: any) {
-        return NextResponse.json({ success: false, error: "Failed to fetch admin data" });
+    } catch (error) {
+        console.error("Admin Dashboard Error:", error);
+        return NextResponse.json({ success: false, error: "Failed to fetch stats" });
     }
 }

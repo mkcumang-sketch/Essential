@@ -1,40 +1,29 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'; // VERCEL CACHE KILLER
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { getServerSession } from "next-auth";
-
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    await mongoose.connect(process.env.MONGODB_URI as string);
-};
 
 export async function POST(req: Request) {
     try {
-        await connectDB();
-        
-        // 🔥 SEEDHA SESSION CHECK KARO 🔥
-        const session = await getServerSession();
-        if (!session || !session.user || !session.user.email) {
-            return NextResponse.json({ success: false, data: { orders: [] } });
+        if (mongoose.connection.readyState < 1) {
+            await mongoose.connect(process.env.MONGODB_URI as string);
         }
+        
+        const { email } = await req.json();
+        if (!email) return NextResponse.json({ success: false, data: { orders: [] } });
 
-        const REAL_EMAIL = session.user.email.toLowerCase().trim();
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         
-        // 🚨 STRICT ISOLATION: Sirf apni email ke orders nikalega
-        const userOrders = await Order.find({ 'customer.email': REAL_EMAIL }).sort({ createdAt: -1 });
+        // 🚨 STRICT FIREWALL: Sirf wahi order aayega jiski email match karegi
+        const exactEmail = email.toLowerCase().trim();
+        const userOrders = await Order.find({ "customer.email": exactEmail }).sort({ createdAt: -1 });
 
         return NextResponse.json({ 
             success: true, 
-            data: { 
-                profile: { completeness: 100 }, 
-                orders: userOrders, 
-                wallet: { points: 0, totalEarned: 0 }, 
-                wishlist: [], savedCards: [], addresses: [], reviews: [], tickets: [], notifications: [] 
-            } 
+            data: { orders: userOrders, profile: { completeness: 100 }, wallet: { points: 0 } } 
         });
 
     } catch (error) {
+        console.error("User Dashboard Error:", error);
         return NextResponse.json({ success: false, data: { orders: [] } });
     }
 }
