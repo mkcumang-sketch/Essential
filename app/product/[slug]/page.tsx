@@ -1,23 +1,57 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import ProductClientPage from './ProductClientPage';
+import mongoose from 'mongoose';
 
-// 1. 🚀 DYNAMIC SEO METADATA GENERATOR
+// 🌟 1. DIRECT DATABASE CONNECTION (Bypasses Vercel Fetch Bugs)
+const connectDB = async () => {
+    if (mongoose.connection.readyState < 1) {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+    }
+};
+
+const getProductData = async (slug: string) => {
+    try {
+        await connectDB();
+        const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
+        
+        // 🚀 Fetch all products directly from Database (Super fast)
+        const products = await Product.find({}).lean();
+        
+        // 🧠 SMART SLUG MATCHER: Exact ID, Normal Slug, SEO Slug, ya Generated Slug sab pehchanega
+        const foundProduct = products.find((p: any) => {
+            const generatedSlug = p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
+            return (
+                p._id?.toString() === slug || 
+                p.slug === slug || 
+                p.seo?.slug === slug ||
+                p.seo?.urlSlug === slug ||
+                generatedSlug === slug
+            );
+        });
+
+        if (foundProduct) {
+            foundProduct._id = foundProduct._id.toString(); // Safety serialize for Client Component
+        }
+        return foundProduct;
+    } catch (error) {
+        console.error("DB Fetch Error:", error);
+        return null;
+    }
+};
+
+// 🌟 2. DYNAMIC SEO METADATA GENERATOR
 export async function generateMetadata(
   { params }: { params: { slug: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
-  
-  // Fetch product securely from backend
-  const res = await fetch(`${baseUrl}/api/products?slug=${params.slug}`, { next: { revalidate: 60 } });
-  const data = await res.json();
-  const product = data.data?.find((p: any) => p.slug === params.slug || p._id === params.slug);
+  const product = await getProductData(params.slug);
 
   if (!product) return { title: 'Asset Not Found | Essential Vault' };
 
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   const seoTitle = product.seo?.metaTitle || `${product.name} | Essential Fine Horology`;
   const seoDesc = product.seo?.metaDescription || product.description?.substring(0, 155) || 'Discover luxury timepieces.';
-  const canonical = product.seo?.canonicalUrl || `${baseUrl}/product/${product.slug || product._id}`;
+  const canonical = product.seo?.canonicalUrl || `${baseUrl}/product/${params.slug}`;
   const ogImage = product.seo?.ogImage || product.imageUrl || (product.images && product.images[0]);
 
   return {
@@ -43,8 +77,8 @@ export async function generateMetadata(
   };
 }
 
-// 2. 🧠 GOOGLE RICH SNIPPETS (JSON-LD SCHEMA)
-const JsonLdSchema = ({ product }: { product: any }) => {
+// 🌟 3. GOOGLE RICH SNIPPETS (JSON-LD SCHEMA)
+const JsonLdSchema = ({ product, slug }: { product: any, slug: string }) => {
   const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   const schema = product.seo?.customSchema ? JSON.parse(product.seo.customSchema) : {
     "@context": "https://schema.org/",
@@ -55,7 +89,7 @@ const JsonLdSchema = ({ product }: { product: any }) => {
     "brand": { "@type": "Brand", "name": product.brand },
     "offers": {
       "@type": "Offer",
-      "url": `${baseUrl}/product/${product.slug || product._id}`,
+      "url": `${baseUrl}/product/${slug}`,
       "priceCurrency": "INR",
       "price": product.offerPrice || product.price,
       "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -65,12 +99,10 @@ const JsonLdSchema = ({ product }: { product: any }) => {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
 };
 
-// 3. 🖥️ MAIN PAGE RENDERER
+// 🌟 4. MAIN PAGE RENDERER
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
-  const res = await fetch(`${baseUrl}/api/products?slug=${params.slug}`, { cache: 'no-store' });
-  const data = await res.json();
-  const product = data.data?.find((p: any) => p.slug === params.slug || p._id === params.slug);
+  // 🔥 NO API FETCHING HERE. PURE DATABASE MAGIC! 🔥
+  const product = await getProductData(params.slug);
 
   if (!product) {
       return <div className="h-screen bg-[#050505] text-[#D4AF37] flex items-center justify-center font-serif text-2xl">Vault Asset Unreachable</div>;
@@ -78,7 +110,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   return (
     <>
-      <JsonLdSchema product={product} />
+      <JsonLdSchema product={product} slug={params.slug} />
       <ProductClientPage initialProduct={product} slug={params.slug} />
     </>
   );
