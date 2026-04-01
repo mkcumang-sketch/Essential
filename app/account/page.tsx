@@ -36,6 +36,12 @@ export default function PremiumAccountDashboard() {
                     email: session.user.email // 🔒 STRICTLY ONLY EMAIL
                 })
             })
+            // Aise update kar de:
+fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: session.user.email })
+})
             .then(res => res.json())
             .then(json => {
                 if (json.success) {

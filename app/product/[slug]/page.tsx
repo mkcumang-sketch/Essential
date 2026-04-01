@@ -14,10 +14,10 @@ const getProductData = async (slug: string) => {
         await connectDB();
         const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
         
-        // 🚀 Fetch all products directly from Database (Super fast)
+        // 🚀 Fetch all products directly from Database
         const products = await Product.find({}).lean();
         
-        // 🧠 SMART SLUG MATCHER: Exact ID, Normal Slug, SEO Slug, ya Generated Slug sab pehchanega
+        // 🧠 SMART SLUG MATCHER
         const foundProduct = products.find((p: any) => {
             const generatedSlug = p.name ? p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
             return (
@@ -29,11 +29,14 @@ const getProductData = async (slug: string) => {
             );
         });
 
-        if (foundProduct) {
-            foundProduct._id = foundProduct._id.toString(); // Safety serialize for Client Component
+        // 🚨 TYPESCRIPT FIX
+        if (foundProduct && (foundProduct as any)._id) {
+            (foundProduct as any)._id = String((foundProduct as any)._id); 
         }
+        
         return foundProduct;
-    } catch (error) {
+        
+    } catch (error) { // 🚨 YE WALA CATCH MISSING THA TERE CODE MEIN
         console.error("DB Fetch Error:", error);
         return null;
     }
@@ -101,7 +104,6 @@ const JsonLdSchema = ({ product, slug }: { product: any, slug: string }) => {
 
 // 🌟 4. MAIN PAGE RENDERER
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  // 🔥 NO API FETCHING HERE. PURE DATABASE MAGIC! 🔥
   const product = await getProductData(params.slug);
 
   if (!product) {
