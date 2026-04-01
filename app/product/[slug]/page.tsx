@@ -6,7 +6,7 @@ export async function generateMetadata(
   { params }: { params: { slug: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-steel.vercel.app';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   
   // Fetch product securely from backend
   const res = await fetch(`${baseUrl}/api/products?slug=${params.slug}`, { next: { revalidate: 60 } });
@@ -45,7 +45,7 @@ export async function generateMetadata(
 
 // 2. 🧠 GOOGLE RICH SNIPPETS (JSON-LD SCHEMA)
 const JsonLdSchema = ({ product }: { product: any }) => {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-steel.vercel.app';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   const schema = product.seo?.customSchema ? JSON.parse(product.seo.customSchema) : {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -67,7 +67,7 @@ const JsonLdSchema = ({ product }: { product: any }) => {
 
 // 3. 🖥️ MAIN PAGE RENDERER
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-steel.vercel.app';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   const res = await fetch(`${baseUrl}/api/products?slug=${params.slug}`, { cache: 'no-store' });
   const data = await res.json();
   const product = data.data?.find((p: any) => p.slug === params.slug || p._id === params.slug);
