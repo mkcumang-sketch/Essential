@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { ShieldCheck, ArrowLeft, CheckCircle, Tag, Info, ShoppingBag, X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { VipWhatsAppHook } from '@/components/VipWhatsAppHook';
 
 // --- LUXURY TOAST COMPONENT ---
 const LuxuryToast = ({ show, message, type = "success" }: any) => (
@@ -36,6 +37,9 @@ export default function CheckoutPage() {
     const [cart, setCart] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
+    
+    // 🎟️ VIP POPUP STATE
+    const [showVipPopup, setShowVipPopup] = useState(false);
 
     // 🎟️ PROMO & MLM REFERRAL STATES
     const [vaultKeyInput, setVaultKeyInput] = useState('');
@@ -61,20 +65,17 @@ export default function CheckoutPage() {
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
     };
 
-    // 🚨 NEW LOGIC: Remove Item from Cart
     const handleRemoveItem = (indexToRemove: number) => {
         const updatedCart = cart.filter((_, index) => index !== indexToRemove);
         setCart(updatedCart);
         localStorage.setItem('luxury_cart', JSON.stringify(updatedCart));
         showLuxuryToast("Item removed from Vault", "success");
 
-        // If cart becomes empty, maybe redirect back to shop or let them see empty cart
         if(updatedCart.length === 0) {
-             setPromoDetails(null); // Clear promos if cart is empty
+             setPromoDetails(null); 
         }
     };
 
-    // 👑 THE MASTER PRICING CALCULATOR
     const { subtotal, totalDiscount, totalTransit, totalTaxes, grandTotal } = useMemo(() => {
         let sub = 0; let disc = 0; let transit = 0; let tax = 0;
 
@@ -83,7 +84,6 @@ export default function CheckoutPage() {
             const qty = Number(item.qty);
             sub += itemPrice * qty;
 
-            // 1. Product Specific VIP Discount Math
             if (promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase()) {
                 const productDisc = Number(item.vipDiscount || 0) * qty;
                 disc += productDisc;
@@ -97,7 +97,6 @@ export default function CheckoutPage() {
             }
         });
 
-        // 2. Global Referral/Coupon Math (Percentage Based - Usually 10% for MLM)
         if (promoDetails?.type === 'global' || promoDetails?.type === 'referral') {
             const globalDisc = (sub * promoDetails.discountValue) / 100;
             disc += globalDisc;
@@ -112,7 +111,6 @@ export default function CheckoutPage() {
         setIsVerifying(true);
         
         try {
-            // 1. Check Product-Specific Code First
             const isProductCode = cart.some(item => item.vipVaultKey?.toUpperCase() === code);
             if (isProductCode) {
                 setPromoDetails({ code, type: 'product', discountValue: 0 }); 
@@ -121,7 +119,6 @@ export default function CheckoutPage() {
                 return;
             }
 
-            // 2. If not local, ask Database (Check if it's a Customer Referral or Marketing Coupon)
             const res = await fetch('/api/verify-promo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -144,10 +141,18 @@ export default function CheckoutPage() {
         }
     };
 
-    const handlePlaceOrder = async (e: React.FormEvent) => {
+    // 🚨 1. FORM SUBMIT HONE PAR PEHLE POPUP KHULEGA
+    const handleInitialCheckoutSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (cart.length === 0) return showLuxuryToast("Your cart is empty!", "error");
         
+        // Asli checkout rok kar VIP WhatsApp popup dikhao
+        setShowVipPopup(true);
+    };
+
+    // 🚨 2. POPUP SE NUMBER AANE KE BAAD ASLI ORDER PLACE HOGA
+    const processFinalOrder = async (capturedWhatsApp: string) => {
+        setShowVipPopup(false);
         setIsSubmitting(true);
         try {
             const res = await fetch('/api/checkout', {
@@ -159,7 +164,8 @@ export default function CheckoutPage() {
                     financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
                     appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
                     appliedVaultKey: promoDetails?.type === 'product' ? promoDetails.code : null,
-                    customer: shippingData,
+                    // Shipping details ke sath VIP WhatsApp number add kar diya
+                    customer: { ...shippingData, vipWhatsApp: capturedWhatsApp },
                     paymentMethod: 'COD'
                 })
             });
@@ -190,22 +196,19 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] text-black pt-24 pb-20 font-sans">
+        <div className="min-h-screen bg-[#FAFAFA] text-black pt-24 pb-20 font-sans relative">
             <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
+            
             <div className="max-w-[1300px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16">
                 
                 {/* --- Left Side: Shipping --- */}
                 <div className="lg:col-span-7 space-y-10">
-                    <button onClick={() => router.back()} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-400 hover:text-black transition-colors">
-                        <ArrowLeft size={16} /> Back
-                    </button>
-                    <h2 className="text-5xl font-serif font-bold border-b border-gray-200 pb-6 tracking-tighter">SECURE CHECKOUT.</h2>
-                    <form onSubmit={handlePlaceOrder} className="space-y-6">
+                    <form onSubmit={handleInitialCheckoutSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
                             <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Phone Number" value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone:e.target.value})}/>
                         </div>
-                        <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
+                        <input required type="email" className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
                         <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
                         
                         <div className="grid grid-cols-3 gap-4">
@@ -226,7 +229,7 @@ export default function CheckoutPage() {
                         </button>
                     </form>
                 </div>
-
+                
                 {/* --- Right Side: Summary --- */}
                 <div className="lg:col-span-5">
                     <div className="bg-white border border-gray-100 p-8 md:p-10 rounded-[40px] sticky top-24 shadow-2xl">
@@ -250,7 +253,6 @@ export default function CheckoutPage() {
                                             )}
                                         </div>
                                         
-                                        {/* 🚨 THE REMOVE BUTTON 🚨 */}
                                         <button 
                                             type="button"
                                             onClick={() => handleRemoveItem(i)} 
@@ -263,7 +265,7 @@ export default function CheckoutPage() {
                                 ))
                             )}
                         </div>
-
+                        
                         {/* --- PROMO & REFERRAL BOX --- */}
                         <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200">
                             <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Friend's Referral Code / Vault Key</label>
@@ -294,6 +296,14 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             </div>
+
+            {/* 👇 STEP 4: YAHAN AAYA TERA VIP POPUP HOOK 👇 */}
+            <VipWhatsAppHook 
+                isOpen={showVipPopup} 
+                onClose={() => setShowVipPopup(false)} 
+                onUnlock={processFinalOrder} 
+            />
+
         </div>
     );
 }

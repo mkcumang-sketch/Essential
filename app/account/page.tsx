@@ -18,6 +18,8 @@ export default function PremiumAccountDashboard() {
     const [activeTab, setActiveTab] = useState('OVERVIEW');
     const [isCopied, setIsCopied] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState("");
+    
+    // 🚨 STATE BLEED FIX: Initial state null rakha hai
     const [dashData, setDashData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorState, setErrorState] = useState(false);
@@ -25,23 +27,26 @@ export default function PremiumAccountDashboard() {
     const [toastMsg, setToastMsg] = useState("");
 
     useEffect(() => {
+        // 🚨 AGAR LOGIN NAHI HAI: Data turant uda do
         if (status === "unauthenticated") {
+            setDashData(null);
+            setIsLoading(false);
             router.push('/login');
-        } else if (status === "authenticated" && session?.user) {
-            
-            fetch('/api/user/dashboard', {
+            return;
+        } 
+        
+        // 🚨 AGAR LOGIN HAI: Naya data laane se pehle memory saaf karo
+        if (status === "authenticated" && session?.user) {
+            setIsLoading(true);
+            setDashData(null); // Purana data screen se hatao
+
+            // Cache-killer URL taaki hamesha fresh data aaye
+            fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    email: session.user.email // 🔒 STRICTLY ONLY EMAIL
-                })
+                body: JSON.stringify({ email: session.user.email }),
+                cache: 'no-store' // Browser ko cache save karne se rokna
             })
-            // Aise update kar de:
-fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: session.user.email })
-})
             .then(res => res.json())
             .then(json => {
                 if (json.success) {
@@ -50,10 +55,11 @@ fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
                 } else {
                     setErrorState(true);
                 }
-                setIsLoading(false);
             })
             .catch(() => {
                 setErrorState(true);
+            })
+            .finally(() => {
                 setIsLoading(false);
             });
         }
@@ -71,13 +77,22 @@ fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
         setTimeout(() => setIsCopied(false), 2000);
     };
 
+    // 🚨 SAFAI ABHIYAN: Logout karte waqt browser ki memory (Cart etc) delete karna
+    const handleLogout = async () => {
+        localStorage.clear();
+        sessionStorage.clear();
+        await signOut({ callbackUrl: '/login' });
+    };
+
+    // ⏳ LOADING STATE: Jab tak naya data na aaye, ye screen dikhegi
     if (status === "loading" || isLoading) return (
-        <div className="min-h-screen bg-[#050505] flex justify-center items-center">
-            <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-[#050505] flex flex-col justify-center items-center">
+            <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-6"></div>
+            <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">Securing Vault Data...</p>
         </div>
     );
     
-    // 🚨 IF THE API FAILS, SHOW THIS CLEAN ERROR INSTEAD OF FAKE DATA
+    // 🚨 IF THE API FAILS
     if (errorState || !dashData) return (
         <div className="h-screen bg-[#050505] flex flex-col justify-center items-center text-center p-6">
             <ShieldAlert size={60} className="text-red-500 mb-6"/>
@@ -117,7 +132,8 @@ fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
                 </Link>
                 <h1 className="text-2xl font-serif font-bold uppercase tracking-[10px] absolute left-1/2 -translate-x-1/2 hidden md:block text-white">Essential</h1>
                 <div className="flex items-center gap-6">
-                    <button onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-500 hover:text-red-500 transition-colors">
+                    {/* 🚨 NAYA LOGOUT BUTTON */}
+                    <button onClick={handleLogout} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-500 hover:text-red-500 transition-colors">
                         Lock Vault <LogOut size={16}/>
                     </button>
                 </div>
