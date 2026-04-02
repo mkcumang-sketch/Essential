@@ -1,6 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getToken } from "next-auth/jwt";
 
+// 🌟 1. BULLETPROOF DB CONNECTION
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected || mongoose.connection.readyState >= 1) return;
+    try { 
+        await mongoose.connect(process.env.MONGODB_URI as string); 
+        isConnected = true;
+    } catch (error) {
+        console.error("❌ MongoDB Connection Error (Reviews):", error);
+    }
+};
+
+// 🌟 2. SCHEMA DEFINITION
 const reviewSchema = new mongoose.Schema({
     userName: { type: String, required: true },
     comment: { type: String, required: true },
@@ -14,30 +28,46 @@ const reviewSchema = new mongoose.Schema({
 
 const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
 
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try { await mongoose.connect(process.env.MONGODB_URI as string); } catch (error) {}
+// 🌟 3. STRICT SECURITY VERIFICATION (MILITARY GRADE)
+const isSuperAdminRequest = async (req: NextRequest) => {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    return token && (token as any).role === 'SUPER_ADMIN';
 };
 
-export async function GET(req: Request) {
+// ==========================================
+// 🚀 API ROUTES
+// ==========================================
+
+export async function GET(req: NextRequest) {
     try {
         await connectDB();
         const { searchParams } = new URL(req.url);
-        const isAdmin = searchParams.get('admin') === 'true';
-        const query = isAdmin ? {} : { visibility: 'public' };
+        const wantsAdminView = searchParams.get('admin') === 'true';
+
+        if (wantsAdminView) {
+            if (!(await isSuperAdminRequest(req))) {
+                console.log("🚨 Unauthorized Admin Review Access Blocked!");
+                return NextResponse.json({ success: false, error: 'Forbidden Access' }, { status: 403 });
+            }
+        }
+
+        const query = wantsAdminView ? {} : { visibility: 'public' };
         const reviews = await Review.find(query).sort({ createdAt: -1 });
         return NextResponse.json({ success: true, data: reviews });
-    } catch (error) { return NextResponse.json({ success: false, error: "Failed to fetch reviews" }, { status: 500 }); }
+    } catch (error) { 
+        console.error("GET Reviews Error:", error);
+        return NextResponse.json({ success: false, error: "Failed to fetch reviews" }, { status: 500 }); 
+    }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         await connectDB();
         const body = await req.json();
 
-        // 🌟 BOT CHECK: If honeyPot is filled, it's a bot!
+        // 🛡️ BOT CHECK: If honeyPot is filled, block it instantly!
         if (body.honeyPot && body.honeyPot.length > 0) {
-            console.log("[SECURITY] Bot submission blocked via Honeypot.");
+            console.log("🛡️ [SECURITY] Bot submission blocked via Honeypot.");
             return NextResponse.json({ success: false, message: "Security Check Failed" }, { status: 400 });
         }
 
@@ -52,30 +82,48 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ success: true, data: newReview });
-    } catch (error) { return NextResponse.json({ success: false }, { status: 500 }); }
+    } catch (error) { 
+        console.error("POST Review Error:", error);
+        return NextResponse.json({ success: false }, { status: 500 }); 
+    }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
     try {
+        if (!(await isSuperAdminRequest(req))) {
+            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+        }
         await connectDB();
         const { reviewId, visibility } = await req.json();
-        if (!reviewId || !visibility) return NextResponse.json({ success: false, error: "Missing parameters" }, { status: 400 });
+        
+        if (!reviewId || !visibility) {
+            return NextResponse.json({ success: false, error: "Missing parameters" }, { status: 400 });
+        }
+        
         const updatedReview = await Review.findByIdAndUpdate(reviewId, { visibility }, { new: true });
         return NextResponse.json({ success: true, data: updatedReview });
-    } catch (error) { return NextResponse.json({ success: false, error: "Failed to update review" }, { status: 500 }); }
+    } catch (error) { 
+        console.error("PATCH Review Error:", error);
+        return NextResponse.json({ success: false, error: "Failed to update review" }, { status: 500 }); 
+    }
 }
-// Add this at the bottom of the file
-export async function DELETE(req: Request) {
+
+export async function DELETE(req: NextRequest) {
     try {
+        if (!(await isSuperAdminRequest(req))) {
+            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+        }
+        await connectDB();
+        
         const body = await req.json();
         const { id } = body;
-        if (!id) return NextResponse.json({ success: false, error: "ID missing" });
+        
+        if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
 
-        const Review = mongoose.models.Review || mongoose.model('Review', new mongoose.Schema({}, { strict: false }));
         await Review.findByIdAndDelete(id);
-
-        return NextResponse.json({ success: true, message: "Review Deleted from Database" });
+        return NextResponse.json({ success: true, message: "Review permanently deleted from Vault" });
     } catch (error) {
+        console.error("DELETE Review Error:", error);
         return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
     }
 }

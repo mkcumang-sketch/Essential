@@ -100,7 +100,8 @@ export const authOptions: NextAuthOptions = {
             if (account?.provider === "google") {
                 const existingUser = await User.findOne({ email: user.email });
                 if (!existingUser) {
-                    const role = user.email === 'mkcumang@gmail.com' ? 'SUPER_ADMIN' : 'USER';
+                    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+                    const role = superAdminEmail && user.email === superAdminEmail ? 'SUPER_ADMIN' : 'USER';
                     const newUser = await User.create({ 
                         name: user.name, 
                         email: user.email, 

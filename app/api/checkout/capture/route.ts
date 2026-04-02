@@ -31,11 +31,15 @@ export async function POST(req: Request) {
 
     // 🚨 YAHAN TWILIO YA MSG91 KA OTP CODE AAYEGA FUTURE MEIN 🚨
     // Abhi ke liye hum sirf success bhej rahe hain
-    console.log(`[SYSTEM LOG]: SMS OTP sent to ${phone}`);
+    console.log(`[SYSTEM LOG]: Lead captured successfully`);
 
-    return NextResponse.json({ success: true, leadId: lead._id, message: "OTP Sent successfully" });
+    return NextResponse.json({
+      success: true,
+      leadId: lead._id,
+      message: "Lead captured successfully (OTP verification flow pending)."
+    });
   } catch (error: any) {
     console.error("Lead Capture Error:", error.message);
-    return NextResponse.json({ error: "Authentication Failed" }, { status: 500 });
+    return NextResponse.json({ error: "Lead capture failed" }, { status: 500 });
   }
 }

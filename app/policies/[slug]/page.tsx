@@ -1,6 +1,6 @@
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
 import { notFound } from 'next/navigation';
-// Update import path to your footer component
-// import Footer from '@/components/Footer';
 
 export default async function PolicyPage({ params }: { params: any }) {
     const resolvedParams = await params;
@@ -29,6 +29,11 @@ export default async function PolicyPage({ params }: { params: any }) {
 
     if (!policyContent) return notFound();
 
+  // 🛡️ INDUSTRY STANDARD XSS SANITIZER (Replaced unsafe Regex)
+    const { window } = new JSDOM('');
+    const purify = DOMPurify(window as any);
+    const safePolicyContent = purify.sanitize(policyContent);
+
     return (
         // 🚨 FIX: Forced Background White and Text Black/Dark Gray for Premium look
         <div className="min-h-screen bg-white text-gray-900 flex flex-col w-full font-sans antialiased">
@@ -49,12 +54,9 @@ export default async function PolicyPage({ params }: { params: any }) {
                                prose-ul:text-gray-700 prose-li:marker:text-[#D4AF37]
                                [&>img]:rounded-2xl [&>img]:shadow-2xl [&>img]:border [&>img]:border-gray-200 [&>img]:w-full [&>img]:my-12
                                [&>video]:rounded-2xl [&>video]:shadow-2xl [&>video]:border [&>video]:border-gray-200 [&>video]:w-full [&>video]:my-12"
-                    dangerouslySetInnerHTML={{ __html: policyContent }} 
+                    dangerouslySetInnerHTML={{ __html: safePolicyContent }} 
                 />
             </main>
-            
-            {/* 🏁 Standardize Main Website Footer */}
-            {/* <Footer /> */}
         </div>
     );
 }

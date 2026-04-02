@@ -1,8 +1,9 @@
 // app/api/temp-seed/route.ts (Temporary Seeder file)
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongoose';
 import mongoose from 'mongoose';
+import { getToken } from 'next-auth/jwt';
 
 // Ensure MONGODB_URI is correctly set in Vercel Environment Variables
 if (!process.env.MONGODB_URI) {
@@ -29,6 +30,11 @@ const cmsSchema = new mongoose.Schema({
 
 // Bind Model
 const CmsConfig = mongoose.models.CmsConfig || mongoose.model('CmsConfig', cmsSchema);
+
+const isSuperAdminRequest = async (req: NextRequest) => {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  return token && (token as any).role === 'SUPER_ADMIN';
+};
 
 // 💎 THE PREMIUM DEFAULT DATA (User's provided data from previous turns)
 const LUXURY_DEFAULT_DATA = {
@@ -64,8 +70,11 @@ const LUXURY_DEFAULT_DATA = {
     ]
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        if (!(await isSuperAdminRequest(req))) {
+            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+        }
         await connectDB();
         const config = await CmsConfig.findOne({});
         

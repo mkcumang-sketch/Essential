@@ -1,25 +1,25 @@
 "use client";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+
+import React, { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const adminEmail = "us7081569@gmail.com"; // Aapki email
+  const isAdmin = (session?.user as any)?.role === "SUPER_ADMIN";
 
   useEffect(() => {
     if (status === "loading") return;
-    
-    // Agar login nahi hai ya email match nahi karti -> Redirect
-    if (!session || session.user?.email !== adminEmail) {
-      // router.push("/"); // Login page par bhejne ke liye uncomment karein
-      console.log("Access Denied: Not an Admin");
+    if (!session || !isAdmin) {
+      router.replace("/login");
     }
-  }, [session, status, router]);
+  }, [session, status, isAdmin, router]);
 
   if (status === "loading") return <div className="p-10 text-center">Verifying Vault Access...</div>;
+  
+  // 🚨 RENDER BLOCKER
+  if (!session || !isAdmin) return null;
 
-  // Agar sab sahi hai, toh content dikhao
   return <>{children}</>;
 }

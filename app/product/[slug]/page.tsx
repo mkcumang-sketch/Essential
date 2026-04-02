@@ -83,7 +83,7 @@ export async function generateMetadata(
 // 🌟 3. GOOGLE RICH SNIPPETS (JSON-LD SCHEMA)
 const JsonLdSchema = ({ product, slug }: { product: any, slug: string }) => {
   const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
-  const schema = product.seo?.customSchema ? JSON.parse(product.seo.customSchema) : {
+  let schema: any = product.seo?.customSchema ? undefined : {
     "@context": "https://schema.org/",
     "@type": "Product",
     "name": product.name,
@@ -99,7 +99,31 @@ const JsonLdSchema = ({ product, slug }: { product: any, slug: string }) => {
     }
   };
 
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
+  if (product.seo?.customSchema) {
+    try {
+      schema = JSON.parse(product.seo.customSchema);
+    } catch (e) {
+      console.error("Invalid product.seo.customSchema JSON, falling back to default schema.");
+      schema = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": product.name,
+        "image": [product.imageUrl, ...(product.images || [])].filter(Boolean),
+        "description": product.description,
+        "brand": { "@type": "Brand", "name": product.brand },
+        "offers": {
+          "@type": "Offer",
+          "url": `${baseUrl}/product/${slug}`,
+          "priceCurrency": "INR",
+          "price": product.offerPrice || product.price,
+          "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        }
+      };
+    }
+  }
+
+  // Render as text content to avoid HTML injection issues.
+  return <script type="application/ld+json">{JSON.stringify(schema)}</script>;
 };
 
 // 🌟 4. MAIN PAGE RENDERER

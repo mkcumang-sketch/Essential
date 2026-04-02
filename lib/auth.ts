@@ -10,9 +10,15 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Yahan tera VIP Admin password set hai
-        if (credentials?.email === "admin@gmail.com" && credentials?.password === "admin") {
-          return { id: "1", name: "Admin", email: "admin@gmail.com", role: "admin" };
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!adminEmail || !adminPassword) {
+          throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be set for credentials auth.");
+        }
+
+        if (credentials?.email === adminEmail && credentials?.password === adminPassword) {
+          return { id: "1", name: "Admin", email: adminEmail, role: "SUPER_ADMIN" };
         }
         return null;
       }
@@ -24,5 +30,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "EssentialRush_Ultra_Premium_Secret_2026",
+  secret: process.env.NEXTAUTH_SECRET,
 };

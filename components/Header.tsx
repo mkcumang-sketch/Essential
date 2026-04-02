@@ -9,11 +9,9 @@ export default function Header() {
   const { data: session } = useSession();
   const router = useRouter();
   
-  // 👑 ADMIN EMAIL (Yahan apni email set karein)
-  const adminEmail = "us7081569@gmail.com"; 
-  
-  // Check Access Level
-  const isAdmin = session?.user?.email === adminEmail;
+  // Admin access is driven by NextAuth session role.
+  // (Your NextAuth callbacks set `session.user.role` from DB user.role / SUPER_ADMIN.)
+  const isAdmin = (session?.user as any)?.role === "SUPER_ADMIN";
 
   const [siteName, setSiteName] = useState("EssentialRush");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -39,34 +37,34 @@ export default function Header() {
 
   return (
     <>
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 py-4 px-6 md:px-12 flex justify-between items-center font-serif text-black">
+      <nav className="fixed top-0 w-full bg-black/70 backdrop-blur-md border-b border-white/10 z-50 py-4 px-6 md:px-12 flex justify-between items-center font-serif text-white">
         
         {/* Logo */}
-        <Link href="/" className="text-2xl md:text-3xl font-bold italic tracking-tighter hover:text-yellow-600 transition-colors">
+        <Link href="/" className="text-2xl md:text-3xl font-bold italic tracking-tighter hover:text-[#D4AF37] transition-colors">
           {siteName}
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest text-gray-500 items-center">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
-          <Link href="/collection" className="hover:text-black transition-colors">Collection</Link>
+        <div className="hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest text-white/70 items-center">
+          <Link href="/" className="hover:text-[#D4AF37] transition-colors">Home</Link>
+          <Link href="/collection" className="hover:text-[#D4AF37] transition-colors">Collection</Link>
           
           {/* 🚨 SMART MENU: Sirf Admin ko ye dikhega */}
           {isAdmin && (
             <>
-              <Link href="/admin" className="text-yellow-600 hover:text-black border-b border-yellow-600 pb-1">Admin Panel</Link>
+              <Link href="/admin" className="text-[#D4AF37] hover:text-white border-b border-[#D4AF37] pb-1">Admin Panel</Link>
             </>
           )}
 
           {/* 🚨 SALES PARTNER: Agar Admin nahi hai, lekin login hai (Sales Person) */}
           {session && !isAdmin && (
-             <Link href="/sales" className="text-blue-600 hover:text-black">Sales Dashboard</Link>
+             <Link href="/sales" className="text-white/70 hover:text-[#D4AF37]">Sales Dashboard</Link>
           )}
 
           {/* Search Trigger */}
           <button 
             onClick={() => setIsSearchOpen(true)}
-            className="hover:text-yellow-600 transition-colors ml-6 flex items-center gap-2 group"
+            className="text-white/70 hover:text-[#D4AF37] transition-colors ml-6 flex items-center gap-2 group"
           >
             <span className="hidden group-hover:block transition-all text-[9px] font-bold">SEARCH</span>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -76,19 +74,19 @@ export default function Header() {
         {/* Auth & Mobile */}
         <div className="flex items-center gap-4">
           
-          <button onClick={() => setIsSearchOpen(true)} className="md:hidden hover:text-yellow-600 p-2">
+          <button onClick={() => setIsSearchOpen(true)} className="md:hidden text-white/70 hover:text-[#D4AF37] p-2">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </button>
 
           {session ? (
             <div className="flex items-center gap-4">
                {/* User Image */}
-               <img src={session.user?.image || ""} alt="User" className="w-8 h-8 rounded-full border border-gray-200" title={`Logged in as ${session.user?.name}`} />
+               <img src={session.user?.image || ""} alt="User" className="w-8 h-8 rounded-full border border-white/15" title={`Logged in as ${session.user?.name}`} />
                
                {/* Sign Out */}
               <button 
                 onClick={() => signOut({ callbackUrl: "/" })} 
-                className="text-[9px] font-bold uppercase tracking-widest text-red-500 hover:text-red-700 border border-red-200 px-3 py-1 rounded-sm hidden sm:block"
+                className="text-[9px] font-bold uppercase tracking-widest text-[#D4AF37] hover:text-black border border-[#D4AF37]/30 hover:bg-[#D4AF37] px-3 py-1 rounded-sm hidden sm:block transition-colors"
               >
                 Sign Out
               </button>
@@ -97,7 +95,7 @@ export default function Header() {
             /* 🚨 GENERIC LOGIN BUTTON (Ab "Admin" nahi likha hai) */
             <button 
               onClick={() => signIn("google")} 
-              className="bg-black text-white text-[9px] uppercase tracking-widest font-bold py-2 px-6 hover:bg-yellow-600 hover:text-black transition-colors"
+              className="bg-[#050505] text-white border border-[#D4AF37]/30 text-[9px] uppercase tracking-widest font-bold py-2 px-6 hover:bg-[#D4AF37] hover:text-black transition-colors shadow-[0_0_0_1px_rgba(212,175,55,0.15)]"
             >
               Login
             </button>

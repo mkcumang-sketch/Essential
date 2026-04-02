@@ -372,18 +372,49 @@ function FrontPageStore() {
       {/* 🌟 FULL SCREEN MENU 🌟 */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[1100] bg-white/98 backdrop-blur-2xl flex flex-col p-8 md:p-24 overflow-hidden">
-            <div className="flex justify-end"><button onClick={()=>setIsMenuOpen(false)} className="p-4 bg-gray-100 rounded-full text-black hover:rotate-90 transition-all duration-500"><X size={35} /></button></div>
-            <nav className="flex-1 flex flex-col justify-center space-y-8 md:space-y-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1100] relative bg-black/70 backdrop-blur-3xl flex flex-col p-8 md:p-24 overflow-hidden border-t border-[#D4AF37]/30"
+          >
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(212,175,55,0.25),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.10),transparent_40%),linear-gradient(to_bottom,rgba(0,0,0,0.65),rgba(0,0,0,0.9))]"
+            />
+            <div aria-hidden className="absolute inset-x-0 top-6 h-px bg-[#D4AF37]/30" />
+            <div aria-hidden className="absolute inset-x-0 bottom-10 h-px bg-[#D4AF37]/20" />
+
+            <div className="relative z-10 flex justify-end">
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="p-4 rounded-full border border-[#D4AF37]/35 bg-black/25 text-[#D4AF37] hover:text-black hover:bg-[#D4AF37] hover:rotate-90 transition-all duration-500 shadow-[0_0_0_3px_rgba(212,175,55,0.15)]"
+              >
+                <X size={35} />
+              </button>
+            </div>
+
+            <nav className="relative z-10 flex-1 flex flex-col justify-center space-y-10 md:space-y-14">
                 {["Home", "Shop Watches", "About Us", "My Account"].map((m, i) => (
                     <motion.div key={m} initial={{x: -50, opacity: 0}} animate={{x: 0, opacity: 1}} transition={{delay: i * 0.1}}>
-                        <Link href={m === "Home" ? "/" : m === "Shop Watches" ? "/shop" : m === "My Account" ? "/account" : "#ourstory"} onClick={()=>setIsMenuOpen(false)} className="text-black text-5xl md:text-8xl font-serif font-bold hover:text-gray-500 transition-all tracking-tight block">{m}</Link>
+                        <Link
+                          href={m === "Home" ? "/" : m === "Shop Watches" ? "/shop" : m === "My Account" ? "/account" : "#ourstory"}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="text-white text-5xl md:text-8xl font-serif font-bold hover:text-[#D4AF37] transition-all tracking-tight block whitespace-nowrap leading-[0.95] drop-shadow-[0_0_18px_rgba(212,175,55,0.22)]"
+                        >
+                          {m}
+                        </Link>
                     </motion.div>
                 ))}
             </nav>
-            <div className="mt-auto border-t border-gray-200 pt-8 flex justify-between items-center">
-                <div className="flex gap-8"><Instagram className="text-gray-400 hover:text-black cursor-pointer"/><Facebook className="text-gray-400 hover:text-black cursor-pointer"/></div>
-                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[5px]">Essential Rush</p>
+            <div className="relative z-10 mt-auto border-t border-white/10 pt-8 flex justify-between items-center">
+              <div className="flex gap-8">
+                <Instagram className="text-white/50 hover:text-[#D4AF37] cursor-pointer transition-colors" />
+                <Facebook className="text-white/50 hover:text-[#D4AF37] cursor-pointer transition-colors" />
+              </div>
+              <p className="text-white/55 text-[10px] font-bold uppercase tracking-[5px]">
+                Essential Rush
+              </p>
             </div>
           </motion.div>
         )}
