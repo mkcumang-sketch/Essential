@@ -32,13 +32,21 @@ export async function GET(req: Request) {
         const profile: any = await User.findOne({ email }).lean() || {};
         const orders: any[] = await Order.find({ 'customer.email': email }).sort({ createdAt: -1 }).lean();
         
-        // ✅ CALCULATION (Isi ke gayab hone se laal line aa rahi thi)
-        const totalSpent: number = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-        
-        let tier: string = 'BRONZE';
-        if (totalSpent > 500000) tier = 'PLATINUM';
-        else if (totalSpent > 200000) tier = 'GOLD';
-        else if (totalSpent > 50000) tier = 'SILVER';
+        // ✅ ELITE LOYALTY PROGRAM (Phase 2)
+        // Only count successful acquisitions toward loyalty progress.
+        const successfulStatuses = ['PROCESSING', 'DISPATCHED', 'DELIVERED'];
+        const successfulOrders = orders.filter((o) => successfulStatuses.includes(o.status));
+        const totalSpent: number = successfulOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+        // Silver Vault (Default) -> Gold Vault after spending >= 1,00,000 INR.
+        const tier: string = totalSpent >= 100000 ? 'Gold Vault' : 'Silver Vault';
+
+        // Persist calculated values so the UI can stay consistent and fast.
+        await User.findOneAndUpdate(
+            { email },
+            { $set: { totalSpent, loyaltyTier: tier } },
+            { new: true }
+        );
 
         const reviews: any[] = await Review.find({ email }).sort({ createdAt: -1 }).lean();
         const tickets: any[] = await Ticket.find({ email }).sort({ createdAt: -1 }).lean();

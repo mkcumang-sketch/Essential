@@ -3,6 +3,7 @@ import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
 import { GlobalProvider } from './GlobalProvider';
 import { ToastProvider } from '@/context/ToastContext'; // 👈 Naya Import
+import AppAnalytics from '@/components/Analytics';
 
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
           </ToastProvider>
           <Analytics />
+          <AppAnalytics />
         </GlobalProvider>
 
       </body>

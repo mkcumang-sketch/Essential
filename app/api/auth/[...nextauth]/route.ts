@@ -34,7 +34,11 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     phone: { type: String, unique: true, sparse: true }, 
     password: String, 
     role: { type: String, default: 'USER' }, 
-    image: String
+    image: String,
+
+    // 🌟 ELITE LOYALTY PROGRAM (Phase 2) 🌟
+    totalSpent: { type: Number, default: 0 },
+    loyaltyTier: { type: String, default: 'Silver Vault' }
 }));
 
 export const authOptions: NextAuthOptions = {

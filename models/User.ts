@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
     addresses: [addressSchema],
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    
+    // 🌟 ELITE LOYALTY PROGRAM (Phase 2) 🌟
+    totalSpent: { type: Number, default: 0 },
+    loyaltyTier: { type: String, default: 'Silver Vault' },
     notifications: [{
         title: String,
         desc: String,
