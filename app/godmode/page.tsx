@@ -663,7 +663,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                               );
                             })
                           )
-                       ))}
+                       )}
                     </div>
                  </div>
 

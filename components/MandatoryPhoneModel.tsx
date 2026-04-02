@@ -27,7 +27,7 @@ export default function MandatoryPhoneModal() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/user/verify-phone', {
+            const res = await fetch(`/api/user/verify-phone?t=${Date.now()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: session?.user?.email, phone })

@@ -307,7 +307,7 @@ function FrontPageStore() {
     // 3. Background sync to Godmode
     try {
         const cartTotal = newCart.reduce((total, item) => total + (Number(item.offerPrice || item.price) * item.qty), 0);
-        await fetch('/api/cart/sync', {
+        await fetch(`/api/cart/sync?t=${Date.now()}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

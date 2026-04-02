@@ -37,9 +37,26 @@ export default function LoginPortal() {
     };
 
     // Handle Google Login
-    const handleGoogleLogin = () => {
+    const handleGoogleLogin = async () => {
         setIsLoading(true);
-        signIn('google', { callbackUrl: '/account' });
+        try {
+            const res = await signIn("google", {
+                redirect: false,
+                callbackUrl: "/account",
+            });
+
+            if (res && (res as any).error) {
+                alert("Google login failed. Please try again.");
+                setIsLoading(false);
+                return;
+            }
+
+            // Hard navigation: fully resets client memory (nuclear cache buster).
+            window.location.href = `/account?t=${Date.now()}`;
+        } catch {
+            alert("Google login failed. Please try again.");
+            setIsLoading(false);
+        }
     };
 
     // 🌟 UPDATED: Handle Sign Up with Security 🌟
@@ -92,9 +109,8 @@ export default function LoginPortal() {
                 alert("Invalid Credentials or Security Check Failed.");
                 setIsLoading(false);
             } else {
-                // 🌟 FIX: Force Next.js to update state and read new cookie
-                router.refresh(); 
-                router.push('/account');
+                // Hard navigation: fully resets client memory (nuclear cache buster).
+                window.location.href = `/account?t=${Date.now()}`;
             }
         } catch (err) {
             alert("Login failed.");

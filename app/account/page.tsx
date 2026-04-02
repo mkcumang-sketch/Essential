@@ -75,8 +75,8 @@ export default function PremiumAccountDashboard() {
             setIsLoading(true);
             setDashData(null); // Purana data screen se hatao
 
-            // Cache-killer URL taaki hamesha fresh data aaye
-            fetch(`/api/user/dashboard?t=${new Date().getTime()}`, {
+            // Nuclear cache buster: timestamp guarantees no cached response reuse.
+            fetch(`/api/user/dashboard?t=${Date.now()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: session.user.email }),
