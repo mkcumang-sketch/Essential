@@ -27,8 +27,8 @@ export default function PremiumAccountDashboard() {
     const [isCopied, setIsCopied] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState("");
     
-    // 🚨 STATE BLEED FIX: Initial state null rakha hai
-    const [dashData, setDashData] = useState<any>(null);
+    // 🚨 Crash-proof default shape: backend may omit fields temporarily.
+    const [dashData, setDashData] = useState<any>({ orders: [] });
     const [isLoading, setIsLoading] = useState(true);
     const [errorState, setErrorState] = useState(false);
     
@@ -64,7 +64,7 @@ export default function PremiumAccountDashboard() {
     useEffect(() => {
         // 🚨 AGAR LOGIN NAHI HAI: Data turant uda do
         if (status === "unauthenticated") {
-            setDashData(null);
+            setDashData({ orders: [] });
             setIsLoading(false);
             router.push('/login');
             return;
@@ -72,14 +72,21 @@ export default function PremiumAccountDashboard() {
         
         // 🚨 AGAR LOGIN HAI: Naya data laane se pehle memory saaf karo
         if (status === "authenticated" && session?.user) {
+            const email = session?.user?.email;
+            if (!email) {
+                setErrorState(true);
+                setIsLoading(false);
+                return;
+            }
+
             setIsLoading(true);
-            setDashData(null); // Purana data screen se hatao
+            setDashData({ orders: [] }); // Reset to safe shape before refetch
 
             // Nuclear cache buster: timestamp guarantees no cached response reuse.
             fetch(`/api/user/dashboard?t=${Date.now()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: session.user.email }),
+                body: JSON.stringify({ email }),
                 cache: 'no-store' // Browser ko cache save karne se rokna
             })
             .then(res => res.json())
@@ -150,9 +157,12 @@ export default function PremiumAccountDashboard() {
             <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">Securing Vault Data...</p>
         </div>
     );
+
+    // 🚨 Session not ready/invalid: avoid rendering the dashboard.
+    if (status === "unauthenticated") return null;
     
     // 🚨 IF THE API FAILS
-    if (errorState || !dashData) return (
+    if (errorState) return (
         <div className={`${isLight ? "h-screen bg-white text-black" : "h-screen bg-[#050505] text-white"} flex flex-col justify-center items-center text-center p-6`}>
             <ShieldAlert size={60} className="text-red-500 mb-6"/>
             <h2 className={`text-3xl font-serif mb-2 ${isLight ? "text-black" : "text-white"}`}>Vault Disconnected</h2>
@@ -176,7 +186,8 @@ export default function PremiumAccountDashboard() {
     const userRole = (session?.user as any)?.role || 'USER';
 
     const giftingWatches = useMemo(() => {
-        const rawItems: any[] = (dashData?.orders || []).flatMap((o: any) => o?.items || []);
+        const orders = Array.isArray(dashData?.orders) ? dashData.orders : [];
+        const rawItems: any[] = orders.flatMap((o: any) => o?.items || []);
         const seen = new Set<string>();
         const normalized = rawItems.map((item: any, idx: number) => {
             const id = String(item?._id || item?.id || item?.name || idx);
