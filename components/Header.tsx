@@ -4,6 +4,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // 🚨 Redirect ke liye
 import SearchOverlay from "./SearchOverlay";
+import { useCartStore } from "@/store/cartStore";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -15,6 +16,23 @@ export default function Header() {
 
   const [siteName, setSiteName] = useState("EssentialRush");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      // Ignore storage errors (private browsing, etc.)
+    }
+
+    // Ensure in-memory Zustand state is cleared too.
+    try {
+      useCartStore.getState().clearCart();
+    } catch (e) {}
+
+    await signOut({ callbackUrl: "/" });
+    window.location.reload(); // Hard reload to eliminate any stale session UI.
+  };
 
   // Site Name Load Karna
   useEffect(() => {
@@ -85,7 +103,7 @@ export default function Header() {
                
                {/* Sign Out */}
               <button 
-                onClick={() => signOut({ callbackUrl: "/" })} 
+                onClick={() => handleLogout()} 
                 className="text-[9px] font-bold uppercase tracking-widest text-[#D4AF37] hover:text-black border border-[#D4AF37]/30 hover:bg-[#D4AF37] px-3 py-1 rounded-sm hidden sm:block transition-colors"
               >
                 Sign Out

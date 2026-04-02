@@ -1,15 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from "next/dynamic";
 import { 
     ArrowLeft, LogOut, ShieldCheck, Clock, Settings, Star, CreditCard, 
     Copy, Wallet, Coins, ArrowRightLeft, CheckCircle, MapPin, Download, Ticket, 
     Bell, Heart, Eye, MessageSquare, Shield, User, ShoppingBag, AlertCircle, ShieldAlert 
 } from 'lucide-react';
 import Link from 'next/link';
+
+const CuratedGiftingSuite = dynamic(
+  () => import("@/components/CuratedGiftingSuite"),
+  { ssr: false }
+);
+
+const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: false });
 
 export default function PremiumAccountDashboard() {
     const { data: session, status } = useSession();
@@ -25,6 +33,7 @@ export default function PremiumAccountDashboard() {
     const [errorState, setErrorState] = useState(false);
     
     const [toastMsg, setToastMsg] = useState("");
+    const [vaultCount, setVaultCount] = useState(0);
 
     // 🎨 Theme Switcher (UI-only): Dark / Light / Luxury
     const [theme, setTheme] = useState<'dark' | 'light' | 'luxury'>('luxury');
@@ -91,6 +100,29 @@ export default function PremiumAccountDashboard() {
         }
     }, [status, session, router]);
 
+    // Virtual Vault count (localStorage driven). Kept UI-only to avoid touching cart/DB/NextAuth.
+    useEffect(() => {
+        const readVaultCount = () => {
+            try {
+                const raw = localStorage.getItem("luxury_wishlist") || "[]";
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.length : 0;
+            } catch {
+                return 0;
+            }
+        };
+
+        setVaultCount(readVaultCount());
+
+        const handler = (e: any) => {
+            const next = Number(e?.detail?.count ?? 0);
+            setVaultCount(Number.isFinite(next) ? next : 0);
+        };
+
+        window.addEventListener("vaultCountChanged", handler);
+        return () => window.removeEventListener("vaultCountChanged", handler);
+    }, []);
+
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(""), 3000);
@@ -108,6 +140,7 @@ export default function PremiumAccountDashboard() {
         localStorage.clear();
         sessionStorage.clear();
         await signOut({ callbackUrl: '/login' });
+        window.location.reload(); // Hard reload to prevent cross-session UI leakage
     };
 
     // ⏳ LOADING STATE: Jab tak naya data na aaye, ye screen dikhegi
@@ -141,6 +174,29 @@ export default function PremiumAccountDashboard() {
 
     const userName = session?.user?.name || 'Premium Member';
     const userRole = (session?.user as any)?.role || 'USER';
+
+    const giftingWatches = useMemo(() => {
+        const rawItems: any[] = (dashData?.orders || []).flatMap((o: any) => o?.items || []);
+        const seen = new Set<string>();
+        const normalized = rawItems.map((item: any, idx: number) => {
+            const id = String(item?._id || item?.id || item?.name || idx);
+            return {
+                id,
+                name: item?.name || "Premium Timepiece",
+                brand: item?.brand || "Essential",
+                imageUrl: item?.imageUrl,
+                image: item?.image,
+                offerPrice: item?.offerPrice,
+                price: item?.price,
+            };
+        });
+
+        return normalized.filter((w) => {
+            if (seen.has(w.id)) return false;
+            seen.add(w.id);
+            return true;
+        });
+    }, [dashData]);
 
     return (
         <div className={pageClassName}>
@@ -207,7 +263,12 @@ export default function PremiumAccountDashboard() {
 
             <main className="max-w-[1600px] mx-auto pt-10 px-6 md:px-12 flex flex-col lg:flex-row gap-10 relative z-10">
                 
-                <aside className="w-full lg:w-[320px] shrink-0">
+                <motion.aside
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="w-full lg:w-[320px] shrink-0"
+                >
                     <div className={`${surfaceBgClass} backdrop-blur-xl border ${surfaceBorderClass} ${surfaceTextClass} p-10 rounded-[40px] mb-8 shadow-2xl relative overflow-hidden`}>
                         <div className="absolute -right-10 -top-10 text-[#D4AF37] opacity-10 pointer-events-none"><ShieldCheck size={150}/></div>
                         
@@ -250,14 +311,21 @@ export default function PremiumAccountDashboard() {
                             </button>
                         ))}
                     </nav>
-                </aside>
+                </motion.aside>
 
                 <div className="flex-1 min-w-0">
                     <AnimatePresence mode="wait">
                         
                         {/* --- TAB 1: OVERVIEW --- */}
                         {activeTab === 'OVERVIEW' && (
-                            <motion.div key="1" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-8">
+                            <motion.div
+                                key="1"
+                                initial={{opacity:0, y:20}}
+                                animate={{opacity:1, y:0}}
+                                exit={{opacity:0}}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="space-y-8"
+                            >
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className={`p-10 ${surfaceBgClass} border ${surfaceBorderClass} rounded-[40px] flex flex-col justify-center hover:border-[#D4AF37]/35 transition-colors`}>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Total Orders</p>
@@ -270,7 +338,7 @@ export default function PremiumAccountDashboard() {
                                     </div>
                                     <div className={`p-10 ${surfaceBgClass} border ${surfaceBorderClass} rounded-[40px] flex flex-col justify-center hover:border-[#D4AF37]/35 transition-colors`}>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Wishlist Items</p>
-                                        <h3 className={`text-5xl font-serif ${surfaceTextClass}`}>0</h3>
+                                        <h3 className={`text-5xl font-serif ${surfaceTextClass}`}>{vaultCount}</h3>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -295,12 +363,27 @@ export default function PremiumAccountDashboard() {
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="pt-2">
+                                    <CuratedGiftingSuite
+                                        watches={giftingWatches}
+                                        isLight={isLight}
+                                        onToast={showToast}
+                                    />
+                                </div>
                             </motion.div>
                         )}
 
                         {/* --- TAB 2: ORDERS --- */}
                         {activeTab === 'ORDERS' && (
-                            <motion.div key="2" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                            <motion.div
+                                key="2"
+                                initial={{opacity:0, y:20}}
+                                animate={{opacity:1, y:0}}
+                                exit={{opacity:0}}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="space-y-6"
+                            >
                                 {dashData?.orders?.length === 0 ? (
                                     <div className={`${surfaceBgClass} p-10 md:p-12 rounded-[46px] text-center border ${surfaceBorderClass}`}>
                                         <ShoppingBag size={50} className="mx-auto text-gray-600 mb-6"/>
@@ -349,7 +432,14 @@ export default function PremiumAccountDashboard() {
 
                         {/* --- TAB 3: EMPIRE WALLET --- */}
                         {activeTab === 'EMPIRE_WALLET' && (
-                            <motion.div key="3" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                            <motion.div
+                                key="3"
+                                initial={{opacity:0, y:20}}
+                                animate={{opacity:1, y:0}}
+                                exit={{opacity:0}}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="space-y-6"
+                            >
                                 <div className={`p-12 md:p-12 ${isLight ? "bg-gradient-to-br from-white to-gray-100" : "bg-gradient-to-br from-[#1a1a1a] to-black"} border border-[#D4AF37]/30 rounded-[46px] relative overflow-hidden shadow-2xl`}>
                                     <div className="absolute right-0 bottom-0 opacity-10"><Wallet size={150} className="text-[#D4AF37]"/></div>
                                     <p className={`text-[10px] font-black uppercase tracking-widest mb-2 relative z-10 ${isLight ? "text-gray-600" : "text-gray-400"}`}>Available Balance</p>
@@ -374,28 +464,27 @@ export default function PremiumAccountDashboard() {
 
                         {/* --- TAB 4: WISHLIST --- */}
                         {activeTab === 'WISHLIST' && (
-                            <motion.div key="4" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}>
-                                <div className={`${surfaceBgClass} p-12 md:p-16 rounded-[46px] text-center border ${surfaceBorderClass}`}>
-                                    <Heart size={50} className="mx-auto text-gray-600 mb-6"/>
-                                    <h3 className={`text-2xl md:text-3xl font-serif ${surfaceTextClass} mb-2`}>Curated Collection</h3>
-                                    <p className={`${isLight ? "text-gray-600" : "text-gray-400"} font-serif text-sm italic mb-8`}>Your wishlist is currently empty. Start curating your favorite timepieces.</p>
-                                    <Link
-                                        href="/shop"
-                                        className={`inline-block px-12 py-5 text-[11px] font-black uppercase tracking-[5px] rounded-full transition-all shadow-[0_20px_60px_rgba(212,175,55,0.10)] border-[#D4AF37]/30 ${
-                                            isLight
-                                                ? "bg-black/5 text-black border border-black/10 hover:bg-[#D4AF37] hover:text-black"
-                                                : "bg-white/10 text-white border border-white/20 hover:bg-[#D4AF37] hover:text-black"
-                                        }`}
-                                    >
-                                        Explore Collection
-                                    </Link>
-                                </div>
+                            <motion.div
+                                key="4"
+                                initial={{opacity:0, y:20}}
+                                animate={{opacity:1, y:0}}
+                                exit={{opacity:0}}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                            >
+                                <VirtualVault isLight={isLight} />
                             </motion.div>
                         )}
 
                         {/* --- TAB 5: SETTINGS & ADDRESSES --- */}
                         {activeTab === 'SETTINGS' && (
-                            <motion.div key="5" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                            <motion.div
+                                key="5"
+                                initial={{opacity:0, y:20}}
+                                animate={{opacity:1, y:0}}
+                                exit={{opacity:0}}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="space-y-6"
+                            >
                                 <div className={`${surfaceBgClass} p-10 rounded-[46px] border ${surfaceBorderClass}`}>
                                     <h3 className={`text-lg md:text-xl font-serif ${surfaceTextClass} mb-6 border-b ${surfaceBorderClass} pb-5 flex items-center gap-3`}>
                                         <MapPin size={20} className="text-[#D4AF37]"/> Saved Addresses
@@ -428,7 +517,14 @@ export default function PremiumAccountDashboard() {
 
                         {/* --- TAB 6: REVIEWS & SUPPORT --- */}
                         {activeTab === 'SUPPORT' && (
-                            <motion.div key="6" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="space-y-6">
+                            <motion.div
+                                key="6"
+                                initial={{opacity:0, y:20}}
+                                animate={{opacity:1, y:0}}
+                                exit={{opacity:0}}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="space-y-6"
+                            >
                                 <div className={`${surfaceBgClass} p-12 md:p-16 rounded-[46px] text-center border ${surfaceBorderClass}`}>
                                     <MessageSquare size={50} className="mx-auto text-[#D4AF37] mb-6"/>
                                     <h3 className={`text-3xl md:text-4xl font-serif ${surfaceTextClass} mb-4`}>Concierge Support</h3>

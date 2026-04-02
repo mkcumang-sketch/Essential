@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getServerSession } from "next-auth";
+import { sendOrderConfirmationEmail } from "@/utils/sendOrderConfirmationEmail";
 
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
@@ -43,6 +44,20 @@ export async function POST(req: Request) {
             status: 'PROCESSING',
             createdAt: new Date()
         });
+
+        // 🚀 Automated Order Confirmation Email (non-blocking)
+        void (async () => {
+            try {
+                await sendOrderConfirmationEmail({
+                    to: REAL_EMAIL,
+                    customerName: session.user.name || "",
+                    orderId: newOrder.orderId,
+                    amount: typeof totalAmount === "number" ? totalAmount : Number(totalAmount || 0),
+                });
+            } catch (e) {
+                console.error("Order confirmation email failed:", e);
+            }
+        })();
 
         // Cleanup Abandoned Carts
         try {

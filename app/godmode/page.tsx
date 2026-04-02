@@ -90,6 +90,7 @@ function AdminDashboard() {
   const [systemLogs, setSystemLogs] = useState<string[]>(["System initialized. Production environment connected."]);
 
   const [leads, setLeads] = useState<any[]>([]);
+  const [vipDispatchingKey, setVipDispatchingKey] = useState<string | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [liveWatches, setLiveWatches] = useState<any[]>([]);
@@ -136,6 +137,54 @@ function AdminDashboard() {
       setSystemLogs(prev => [msg, ...prev].slice(0, 8)); 
   };
 
+  const handleAdminLogout = async () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {}
+    await signOut();
+    window.location.reload(); // Hard reload: guarantees next login shows fresh admin state
+  };
+
+  const dispatchVIPRecovery = async (channel: "email" | "sms" | "whatsapp", lead: any) => {
+    const leadId = lead?._id;
+    if (!leadId) return;
+
+    const key = `${channel}:${leadId}`;
+    setVipDispatchingKey(key);
+
+    const endpoint =
+      channel === "email"
+        ? "/api/admin/abandoned-carts/dispatch/email"
+        : channel === "sms"
+          ? "/api/admin/abandoned-carts/dispatch/sms"
+          : "/api/admin/abandoned-carts/dispatch/whatsapp";
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Dispatch failed");
+      }
+
+      if (channel === "whatsapp" && data.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer");
+      }
+
+      addLog(`VIP ${channel.toUpperCase()} sent for ${lead.name || "Client"}.`);
+    } catch (e: any) {
+      addLog(`VIP ${channel.toUpperCase()} dispatch failed: ${e?.message || "Unknown error"}`);
+      alert(`VIP ${channel.toUpperCase()} failed. Please try again.`);
+    } finally {
+      setVipDispatchingKey(null);
+    }
+  };
+
   const fetchDashboardData = async (silent = false) => {
     if (!silent) {
         setIsSyncing(true);
@@ -144,7 +193,7 @@ function AdminDashboard() {
     try {
       const ts = new Date().getTime();
       const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust, resCelebs] = await Promise.all([
-        fetch(`/api/admin/analytics?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
+        fetch(`/api/admin/abandoned-carts?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
         fetch(`/api/cms?t=${ts}`).then(r => r.ok ? r.json() : {data: null}),
         fetch(`/api/products?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
         fetch(`/api/agents?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
@@ -442,7 +491,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
         </nav>
 
         <div className="p-6 border-t border-white/10 bg-black/40">
-            <button onClick={() => signOut()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Close Vault</button>
+            <button onClick={() => handleAdminLogout()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Close Vault</button>
         </div>
       </aside>
 
@@ -525,51 +574,95 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                           ))
                        )}
 
-                       {/* 🚨 VIP WHATSAPP RETARGETING BUTTONS IN ABANDONED VIEW 🚨 */}
+                       {/* Recovery Vault (Omnichannel VIP) */}
                        {dashboardView === 'abandoned' && (
-                          leads.length === 0 ? <p className="text-gray-600 text-sm uppercase tracking-widest text-center py-10 font-bold">Vault is Clear</p> :
-                          leads.map((lead: any, i: number) => {
-                              const phoneClean = lead.phone?.replace(/[^0-9]/g, '') || '';
-                              const msg1Hr = encodeURIComponent(`Dear ${lead.name || 'Client'},\n\nYour Vault is still open. Your selected timepiece is reserved for the next 24 hours. Please let us know if you need assistance completing your acquisition.\n\n- Essential Rush Concierge`);
-                              const msg24Hr = encodeURIComponent(`Update from Essential Rush Vault:\n\n${lead.name ? `Mr/Ms ${lead.name}` : 'Dear Client'}, we currently have only 2 pieces remaining for the asset you selected. Secure your acquisition before the vault closes.\n\nResume Checkout: https://essential-ivory.vercel.app/cart`);
-                              const msg48Hr = encodeURIComponent(`Exclusive Access, ${lead.name || 'Client'}.\n\nWe deeply value your taste. Use Vault Key *VIP10* at checkout to receive a 10% privilege on your pending cart value of ₹${lead.cartTotal?.toLocaleString()}.\n\nSecure here: https://essential-ivory.vercel.app/cart`);
+                          leads.length === 0 ? (
+                            <p className="text-gray-600 text-sm uppercase tracking-widest text-center py-10 font-bold">
+                              Recovery Vault is Clear
+                            </p>
+                          ) : (
+                            leads.map((lead: any, i: number) => {
+                              const leadId = lead?._id;
+                              const contact = lead.phone || lead.email || "---";
+
+                              const isEmailLoading = vipDispatchingKey === `email:${leadId}`;
+                              const isSmsLoading = vipDispatchingKey === `sms:${leadId}`;
+                              const isWaLoading = vipDispatchingKey === `whatsapp:${leadId}`;
 
                               return (
-                                 <div key={i} className="flex flex-col xl:flex-row justify-between xl:items-center p-5 bg-red-900/10 border border-red-500/20 rounded-xl hover:border-red-500/50 transition-colors gap-4 shadow-lg">
-                                    <div className="flex items-center gap-4">
-                                       <div className="w-12 h-12 bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center shrink-0"><AlertTriangle size={20} /></div>
-                                       <div>
-                                          <p className="font-bold text-white text-base">{lead.name || 'Anonymous Client'}</p>
-                                          <p className="text-xs text-red-400 font-mono mt-1">Value: ₹{lead.cartTotal?.toLocaleString() || '---'} <span className="mx-2 text-white/20">|</span> {lead.phone || lead.email}</p>
-                                       </div>
+                                <div
+                                  key={i}
+                                  className="flex flex-col xl:flex-row justify-between xl:items-center p-5 bg-black/40 border border-[#D4AF37]/20 rounded-xl hover:border-[#D4AF37]/50 transition-colors gap-4 shadow-lg"
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center shrink-0 shadow-[0_0_18px_rgba(212,175,55,0.18)]">
+                                      <AlertTriangle size={20} />
                                     </div>
-                                    
-                                    <div className="flex flex-col gap-3">
-                                       {lead.phone ? (
-                                           <div className="flex flex-wrap gap-2 justify-end">
-                                               <a href={`https://wa.me/${phoneClean}?text=${msg1Hr}`} target="_blank" className="px-4 py-2 bg-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-white hover:text-black transition-colors border border-white/10" title="Send 1 Hour After Abandonment">
-                                                   1 Hr Follow-up
-                                               </a>
-                                               <a href={`https://wa.me/${phoneClean}?text=${msg24Hr}`} target="_blank" className="px-4 py-2 bg-orange-500/20 text-orange-500 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-orange-500 hover:text-black transition-colors border border-orange-500/20" title="Send 24 Hours After Abandonment">
-                                                   24 Hr FOMO
-                                               </a>
-                                               <a href={`https://wa.me/${phoneClean}?text=${msg48Hr}`} target="_blank" className="px-4 py-2 bg-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-green-500 hover:text-black transition-colors border border-green-500/20" title="Send 48 Hours After with VIP Code">
-                                                   48 Hr VIP
-                                               </a>
-                                           </div>
-                                       ) : (
-                                           <span className="text-[10px] text-gray-500 uppercase tracking-widest text-right">Email Only Lead</span>
-                                       )}
-                                       
-                                       <div className="text-right">
-                                           <button onClick={() => handleDeleteLead(lead._id)} className="text-red-500/70 text-[10px] uppercase font-bold tracking-widest hover:text-red-500 transition-colors flex items-center justify-end gap-1 ml-auto">
-                                               <Trash2 size={12}/> Erase Lead
-                                           </button>
-                                       </div>
+                                    <div>
+                                      <p className="font-bold text-white text-base">
+                                        {lead.name || "Client"}
+                                      </p>
+                                      <p className="text-xs text-[#D4AF37] font-mono mt-1">
+                                        Value: ₹{lead.cartTotal?.toLocaleString() || "---"} <span className="mx-2 text-white/20">|</span> {contact}
+                                      </p>
                                     </div>
-                                 </div>
+                                  </div>
+
+                                  <div className="flex flex-col gap-3 w-full xl:w-auto items-start xl:items-end">
+                                    <div className="flex flex-wrap gap-2 justify-end">
+                                      <button
+                                        type="button"
+                                        onClick={() => dispatchVIPRecovery("email", lead)}
+                                        disabled={isEmailLoading}
+                                        className={`px-4 py-2 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all duration-1000 hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] ${
+                                          isEmailLoading
+                                            ? "bg-white/10 text-white/60 border-[#D4AF37]/20 cursor-wait"
+                                            : "bg-white/10 text-gray-200 border-white/10 hover:bg-[#D4AF37]/15 hover:text-[#D4AF37] hover:border-[#D4AF37]/45"
+                                        }`}
+                                      >
+                                        ✉️ VIP Email
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => dispatchVIPRecovery("sms", lead)}
+                                        disabled={isSmsLoading}
+                                        className={`px-4 py-2 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all duration-1000 hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] ${
+                                          isSmsLoading
+                                            ? "bg-white/10 text-white/60 border-[#D4AF37]/20 cursor-wait"
+                                            : "bg-white/10 text-gray-200 border-white/10 hover:bg-[#D4AF37]/15 hover:text-[#D4AF37] hover:border-[#D4AF37]/45"
+                                        }`}
+                                      >
+                                        📱 VIP SMS
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => dispatchVIPRecovery("whatsapp", lead)}
+                                        disabled={isWaLoading}
+                                        className={`px-4 py-2 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all duration-1000 hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] ${
+                                          isWaLoading
+                                            ? "bg-white/10 text-white/60 border-[#D4AF37]/20 cursor-wait"
+                                            : "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/25 hover:bg-[#D4AF37]/20 hover:text-black hover:border-[#D4AF37]/55"
+                                        }`}
+                                      >
+                                        💬 VIP WhatsApp
+                                      </button>
+                                    </div>
+
+                                    <div className="text-right">
+                                      <button
+                                        onClick={() => handleDeleteLead(lead._id)}
+                                        className="text-red-500/70 text-[10px] uppercase font-bold tracking-widest hover:text-red-500 transition-colors flex items-center justify-end gap-1 ml-auto"
+                                      >
+                                        <Trash2 size={12} /> Remove Lead
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
                               );
-                          }
+                            })
+                          )
                        ))}
                     </div>
                  </div>

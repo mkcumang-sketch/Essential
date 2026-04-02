@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth';

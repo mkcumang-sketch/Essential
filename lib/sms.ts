@@ -22,3 +22,38 @@ export async function sendRecoverySMS(phone: string, name: string, offerLink: st
     return false;
   }
 }
+
+// VIP SMS: Uses MSG91 Text SMS API (v2) to send a fully custom message.
+// This is intentionally additive: it will not affect your existing recovery flow.
+export async function sendVIPSMS(phone: string, name: string, link: string) {
+  const authKey = process.env.MSG91_AUTH_KEY;
+  if (!authKey) return false;
+
+  const digits = (phone || "").replace(/[^0-9]/g, "");
+  const mobiles = digits.length === 10 ? `91${digits}` : digits;
+
+  if (!mobiles) return false;
+
+  const message = `Dear ${name || "Client"}, your curated selection has been safely secured in our private vault. Tap here to complete your exclusive acquisition: ${link}`;
+
+  // MSG91 Text SMS API expects these fields.
+  const sender = process.env.MSG91_SENDER_ID || "ESSRUSH";
+  const route = process.env.MSG91_ROUTE || "4";
+
+  try {
+    const res = await fetch("https://api.msg91.com/api/v2/sendsms", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        authkey: authKey,
+        mobiles,
+        message,
+        sender,
+        route,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

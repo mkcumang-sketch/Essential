@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-// 🌟 FIXED: Added a dummy fallback key to prevent Vercel build crash 🌟
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_to_pass_build_123');
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function POST(req: Request) {
   try {
     const { to, subject, customerName, orderId, amount } = await req.json();
+
+    if (!to) {
+      return NextResponse.json({ success: false, error: "Missing `to`" }, { status: 400 });
+    }
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      return NextResponse.json({ success: false, error: "Missing RESEND_API_KEY" }, { status: 500 });
+    }
+
+    const resend = new Resend(resendApiKey);
 
     const data = await resend.emails.send({
       from: 'Essential Store <onboarding@resend.dev>', 

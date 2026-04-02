@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Lead from '@/models/Lead'; // 🚨 FIXED: Ensure models/Lead.ts exists
