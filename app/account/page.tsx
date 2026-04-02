@@ -1,18 +1,42 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function PremiumAccountDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const [dashData, setDashData] = useState<any>(null);
 
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
         }
     }, [status, router]);
+
+    useEffect(() => {
+        if (status !== "authenticated") return;
+
+        fetch(`/api/user/dashboard?t=${Date.now()}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+        })
+            .then((res) => res.json())
+            .then((json) => {
+                // API contract: { success: true, data: { orders: [] ... } }
+                const data = json?.data ?? null;
+                setDashData(data);
+            })
+            .catch(() => {
+                setDashData(null);
+            });
+    }, [status]);
+
+    useEffect(() => {
+        console.log("Dashboard Data Received:", dashData);
+    }, [dashData]);
 
     if (status === "loading") {
         return (
@@ -38,7 +62,7 @@ export default function PremiumAccountDashboard() {
                     <span className="text-white/60">Email:</span> {email}
                 </p>
                 <p className="text-sm text-white/90">
-                    <span className="text-white/60">Orders:</span> 0
+                    <span className="text-white/60">Orders:</span> {dashData?.orders?.length || 0}
                 </p>
             </div>
         </div>
