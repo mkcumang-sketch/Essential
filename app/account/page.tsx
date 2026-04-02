@@ -27,8 +27,11 @@ export default function PremiumAccountDashboard() {
     const [isCopied, setIsCopied] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState("");
     
-    // 🚨 Crash-proof default shape: backend may omit fields temporarily.
-    const [dashData, setDashData] = useState<any>({ orders: [] });
+    // 🚨 Store RAW API response (dashData.data.*) to avoid shape mismatch crashes.
+    const [dashData, setDashData] = useState<any>({
+        success: true,
+        data: { orders: [], totalSpent: 0, tier: "Silver" },
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [errorState, setErrorState] = useState(false);
     
@@ -64,7 +67,7 @@ export default function PremiumAccountDashboard() {
     useEffect(() => {
         // 🚨 AGAR LOGIN NAHI HAI: Data turant uda do
         if (status === "unauthenticated") {
-            setDashData({ orders: [] });
+            setDashData({ success: true, data: { orders: [], totalSpent: 0, tier: "Silver" } });
             setIsLoading(false);
             router.push('/login');
             return;
@@ -80,7 +83,7 @@ export default function PremiumAccountDashboard() {
             }
 
             setIsLoading(true);
-            setDashData({ orders: [] }); // Reset to safe shape before refetch
+            setDashData({ success: true, data: { orders: [], totalSpent: 0, tier: "Silver" } }); // Reset before refetch
 
             // Nuclear cache buster: timestamp guarantees no cached response reuse.
             fetch(`/api/user/dashboard?t=${Date.now()}`, {
@@ -89,14 +92,27 @@ export default function PremiumAccountDashboard() {
                 body: JSON.stringify({ email }),
                 cache: 'no-store' // Browser ko cache save karne se rokna
             })
-            .then(res => res.json())
-            .then(json => {
-                if (json.success) {
-                    setDashData(json.data);
-                    setErrorState(false);
-                } else {
-                    setErrorState(true);
-                }
+            .then(async (res) => {
+                const json = await res.json().catch(() => null);
+                console.log("Raw API Response:", json);
+                return json;
+            })
+            .then((json) => {
+                const next = (json && typeof json === "object") ? json : null;
+                const hasData = !!next?.data && typeof next.data === "object";
+                const safe = hasData
+                    ? {
+                        success: true,
+                        data: {
+                            orders: Array.isArray(next.data.orders) ? next.data.orders : [],
+                            totalSpent: Number.isFinite(Number(next.data.totalSpent)) ? Number(next.data.totalSpent) : 0,
+                            tier: next.data.tier === "Gold" ? "Gold" : "Silver",
+                        }
+                    }
+                    : { success: true, data: { orders: [], totalSpent: 0, tier: "Silver" } };
+
+                setDashData(safe);
+                setErrorState(false);
             })
             .catch(() => {
                 setErrorState(true);
@@ -173,6 +189,18 @@ export default function PremiumAccountDashboard() {
         </div>
     );
 
+    // 🚨 No usable data: render safe empty state (never crash).
+    if (!dashData?.data) return (
+        <div className={`${isLight ? "min-h-screen bg-white text-black" : "min-h-screen bg-[#050505] text-white"} flex flex-col justify-center items-center text-center p-6`}>
+            <AlertCircle size={60} className="text-[#D4AF37] mb-6"/>
+            <h2 className={`text-3xl font-serif mb-2 ${isLight ? "text-black" : "text-white"}`}>No Data Found</h2>
+            <p className={`max-w-sm mb-8 ${isLight ? "text-gray-600" : "text-gray-500"}`}>Your vault data is currently unavailable. Please refresh and try again.</p>
+            <button onClick={() => window.location.reload()} className="px-10 py-4 bg-[#D4AF37] text-black font-bold uppercase tracking-[5px] text-[11px] rounded-full hover:bg-white transition-colors shadow-[0_20px_60px_rgba(212,175,55,0.18)] border border-[#D4AF37]/40">
+                Refresh Vault
+            </button>
+        </div>
+    );
+
     const MENU_ITEMS = [
         { id: 'OVERVIEW', label: 'Vault Overview', icon: User },
         { id: 'ORDERS', label: 'Orders & Invoices', icon: ShoppingBag },
@@ -186,7 +214,7 @@ export default function PremiumAccountDashboard() {
     const userRole = (session?.user as any)?.role || 'USER';
 
     const giftingWatches = useMemo(() => {
-        const orders = Array.isArray(dashData?.orders) ? dashData.orders : [];
+        const orders = Array.isArray(dashData?.data?.orders) ? dashData.data.orders : [];
         const rawItems: any[] = orders.flatMap((o: any) => o?.items || []);
         const seen = new Set<string>();
         const normalized = rawItems.map((item: any, idx: number) => {
@@ -340,7 +368,7 @@ export default function PremiumAccountDashboard() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className={`p-10 ${surfaceBgClass} border ${surfaceBorderClass} rounded-[40px] flex flex-col justify-center hover:border-[#D4AF37]/35 transition-colors`}>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Total Orders</p>
-                                        <h3 className={`text-5xl font-serif ${surfaceTextClass}`}>{dashData?.orders?.length || 0}</h3>
+                                        <h3 className={`text-5xl font-serif ${surfaceTextClass}`}>{dashData?.data?.orders?.length || 0}</h3>
                                     </div>
                                     <div className={`p-10 ${isLight ? "bg-gradient-to-br from-white to-gray-100" : "bg-gradient-to-br from-[#1a1a1a] to-black"} border border-[#D4AF37]/30 rounded-[40px] flex flex-col justify-center relative overflow-hidden shadow-[0_25px_80px_rgba(212,175,55,0.10)]`}>
                                         <div className="absolute right-[-20px] bottom-[-20px] opacity-20"><Wallet size={100} className="text-[#D4AF37]"/></div>
@@ -395,13 +423,13 @@ export default function PremiumAccountDashboard() {
                                 transition={{ duration: 0.8, ease: "easeOut" }}
                                 className="space-y-6"
                             >
-                                {dashData?.orders?.length === 0 ? (
+                                {dashData?.data?.orders?.length === 0 ? (
                                     <div className={`${surfaceBgClass} p-10 md:p-12 rounded-[46px] text-center border ${surfaceBorderClass}`}>
                                         <ShoppingBag size={50} className="mx-auto text-gray-600 mb-6"/>
                                         <p className={`${isLight ? "text-gray-600" : "text-gray-400"} font-serif text-lg`}>You haven't acquired any timepieces yet.</p>
                                         <Link href="/shop" className="mt-8 inline-block px-12 py-5 bg-[#D4AF37] text-black text-[11px] font-black uppercase tracking-[5px] rounded-full hover:bg-white transition-all shadow-lg border border-[#D4AF37]/40">Enter Vault</Link>
                                     </div>
-                                ) : dashData?.orders?.map((order: any) => (
+                                ) : dashData?.data?.orders?.map((order: any) => (
                                     <div key={order._id} className={`${surfaceBgClass} p-10 rounded-[46px] border ${surfaceBorderClass} flex flex-col gap-6 hover:border-[#D4AF37]/50 transition-colors shadow-lg`}>
                                         <div
                                             className={`flex flex-col md:flex-row justify-between md:items-center gap-4 border-b pb-6 ${isLight ? "border-black/10" : "border-white/10"}`}
