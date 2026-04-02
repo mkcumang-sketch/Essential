@@ -320,6 +320,21 @@ function FrontPageStore() {
                 }
             })
         });
+
+        // Recovery Vault lead capture (email/phone based) for abandoned cart flow.
+        if (session?.user?.email || (session.user as any)?.phone) {
+            await fetch(`/api/cart/verify-lead?t=${Date.now()}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: session.user?.name || 'Vault Client',
+                    email: session.user?.email || '',
+                    phone: (session.user as any)?.phone || '',
+                    cartItems: newCart,
+                    cartTotal
+                })
+            });
+        }
     } catch (err) {
         console.error("Cart sync failed");
     }

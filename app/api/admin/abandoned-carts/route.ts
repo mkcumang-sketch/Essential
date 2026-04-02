@@ -41,14 +41,26 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    const leads = await AbandonedCart.find({ status: "ABANDONED" })
+    const leads = await AbandonedCart.find({
+      status: { $in: ["ABANDONED", "PENDING", "pending", "abandoned"] },
+    })
       .sort({ createdAt: -1 })
       .lean();
 
     const appUrl = process.env.NEXTAUTH_URL || "https://essential-ivory.vercel.app";
     const recoveryLink = `${appUrl}/cart`;
 
-    return NextResponse.json({ success: true, leads: leads.map((l: any) => ({ ...l, recoveryLink })) });
+    return NextResponse.json({
+      success: true,
+      leads: leads.map((l: any) => ({
+        ...l,
+        cartTotal: Number(l?.cartTotal ?? l?.totalAmount ?? 0) || 0,
+        name: l?.name || l?.customer?.name || "Vault Client",
+        email: l?.email || l?.customer?.email || "",
+        phone: l?.phone || l?.customer?.phone || "",
+        recoveryLink,
+      })),
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to fetch abandoned carts" },

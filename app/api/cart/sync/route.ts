@@ -3,6 +3,7 @@ export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { AbandonedCart } from '@/models/AbandonedCart';
 
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
@@ -58,6 +59,27 @@ export async function POST(req: Request) {
                 totalAmount: totalAmount,
                 status: 'PENDING' 
             });
+        }
+
+        // Mirror lead into dedicated AbandonedCart collection for Recovery Vault UI.
+        const leadFilters: any[] = [];
+        if (user.email) leadFilters.push({ email: String(user.email).toLowerCase().trim() });
+        if (user.phone) leadFilters.push({ phone: String(user.phone).trim() });
+
+        if (leadFilters.length > 0) {
+            await AbandonedCart.findOneAndUpdate(
+                { $or: leadFilters },
+                {
+                    name: user.name || 'Vault Client',
+                    email: user.email ? String(user.email).toLowerCase().trim() : '',
+                    phone: user.phone ? String(user.phone).trim() : '',
+                    items: Array.isArray(items) ? items : [],
+                    cartTotal: Number(totalAmount) || 0,
+                    status: 'ABANDONED',
+                    lastInteraction: new Date(),
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
         }
 
         return NextResponse.json({ success: true });

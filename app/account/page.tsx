@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react"; // ✅ Added signOut
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ShieldCheck, Crown, Package, Clock } from "lucide-react";
+import { ShieldCheck, Crown, Package, Clock, LogOut } from "lucide-react"; // ✅ Added LogOut icon
 
 export default function PremiumAccountDashboard() {
     const { data: session, status } = useSession();
@@ -17,6 +17,9 @@ export default function PremiumAccountDashboard() {
     const [theme, setTheme] = useState<"dark" | "light">("dark");
     const isLight = theme === "light";
 
+    // ✅ FIX 1: Hydration / First Visit Anomaly Guard
+    const [hasMounted, setHasMounted] = useState(false);
+
     const CuratedGiftingSuite = useMemo(
         () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
         []
@@ -26,11 +29,17 @@ export default function PremiumAccountDashboard() {
         []
     );
 
+    // ✅ Tell Next.js that the component has safely mounted in the browser
     useEffect(() => {
-        if (status === "unauthenticated") {
+        setHasMounted(true);
+    }, []);
+
+    useEffect(() => {
+        // ✅ Only redirect if mounted
+        if (hasMounted && status === "unauthenticated") {
             router.push("/login");
         }
-    }, [status, router]);
+    }, [status, router, hasMounted]);
 
     useEffect(() => {
         if (status !== "authenticated") return;
@@ -60,7 +69,8 @@ export default function PremiumAccountDashboard() {
         window.setTimeout(() => setToastMsg(""), 2600);
     };
 
-    if (status === "loading") {
+    // ✅ FIX 2: Stop server from rendering this prematurely (Kills the Anomaly)
+    if (!hasMounted || status === "loading") {
         return (
             <div className="min-h-screen bg-[#050505] text-white flex flex-col justify-center items-center">
                 <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
@@ -147,7 +157,7 @@ export default function PremiumAccountDashboard() {
                     </Link>
 
                     <div className="flex items-center gap-3">
-                        <span className={`text-[10px] font-black uppercase tracking-[4px] ${mutedText}`}>Theme</span>
+                        <span className={`text-[10px] font-black uppercase tracking-[4px] ${mutedText} hidden sm:block`}>Theme</span>
                         <div
                             className={`flex rounded-full overflow-hidden border ${
                                 isLight ? "border-black/10 bg-white/80" : "border-white/10 bg-black/30"
@@ -180,6 +190,20 @@ export default function PremiumAccountDashboard() {
                                 White
                             </button>
                         </div>
+
+                        {/* ✅ FIX 3: Premium Sign Out Button added next to theme selector */}
+                        <div className="h-6 w-[1px] bg-[#D4AF37]/30 mx-2 hidden sm:block"></div>
+                        <button
+                            onClick={() => signOut({ callbackUrl: "/" })}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[4px] border transition-colors ${
+                                isLight 
+                                ? "border-red-500/40 text-red-600 hover:bg-red-50" 
+                                : "border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                            }`}
+                        >
+                            <LogOut size={14} />
+                            <span className="hidden sm:block">Logout</span>
+                        </button>
                     </div>
                 </div>
             </header>

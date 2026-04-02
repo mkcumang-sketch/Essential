@@ -1,16 +1,20 @@
 import mongoose from "mongoose";
 
-const abandonedSchema = new mongoose.Schema({
-  guestId: { type: String, required: true }, // Unique Device ID
-  items: [{
-    title: String,
-    price: Number,
-    brand: String,
-    image: String
-  }],
-  totalAmount: Number,
-  referredBy: { type: String, default: "Direct" }, // Staff ka naam agar link se aaya
-  isRecovered: { type: Boolean, default: false }, // Agar baad mein khareed liya
-}, { timestamps: true });
+const abandonedSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "Vault Client" },
+    email: { type: String, default: "", index: true },
+    phone: { type: String, default: "", index: true },
+    cartTotal: { type: Number, default: 0 },
+    items: { type: Array, default: [] },
+    status: {
+      type: String,
+      default: "ABANDONED",
+      enum: ["ABANDONED", "OFFER_SENT", "RECOVERED"],
+    },
+    lastInteraction: { type: Date, default: Date.now },
+  },
+  { timestamps: true, strict: false }
+);
 
 export const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model("AbandonedCart", abandonedSchema);

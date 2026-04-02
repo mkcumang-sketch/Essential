@@ -24,11 +24,11 @@ const GuestLeadModal = ({ isOpen, onClose, onSubmit, productPrice }: any) => {
         setLoading(true);
         
         try {
-            // Sends lead to abandoned cart analytics database
-            await fetch('/api/admin/analytics', { 
+            // Sends lead to Recovery Vault pipeline
+            await fetch(`/api/cart/verify-lead?t=${Date.now()}`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, name, cartTotal: productPrice }) 
+                body: JSON.stringify({ phone, name, cartTotal: productPrice, cartItems: [] }) 
             });
             // Marks browser so we don't ask again for this specific user
             localStorage.setItem("guest_lead_captured", "true");
@@ -126,15 +126,16 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         const isGuestTracked = localStorage.getItem("guest_lead_captured");
         
         if (session?.user) {
-            // LOGGED IN USER: Silently capture data in background using Gmail data
-            fetch('/api/admin/analytics', { 
+            // LOGGED IN USER: Silently capture Recovery Vault lead in background
+            fetch(`/api/cart/verify-lead?t=${Date.now()}`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     name: session.user.name, 
                     email: session.user.email,
                     phone: (session.user as any).phone || '', 
-                    cartTotal: product.offerPrice || product.price 
+                    cartTotal: product.offerPrice || product.price,
+                    cartItems: [{ _id: product._id, name: product.name, price: product.offerPrice || product.price, qty: 1 }]
                 }) 
             }).catch(() => {}); // Catch silent errors so UI doesn't break
             

@@ -3,22 +3,51 @@ export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Lead from '@/models/Lead'; // 🚨 FIXED: Ensure models/Lead.ts exists
+import { AbandonedCart } from '@/models/AbandonedCart';
 
 export async function POST(req: Request) {
   try {
     await connectDB();
-    const { phone, cartItems } = await req.json();
-    
-    // Check if lead already exists or create new
-    const lead = await Lead.findOneAndUpdate(
-      { phone },
-      { cartItems, lastInteraction: new Date(), status: 'ABANDONED' },
-      { upsert: true, new: true }
+    const payload = await req.json();
+    const name = String(payload?.name || 'Vault Client').trim();
+    const email = String(payload?.email || '').trim().toLowerCase();
+    const phone = String(payload?.phone || '').trim();
+    const items = Array.isArray(payload?.cartItems) ? payload.cartItems : [];
+
+    if (!email && !phone) {
+      return NextResponse.json({ success: false, error: "Email or phone required" }, { status: 400 });
+    }
+
+    const computedTotal = items.reduce((acc: number, item: any) => {
+      const price = Number(item?.offerPrice ?? item?.price ?? 0);
+      const qty = Number(item?.qty ?? 1);
+      return acc + (Number.isFinite(price) ? price : 0) * (Number.isFinite(qty) ? qty : 1);
+    }, 0);
+
+    const cartTotal = Number.isFinite(Number(payload?.cartTotal))
+      ? Number(payload?.cartTotal)
+      : computedTotal;
+
+    const orConditions: any[] = [];
+    if (email) orConditions.push({ email });
+    if (phone) orConditions.push({ phone });
+
+    const lead = await AbandonedCart.findOneAndUpdate(
+      { $or: orConditions },
+      {
+        name,
+        email,
+        phone,
+        items,
+        cartTotal: Number.isFinite(cartTotal) ? cartTotal : 0,
+        status: 'ABANDONED',
+        lastInteraction: new Date(),
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     return NextResponse.json({ success: true, leadId: lead._id });
   } catch (error) {
-    return NextResponse.json({ error: "Lead Capture Failed" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Lead Capture Failed" }, { status: 500 });
   }
 }
