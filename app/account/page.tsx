@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { ShieldCheck, Crown, Package, Clock } from "lucide-react";
 
 export default function PremiumAccountDashboard() {
     const { data: session, status } = useSession();
@@ -74,15 +75,17 @@ export default function PremiumAccountDashboard() {
     const email = session?.user?.email || "Unknown";
     const name = session?.user?.name || "Elite Member";
 
-    const orders: any[] = Array.isArray(dashData?.orders) ? dashData.orders : [];
-    const totalSpent = Number.isFinite(Number(dashData?.totalSpent)) ? Number(dashData?.totalSpent) : 0;
+    // ABSOLUTE SAFETY: progress math can never NaN/Infinity.
+    const spent = Number(dashData?.totalSpent || 0) || 0;
+    const goal = 100000;
+    const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
+
     const tier = dashData?.tier === "Gold" ? "Gold" : "Silver";
-    const GOLD_THRESHOLD = 100000;
-    const progress = Math.max(0, Math.min(1, totalSpent / GOLD_THRESHOLD));
-    const remaining = tier === "Gold" ? 0 : Math.max(0, GOLD_THRESHOLD - totalSpent);
+    const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
 
     const giftingWatches = useMemo(() => {
-        const rawItems: any[] = orders.flatMap((o: any) => (Array.isArray(o?.items) ? o.items : []));
+        const safeOrders: any[] = Array.isArray(dashData?.orders) ? dashData.orders : [];
+        const rawItems: any[] = safeOrders.flatMap((o: any) => (Array.isArray(o?.items) ? o.items : []));
         const seen = new Set<string>();
         const normalized = rawItems.map((item: any, idx: number) => {
             const id = String(item?._id || item?.id || item?.sku || item?.name || idx);
@@ -101,7 +104,7 @@ export default function PremiumAccountDashboard() {
             seen.add(w.id);
             return true;
         });
-    }, [orders]);
+    }, [dashData]);
 
     const pageClass = isLight
         ? "min-h-screen bg-white text-black pb-20"
@@ -183,9 +186,7 @@ export default function PremiumAccountDashboard() {
 
             <main className="max-w-[1200px] mx-auto px-6 md:px-10 pt-10 space-y-10">
                 {/* Elite Vault Tier */}
-                <section
-                    className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)] relative overflow-hidden`}
-                >
+                <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)] relative overflow-hidden`}>
                     <div className="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-[#D4AF37]/10 blur-2xl pointer-events-none" />
                     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                         <div>
@@ -201,16 +202,19 @@ export default function PremiumAccountDashboard() {
                         <div className="min-w-[280px]">
                             <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>Elite Vault Tier</p>
                             <div className="mt-3 flex items-center justify-between gap-3">
-                                <span className={`text-sm font-serif ${isLight ? "text-black" : "text-white"}`}>{tier} Vault</span>
+                                <span className={`text-sm font-serif ${isLight ? "text-black" : "text-white"} flex items-center gap-2`}>
+                                    {tier === "Gold" ? <Crown size={16} className="text-[#D4AF37]" /> : <ShieldCheck size={16} className="text-[#D4AF37]" />}
+                                    {tier} Vault
+                                </span>
                                 <span className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">
-                                    ₹{totalSpent.toLocaleString()}
+                                    ₹{spent.toLocaleString()}
                                 </span>
                             </div>
 
                             <div className={`mt-3 h-2 rounded-full overflow-hidden ${isLight ? "bg-black/10" : "bg-white/10"}`}>
                                 <motion.div
                                     initial={{ width: 0 }}
-                                    animate={{ width: `${Math.round(progress * 100)}%` }}
+                                    animate={{ width: `${progress}%` }}
                                     transition={{ duration: 0.8, ease: "easeOut" }}
                                     className="h-full bg-[#D4AF37]"
                                 />
@@ -230,15 +234,18 @@ export default function PremiumAccountDashboard() {
                 {/* Orders */}
                 <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10`}>
                     <div className="flex items-center justify-between gap-4">
-                        <h2 className={`text-2xl md:text-3xl font-serif font-bold ${isLight ? "text-black" : "text-white"}`}>
+                        <h2 className={`text-2xl md:text-3xl font-serif font-bold ${isLight ? "text-black" : "text-white"} flex items-center gap-2`}>
+                            <Package size={18} className="text-[#D4AF37]" />
                             Order History
                         </h2>
-                        <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>Orders: {orders?.length || 0}</p>
+                        <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>
+                            Orders: {(Array.isArray(dashData?.orders) ? dashData.orders : [])?.length || 0}
+                        </p>
                     </div>
 
-                    {orders?.length ? (
+                    {(Array.isArray(dashData?.orders) ? dashData.orders : [])?.length ? (
                         <div className="mt-8 space-y-6">
-                            {orders?.map((order: any) => {
+                            {(Array.isArray(dashData?.orders) ? dashData.orders : []).map((order: any) => {
                                 const orderId = order?.orderId || order?._id?.slice?.(-6) || "—";
                                 const statusText = String(order?.status || "PROCESSING");
                                 const total = Number(order?.totalAmount ?? 0);
@@ -260,7 +267,8 @@ export default function PremiumAccountDashboard() {
                                                 <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>
                                                     Acquisition #{orderId}
                                                 </p>
-                                                <p className={`mt-1 text-xl font-serif font-bold ${isLight ? "text-black" : "text-white"}`}>
+                                                <p className={`mt-1 text-xl font-serif font-bold ${isLight ? "text-black" : "text-white"} flex items-center gap-2`}>
+                                                    <Clock size={16} className="text-[#D4AF37]" />
                                                     ₹{Number.isFinite(total) ? total.toLocaleString() : "0"}
                                                 </p>
                                             </div>
