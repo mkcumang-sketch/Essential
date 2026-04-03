@@ -16,6 +16,9 @@ export function CustomCursor() {
     const cursorYSpring = useSpring(cursorY, springConfig);
 
     useEffect(() => {
+        // 🚨 SSR FIX: Check if window exists (browser environment)
+        if (typeof window === 'undefined') return;
+        
         // Only show custom cursor on desktop
         const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
         if (isTouchDevice) return;
