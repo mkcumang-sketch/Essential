@@ -36,30 +36,22 @@ export default function LoginPortal() {
         });
     };
 
-    // Handle Google Login
+    // 🚀 FIX: Google Login handled correctly for OAuth
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            const res = await signIn("google", {
-                redirect: false,
-                callbackUrl: "/account",
+            // NextAuth will automatically take the user to Google and bring them back to /account
+            await signIn("google", {
+                callbackUrl: "/account", // 👈 Seedha vault ka rasta
             });
-
-            if (res && (res as any).error) {
-                alert("Google login failed. Please try again.");
-                setIsLoading(false);
-                return;
-            }
-
-            // Hard navigation: fully resets client memory (nuclear cache buster).
-            window.location.href = `/account?t=${Date.now()}`;
+            // No need for redirect: false or window.location.href here for Google
         } catch {
             alert("Google login failed. Please try again.");
             setIsLoading(false);
         }
     };
 
-    // 🌟 UPDATED: Handle Sign Up with Security 🌟
+    // 🌟 Handle Sign Up with Security 🌟
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name || !phone || !password) return alert("Please fill all details.");
@@ -88,8 +80,7 @@ export default function LoginPortal() {
         }
     };
 
-    // 🌟 UPDATED: Handle Login with Security 🌟
-    // 🌟 UPDATED: Handle Login with Security 🌟
+    // 🌟 Handle Manual Login with Security 🌟
     const handleManualLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phone || !password) return alert("Please enter details.");
@@ -99,7 +90,7 @@ export default function LoginPortal() {
             const captchaToken = await getSecurityToken('login');
 
             const res = await signIn('credentials', {
-                redirect: false,
+                redirect: false, // Keep false for credentials to catch errors
                 phone,
                 password,
                 captchaToken
@@ -109,8 +100,8 @@ export default function LoginPortal() {
                 alert("Invalid Credentials or Security Check Failed.");
                 setIsLoading(false);
             } else {
-                // Hard navigation: fully resets client memory (nuclear cache buster).
-                window.location.href = `/account?t=${Date.now()}`;
+                // Hard navigation to Vault
+                window.location.href = `/account`;
             }
         } catch (err) {
             alert("Login failed.");
