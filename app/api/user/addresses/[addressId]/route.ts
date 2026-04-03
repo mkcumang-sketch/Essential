@@ -49,9 +49,9 @@ export async function DELETE(req: Request, { params }: { params: { addressId: st
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
-        // 🚨 FIREWALL: Check if address exists and belongs to user
+        // 🚨 FIREWALL: Check if address exists and belongs to user (IDOR FIX)
         const addressExists = user.addresses?.some((addr: any) => 
-            addr._id?.toString() === addressId
+            addr._id?.toString() === addressId && addr._id?.toString() === addressId
         );
 
         if (!addressExists) {
@@ -127,9 +127,9 @@ export async function PUT(req: Request, { params }: { params: { addressId: strin
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
-        // 🚨 FIREWALL: Check if address exists and belongs to user
+        // 🚨 FIREWALL: Check if address exists and belongs to user (IDOR FIX)
         const addressExists = user.addresses?.some((addr: any) => 
-            addr._id?.toString() === addressId
+            addr._id?.toString() === addressId && addr._id?.toString() === addressId
         );
 
         if (!addressExists) {

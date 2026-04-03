@@ -151,7 +151,12 @@ const Isolated4DHero = ({ config }: { config: any }) => {
           <AnimatePresence mode="wait">
             <motion.div key={currentSlideIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
               {currentSlide?.type === 'image' ? (
-                 <img src={currentSlide.url} className="w-full h-full object-cover opacity-70" alt="Banner"/>
+                 <img 
+                    src={currentSlide.url} 
+                    className="w-full h-full object-cover opacity-70" 
+                    alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
+                    priority={currentSlideIndex === 0}
+                 />
               ) : (
                  <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-70">
                    <source src={currentSlide?.url} type="video/mp4" />
@@ -475,7 +480,18 @@ function FrontPageStore() {
                                <div className="flex flex-wrap gap-4">
                                    {reviewMedia.map((url: string, idx: number) => (
                                        <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 group">
-                                           {url.match(/\.(mp4|webm|mov)$/i) ? <video src={url} className="w-full h-full object-cover"/> : <img src={url} className="w-full h-full object-cover"/>}
+                                           {url.match(/\.(mp4|webm|mov)$/i) ? 
+                    <video 
+                        src={url} 
+                        className="w-full h-full object-cover" 
+                        aria-label={`Review media ${idx + 1}`}
+                    /> : 
+                    <img 
+                        src={url} 
+                        className="w-full h-full object-cover" 
+                        alt={`Review media ${idx + 1}`}
+                    />
+                }
                                            <button onClick={()=>setReviewMedia(reviewMedia.filter(x => x !== url))} className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center"><Trash2 size={14}/></button>
                                        </div>
                                    ))}
@@ -547,7 +563,12 @@ function FrontPageStore() {
       {latestWatches.length > 0 && (
           <section className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
              <div className="absolute inset-0 z-0">
-                 <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" className="w-full h-full object-cover opacity-30 grayscale" />
+                 <img 
+                    src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
+                    className="w-full h-full object-cover opacity-30 grayscale" 
+                    alt="Essential Rush Heritage Collection Background"
+                    priority={false}
+                 />
                  <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFA] via-[#FAFAFA]/90 to-[#FAFAFA]"></div>
              </div>
 
@@ -565,7 +586,12 @@ function FrontPageStore() {
                          <div key={`horiz-${i}`} onClick={()=>router.push(`/product/${watch.slug || watch._id}`)} className="w-[260px] md:w-[340px] shrink-0 snap-start bg-white/95 backdrop-blur-md rounded-[20px] p-6 border border-gray-200 group hover:border-black hover:shadow-xl transition-all duration-500 cursor-pointer flex flex-col will-change-transform shadow-lg">
                             <div className="h-56 md:h-72 bg-gray-50/50 rounded-2xl mb-6 p-6 flex items-center justify-center relative overflow-hidden">
                                 {watch.badge && <span className="absolute top-3 left-3 bg-black text-white text-[9px] font-bold uppercase px-3 py-1 rounded-full z-10 shadow-sm">{watch.badge}</span>}
-                                <img src={watch.imageUrl || (watch.images && watch.images[0])} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                                <img 
+                                src={watch.imageUrl || (watch.images && watch.images[0])} 
+                                className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
+                                loading="lazy" 
+                                alt={`${watch.brand} ${watch.name} - Premium Timepiece`}
+                            />
                             </div>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-1">{watch.brand}</p>
                             <h4 className="text-lg md:text-xl font-serif text-black leading-tight line-clamp-1 mb-4 font-bold">{watch.name}</h4>
@@ -624,7 +650,12 @@ function FrontPageStore() {
                       {watch.badge && <span className="absolute top-4 left-4 bg-black text-white text-[8px] font-bold px-2.5 py-1 rounded-md uppercase z-20 shadow-sm">{watch.badge}</span>}
                       
                       <div className="flex aspect-square bg-gray-50/80 rounded-xl overflow-hidden mb-6 items-center justify-center p-6 relative will-change-transform">
-                        <img src={watch.imageUrl || (watch.images && watch.images[0])} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                        <img 
+                                src={watch.imageUrl || (watch.images && watch.images[0])} 
+                                className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
+                                loading="lazy" 
+                                alt={`${watch.brand} ${watch.name} - Premium Timepiece`}
+                            />
                       </div>
 
                       <div className="flex-1 flex flex-col justify-between">

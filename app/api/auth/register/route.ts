@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { validateInput } from '@/lib/validation';
 import { userRegistrationSchema } from '@/lib/validation';
 import { ApiResponse } from '@/types';
+import { sendWelcomeEmail } from '@/lib/mail';
 
 export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
     try {
@@ -18,8 +19,8 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
 
         // DUPLICATE USER CHECKS
         const [existingPhone, existingEmail] = await Promise.all([
-            User.findOne({ phone }).select('_id'),
-            User.findOne({ email: `${phone}@essential-guest.com` }).select('_id')
+            User.findOne({ phone }).select('_id').select('-password -__v'),
+            User.findOne({ email: `${phone}@essential-guest.com` }).select('_id').select('-password -__v')
         ]);
 
         if (existingPhone) {
@@ -61,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         // REFERRAL CODE VALIDATION
         let referredByUser = null;
         if (referredBy) {
-            referredByUser = await User.findOne({ myReferralCode: referredBy }).select('_id name');
+            referredByUser = await User.findOne({ myReferralCode: referredBy }).select('_id name').select('-password -__v');
             if (!referredByUser) {
                 return NextResponse.json({ 
                     success: false, 
@@ -122,6 +123,19 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
                 }
             }
         });
+
+        // SEND WELCOME EMAIL
+        try {
+            await sendWelcomeEmail(fallbackEmail, name, myReferralCode);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ Welcome email sent to:', fallbackEmail);
+            }
+        } catch (emailError) {
+            if (process.env.NODE_ENV === 'development') {
+                console.error('❌ Welcome email failed:', emailError);
+            }
+            // Don't fail registration if email fails
+        }
 
         return NextResponse.json({ 
             success: true, 

@@ -10,6 +10,7 @@ import UserService from '@/services/user.service';
 import { validateInput } from '@/lib/validation';
 import { referralApplySchema } from '@/lib/validation';
 import { ApiResponse } from '@/types';
+import { sendReferralRewardEmail } from '@/lib/mail';
 
 // 🌟 BULLETPROOF DATABASE CONNECTION 🌟
 let isConnected = false;
@@ -72,11 +73,57 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
             }, { status: 400 });
         }
 
-        // 🏆 BUSINESS LOGIC: Apply referral using service layer
-        const result = await UserService.applyReferralReward(referralCode, session.user.id);
+        // 🏆 ATOMIC REFERRAL APPLICATION (PREVENT RACE CONDITION)
+        const result = await User.findOneAndUpdate(
+            { 
+                _id: session.user.id,
+                referredBy: { $exists: false } // Atomic check
+            },
+            { 
+                $set: { referredBy: referralCode },
+                $inc: { walletPoints: 50 }, // Welcome bonus
+                $push: {
+                    notifications: {
+                        title: "🎁 Referral Bonus Applied!",
+                        desc: "₹500 discount has been applied to your account.",
+                        unread: true,
+                        time: new Date()
+                    }
+                }
+            },
+            { new: true }
+        ).select('-password -__v');
 
-        if (!result.success) {
-            return NextResponse.json(result, { status: 400 });
+        if (!result) {
+            return NextResponse.json({ 
+                success: false, 
+                error: "Failed to apply referral code" 
+            }, { status: 400 });
+        }
+
+        // 📧 SEND REFERRAL REWARD EMAIL TO REFERRER
+        try {
+            // Get referrer details for email
+            const referrer = await User.findOne({ myReferralCode: referralCode })
+                .select('name email')
+                .lean();
+            
+            if (referrer) {
+                await sendReferralRewardEmail(
+                    referrer.email,
+                    referrer.name,
+                    currentUser.name,
+                    100 // Reward amount
+                );
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('✅ Referral reward email sent to:', referrer.email);
+                }
+            }
+        } catch (emailError) {
+            if (process.env.NODE_ENV === 'development') {
+                console.error('❌ Referral reward email failed:', emailError);
+            }
+            // Don't fail the API call if email fails
         }
 
         // 🏆 SUCCESS RESPONSE WITH REWARD DETAILS

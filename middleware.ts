@@ -47,7 +47,17 @@ export async function middleware(req: NextRequest) {
         }
     }
 
-    // 👤 CLIENT ACCOUNT PROTECTION
+    // � ADMIN PANEL PROTECTION (EDGE LEVEL)
+    if (pathname.startsWith('/admin')) {
+        if (!token) {
+            return NextResponse.redirect(new URL('/login', req.url));
+        }
+        if (token.role !== 'SUPER_ADMIN') {
+            return NextResponse.redirect(new URL('/account', req.url)); 
+        }
+    }
+
+    // �👤 CLIENT ACCOUNT PROTECTION
     if (pathname.startsWith('/account') || pathname.startsWith('/checkout')) {
         if (!token) {
             return NextResponse.redirect(new URL('/login', req.url));

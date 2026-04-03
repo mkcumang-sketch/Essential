@@ -17,6 +17,45 @@ export default function PremiumAccountDashboard() {
     const [dashData, setDashData] = useState<any>(null);
     const [toastMsg, setToastMsg] = useState("");
 
+    // 🚨 Handle redirect before any conditional returns
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            router.push("/login");
+        }
+    }, [status, router]);
+
+    useEffect(() => {
+        if (status !== "authenticated") return;
+
+        fetch(`/api/user/dashboard?t=${Date.now()}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+        })
+            .then((res) => res.json())
+            .then((json) => {
+                const data = json?.data ?? null;
+                setDashData(data);
+            })
+            .catch(() => {
+                setDashData(null);
+            });
+    }, [status]);
+
+    // 🚨 Single loading guard clause
+    if (status === "loading") {
+        return (
+            <div className="min-h-screen bg-[#FAFAFA] text-black flex flex-col justify-center items-center">
+                <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
+                    Loading Vault...
+                </p>
+            </div>
+        );
+    }
+
+    // 🚨 Final gatekeeper
+    if (status === "unauthenticated" || !session) return null;
+
     const CuratedGiftingSuite = useMemo(
         () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
         []
@@ -49,30 +88,6 @@ export default function PremiumAccountDashboard() {
         });
     }, [dashData]);
 
-    useEffect(() => {
-        if (status === "unauthenticated") {
-            router.push("/login");
-        }
-    }, [status, router]);
-
-    useEffect(() => {
-        if (status !== "authenticated") return;
-
-        fetch(`/api/user/dashboard?t=${Date.now()}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-        })
-            .then((res) => res.json())
-            .then((json) => {
-                const data = json?.data ?? null;
-                setDashData(data);
-            })
-            .catch(() => {
-                setDashData(null);
-            });
-    }, [status]);
-
     const showToast = (msg: string) => {
         setToastMsg(msg);
         window.setTimeout(() => setToastMsg(""), 2600);
@@ -86,18 +101,6 @@ export default function PremiumAccountDashboard() {
             showToast("Failed to copy code");
         }
     };
-
-    if (status === "loading") {
-        return (
-            <div className="min-h-screen bg-[#FAFAFA] text-black flex flex-col justify-center items-center">
-                <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
-                    Loading Vault...
-                </p>
-            </div>
-        );
-    }
-
-    if (status === "unauthenticated") return null;
 
     const email = session?.user?.email || "Unknown";
     const name = session?.user?.name || "Elite Member";
@@ -173,7 +176,7 @@ export default function PremiumAccountDashboard() {
                                     {tier === "Gold" ? <Crown size={16} className="text-[#D4AF37]" /> : <ShieldCheck size={16} className="text-[#D4AF37]" />}
                                     {tier} Vault
                                 </span>
-                                <span className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37] font-bold">
+                                <span className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">
                                     ₹{spent.toLocaleString()}
                                 </span>
                             </div>

@@ -47,8 +47,9 @@ const userSchema = new mongoose.Schema({
     myReferralCode: { 
         type: String, 
         unique: true, 
+        sparse: true,
         uppercase: true,
-        match: [/^[A-Z]{2,4}-\d{4}$/, 'Invalid referral code format']
+        match: [/^[A-Z0-9]{4,8}$/, 'Referral code must be 4-8 uppercase alphanumeric characters']
     }, 
     referredBy: { 
         type: String,

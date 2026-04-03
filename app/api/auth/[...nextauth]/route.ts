@@ -26,9 +26,11 @@ const connectDB = async () => {
 
 // 💎 HELPER: Unique Referral Code Generator
 const generateReferralCode = (name: string) => {
-    const prefix = name.split(' ')[0].toUpperCase().slice(0, 4);
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `ESS-${prefix}-${random}`;
+    const prefix = name.split(' ')[0].toUpperCase().slice(0, 4).replace(/[^A-Z0-9]/g, '');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const code = `ESS${prefix}${random}`.replace(/[^A-Z0-9]/g, '').substring(0, 8);
+    console.log('🔧 Generated Referral Code:', code); // Debug log
+    return code;
 };
 
 export const authOptions: NextAuthOptions = {
@@ -138,6 +140,8 @@ export const authOptions: NextAuthOptions = {
                 (user as any).walletPoints = existingUser.walletPoints;
                 (user as any).loyaltyTier = existingUser.loyaltyTier;
                 user.id = existingUser._id.toString();
+                
+                console.log('🔧 New User Created - Referral Code:', existingUser.myReferralCode); // Debug log
             }
             return true;
         },
