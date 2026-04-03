@@ -104,10 +104,15 @@ export const authOptions: NextAuthOptions = {
             return session;
         }
     },
-    session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+session: { 
+        strategy: "jwt", 
+        maxAge: 30 * 24 * 60 * 60 
+    },
     secret: process.env.NEXTAUTH_SECRET,
-    // 🚨 LOGIN LOOP FIX: Hata diya yahan se custom error page redirect, isse Vercel par loop banta hai agar URL mismatch ho.
-};
+    debug: true, // 🚨 Ab ye sahi jagah par hai
+}; // 👈 Ye bracket yahan khatam hona chahiye
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+
+
