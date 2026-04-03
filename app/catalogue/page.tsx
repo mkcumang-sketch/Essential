@@ -19,6 +19,8 @@ export default function RetailCatalogue() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState('newest');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
+  const [availability, setAvailability] = useState<string>('all');
 
   useEffect(() => {
     const fetchVault = async () => {
@@ -55,7 +57,12 @@ export default function RetailCatalogue() {
     const matchesSearch = (p.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || (p.brand?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category);
     const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(p.brand);
-    return matchesSearch && matchesCategory && matchesBrand;
+    const matchesPrice = p.price >= priceRange.min && p.price <= priceRange.max;
+    const matchesAvailability = availability === 'all' || 
+      (availability === 'in-stock' && p.stock > 0) || 
+      (availability === 'out-of-stock' && p.stock <= 0);
+    
+    return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesAvailability;
   });
 
   if (sortOption === 'low-high') filteredProducts.sort((a, b) => a.price - b.price);
@@ -134,6 +141,83 @@ export default function RetailCatalogue() {
                  ))}
                </div>
             </div>
+
+            <hr className="border-gray-300"/>
+
+            <div>
+               <h3 className="font-bold text-lg mb-4">Price Range</h3>
+               <div className="space-y-4">
+                 <div className="flex items-center gap-3">
+                   <span className="text-sm text-gray-600 font-medium">₹</span>
+                   <input 
+                     type="number" 
+                     placeholder="Min" 
+                     value={priceRange.min}
+                     onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) || 0 }))}
+                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-[#D4AF37] outline-none"
+                   />
+                   <span className="text-sm text-gray-600 font-medium">to ₹</span>
+                   <input 
+                     type="number" 
+                     placeholder="Max" 
+                     value={priceRange.max}
+                     onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) || 100000 }))}
+                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-[#D4AF37] outline-none"
+                   />
+                 </div>
+                 {/* Quick Price Filters */}
+                 <div className="flex flex-wrap gap-2">
+                   {[
+                     { label: 'Under ₹5K', min: 0, max: 5000 },
+                     { label: '₹5K - ₹15K', min: 5000, max: 15000 },
+                     { label: '₹15K - ₹30K', min: 15000, max: 30000 },
+                     { label: 'Over ₹30K', min: 30000, max: 100000 }
+                   ].map((range) => (
+                     <button
+                       key={range.label}
+                       onClick={() => setPriceRange({ min: range.min, max: range.max })}
+                       className="px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-[#D4AF37] hover:text-white hover:border-[#D4AF37] transition-colors"
+                     >
+                       {range.label}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+            </div>
+
+            <hr className="border-gray-300"/>
+
+            <div>
+               <h3 className="font-bold text-lg mb-4">Availability</h3>
+               <div className="space-y-3">
+                 {[
+                   { value: 'all', label: 'All Products' },
+                   { value: 'in-stock', label: 'In Stock' },
+                   { value: 'out-of-stock', label: 'Out of Stock' }
+                 ].map((option) => (
+                   <label key={option.value} className="flex items-center gap-3 cursor-pointer group">
+                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${availability === option.value ? 'bg-[#D4AF37] border-[#D4AF37]' : 'border-gray-400 bg-white group-hover:border-black'}`}>
+                       {availability === option.value && <Check size={14} className="text-black"/>}
+                     </div>
+                     <span className="text-sm text-gray-700 group-hover:text-black font-medium">{option.label}</span>
+                   </label>
+                 ))}
+               </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <button
+               onClick={() => {
+                 setSelectedCategories([]);
+                 setSelectedBrands([]);
+                 setPriceRange({ min: 0, max: 100000 });
+                 setAvailability('all');
+                 setSearchQuery('');
+               }}
+               className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors text-sm"
+            >
+               Clear All Filters
+            </button>
          </aside>
 
          {/* ♞ MAIN PRODUCT GRID ♞ */}

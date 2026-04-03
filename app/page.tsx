@@ -38,14 +38,20 @@ const LuxuryToast = ({ show, message, type = "success" }: any) => (
                 initial={{ opacity: 0, y: 50, x: "-50%" }}
                 animate={{ opacity: 1, y: 0, x: "-50%" }}
                 exit={{ opacity: 0, scale: 0.95, x: "-50%" }}
-                className="fixed bottom-10 left-1/2 z-[3000] bg-black/95 backdrop-blur-xl border border-[#D4AF37]/50 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[320px]"
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="fixed bottom-10 left-1/2 z-[3000] bg-white/95 backdrop-blur-xl border border-gray-200 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[320px]"
             >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-red-500/20 text-red-500'}`}>
+                <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring" }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-red-500/20 text-red-500'}`}
+                >
                     {type === 'success' ? <ShoppingBag size={20} /> : <X size={20} />}
-                </div>
+                </motion.div>
                 <div>
                     <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Vault Updated</p>
-                    <p className="text-white text-sm font-serif italic">{message}</p>
+                    <p className="text-gray-900 text-sm font-serif italic">{message}</p>
                 </div>
             </motion.div>
         )}
@@ -55,22 +61,35 @@ const LuxuryToast = ({ show, message, type = "success" }: any) => (
 const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string }) => {
     if (!videoUrl || videoUrl.trim() === '') return null;
     return (
-        <section className="relative w-full h-[50vh] md:h-[70vh] bg-black overflow-hidden border-t border-b border-gray-100 will-change-transform">
-            <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-70 scale-105 transition-transform duration-[10s]" />
+        <motion.section 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+            className="relative w-full h-[50vh] md:h-[70vh] bg-gray-900 overflow-hidden border-t border-b border-gray-100 will-change-transform"
+        >
+            <motion.video 
+                src={videoUrl} 
+                autoPlay loop muted playsInline 
+                initial={{ scale: 1.05 }}
+                animate={{ scale: 1.1 }}
+                transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+                className="w-full h-full object-cover opacity-60" 
+            />
             {title && (
                 <div className="absolute inset-0 flex items-center justify-center text-center px-4 z-20">
                     <motion.h2 
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
                         className="text-white text-4xl md:text-7xl font-serif tracking-[5px] uppercase drop-shadow-2xl font-bold"
                     >
                         {title}
                     </motion.h2>
                 </div>
             )}
-            <div className="absolute inset-0 bg-black/20 z-10"></div>
-        </section>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40 z-10"></div>
+        </motion.section>
     );
 };
 

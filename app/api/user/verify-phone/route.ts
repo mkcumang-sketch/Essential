@@ -20,9 +20,9 @@ export async function POST(req: Request) {
 
         const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
 
-        // 🚨 THE RULE: 1 GMAIL = 1 PHONE 🚨
-        // Pehle check karo ki kya ye phone number already kisi aur ke paas hai?
-        const existingUserWithPhone = await User.findOne({ phone: phone });
+        // THE RULE: 1 GMAIL = 1 PHONE 
+        // Pehle check karo ki kya ye phone number already kisi aur ke paas hai? (SECURITY: Exclude sensitive fields)
+        const existingUserWithPhone = await User.findOne({ phone: phone }).select('-password -__v');
         
         // Agar number mila, aur uska email is current email se alag hai -> ERROR!
         if (existingUserWithPhone && existingUserWithPhone.email !== email) {

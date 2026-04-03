@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import User from "@/models/User"; // ⚠️ Check: Agar tera folder Capital 'M' se hai toh '@/Models/user' kar dena
+import User from "@/models/User"; 
 
 // 🌟 BULLETPROOF DATABASE CONNECTION 🌟
 let isConnected = false; 
@@ -22,6 +22,13 @@ const connectDB = async () => {
         console.error("❌ DB Connection Error:", error);
         throw new Error("Database connection failed!");
     }
+};
+
+// 💎 HELPER: Unique Referral Code Generator
+const generateReferralCode = (name: string) => {
+    const prefix = name.split(' ')[0].toUpperCase().slice(0, 4);
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `ESS-${prefix}-${random}`;
 };
 
 export const authOptions: NextAuthOptions = {
@@ -45,23 +52,28 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Please enter phone and password.");
                 }
 
-                // 🚨 DEV BYPASS: reCAPTCHA commented out for local testing. Uncomment when pushing to Vercel.
-                /*
-                try {
-                    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${credentials.captchaToken}`;
-                    const captchaRes = await fetch(verifyUrl, { method: 'POST' });
-                    const captchaData = await captchaRes.json();
-                    if (!captchaData.success || captchaData.score < 0.5) {
-                        throw new Error("Security check failed. Bots are not allowed.");
+                // 🛡️ RECAPTCHA VERIFICATION
+                if (process.env.NODE_ENV === 'production' && credentials.captchaToken) {
+                    try {
+                        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${credentials.captchaToken}`;
+                        const captchaRes = await fetch(verifyUrl, { method: 'POST' });
+                        const captchaData = await captchaRes.json();
+                        
+                        if (!captchaData.success || captchaData.score < 0.5) {
+                            throw new Error("Security verification failed.");
+                        }
+                    } catch (err) {
+                        console.error("reCAPTCHA Error:", err);
+                        throw new Error("Security service unavailable.");
                     }
-                } catch (err) {
-                    throw new Error("Security verification service unavailable.");
                 }
-                */
 
-                // 🛡️ VERIFY DATABASE USER 🛡️
                 await connectDB();
-                const user = await User.findOne({ phone: credentials.phone });
+                
+                // 🛡️ FIX: Cast to any after .lean() to solve TS errors
+                const user = (await User.findOne({ phone: credentials.phone })
+                    .select('+password') 
+                    .lean()) as any;
                 
                 if (!user || !user.password) {
                     throw new Error("No account found with this phone number.");
@@ -72,13 +84,26 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Incorrect password.");
                 }
 
-                // Success: Return user data to JWT
+                // 🛡️ LOGIN HISTORY
+                await User.findByIdAndUpdate(user._id, {
+                    $push: {
+                        loginHistory: {
+                            ip: '0.0.0.0', 
+                            device: 'Web Browser',
+                            date: new Date()
+                        }
+                    }
+                });
+
                 return { 
                     id: user._id.toString(), 
                     name: user.name, 
                     email: user.email, 
                     phone: user.phone, 
-                    role: user.role 
+                    role: user.role,
+                    myReferralCode: user.myReferralCode,
+                    walletPoints: user.walletPoints,
+                    loyaltyTier: user.loyaltyTier
                 };
             }
         })
@@ -87,21 +112,31 @@ export const authOptions: NextAuthOptions = {
         async signIn({ user, account }) {
             await connectDB();
             if (account?.provider === "google") {
-                let existingUser = await User.findOne({ email: user.email });
+                // 🛡️ FIX: Remove semicolon and cast correctly
+                let existingUser = (await User.findOne({ email: user.email }).lean()) as any;
+                
                 if (!existingUser) {
                     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
                     const role = superAdminEmail && user.email === superAdminEmail ? 'SUPER_ADMIN' : 'USER';
                     
-                    // 🚀 MongoDB Crash Fix: 'phone: null' hata diya 
                     existingUser = await User.create({ 
                         name: user.name, 
                         email: user.email, 
                         image: user.image, 
-                        role: role
+                        role: role,
+                        myReferralCode: generateReferralCode(user.name || "Elite"),
+                        walletPoints: 0,
+                        totalEarned: 0,
+                        loyaltyTier: 'Silver Vault'
                     });
                 }
+                
+                // Sync data for session
                 (user as any).role = existingUser.role;
                 (user as any).phone = existingUser.phone || null;
+                (user as any).myReferralCode = existingUser.myReferralCode;
+                (user as any).walletPoints = existingUser.walletPoints;
+                (user as any).loyaltyTier = existingUser.loyaltyTier;
                 user.id = existingUser._id.toString();
             }
             return true;
@@ -111,10 +146,13 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.role = (user as any).role || 'USER';
                 token.phone = (user as any).phone;
+                token.myReferralCode = (user as any).myReferralCode;
+                token.walletPoints = (user as any).walletPoints;
+                token.loyaltyTier = (user as any).loyaltyTier;
             }
-            // User can update their phone number later
-            if (trigger === "update" && session?.phone) {
-                token.phone = session.phone;
+            if (trigger === "update") {
+                if (session?.phone) token.phone = session.phone;
+                if (session?.walletPoints !== undefined) token.walletPoints = session.walletPoints;
             }
             return token;
         },
@@ -123,22 +161,23 @@ export const authOptions: NextAuthOptions = {
                 (session.user as any).id = token.id;
                 (session.user as any).role = token.role;
                 (session.user as any).phone = token.phone;
+                (session.user as any).myReferralCode = token.myReferralCode;
+                (session.user as any).walletPoints = token.walletPoints;
+                (session.user as any).loyaltyTier = token.loyaltyTier;
             }
             return session;
         }
     },
-    // 🎯 THE MAGIC FIX: NextAuth ko tera custom page bata diya
     pages: {
         signIn: '/login', 
     },
     session: { 
         strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        maxAge: 30 * 24 * 60 * 60, 
     },
     secret: process.env.NEXTAUTH_SECRET,
-    debug: true,
+    debug: process.env.NODE_ENV === 'development',
     
-    // 🛡️ LOCALHOST LOOP PREVENTER (Forces browser to accept cookies locally)
     cookies: {
         sessionToken: {
             name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',

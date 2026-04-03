@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ShieldCheck, Crown, Package, Clock, LogOut } from "lucide-react";
+import { 
+    ShieldCheck, Crown, Package, Clock, LogOut, 
+    Wallet, Share2, Copy, CheckCircle2 // 👈 Ye naye icon add kiye
+} from "lucide-react";
 
 export default function PremiumAccountDashboard() {
     const { data: session, status } = useSession();
@@ -73,6 +76,15 @@ export default function PremiumAccountDashboard() {
     const showToast = (msg: string) => {
         setToastMsg(msg);
         window.setTimeout(() => setToastMsg(""), 2600);
+    };
+
+    const copyToClipboard = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast("Referral code copied to clipboard!");
+        } catch (err) {
+            showToast("Failed to copy code");
+        }
     };
 
     if (status === "loading") {
@@ -286,6 +298,52 @@ export default function PremiumAccountDashboard() {
                         </div>
                     )}
                 </section>
+
+                {/* 🌟 EMPIRE REWARDS ENGINE UI 🌟 */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+    
+    {/* WALLET POINTS CARD */}
+    <div className="bg-white border border-gray-200 p-8 rounded-[34px] shadow-sm flex items-center justify-between">
+        <div>
+            <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-400">Vault Balance</p>
+            <h3 className="text-3xl font-serif font-bold text-gray-900 mt-2">₹{dashData?.walletPoints || 0}</h3>
+            <p className="text-[10px] text-green-600 font-bold mt-1">TOTAL EARNED: ₹{dashData?.totalEarned || 0}</p>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+            <Wallet className="text-[#D4AF37]" size={32} />
+        </div>
+    </div>
+
+    {/* REFERRAL CODE CARD */}
+    <div className="bg-black text-white p-8 rounded-[34px] shadow-xl relative overflow-hidden group">
+        <div className="relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">My Referral Code</p>
+            <div className="flex items-center gap-4 mt-2">
+                <h3 className="text-2xl font-mono font-bold tracking-widest uppercase">
+                    {dashData?.myReferralCode || "GENERATING..."}
+                </h3>
+                <button 
+                    onClick={() => copyToClipboard(dashData?.myReferralCode)}
+                    className="p-2 bg-white/10 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-all"
+                >
+                    <Copy size={16} />
+                </button>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-4">SHARE THIS CODE TO EARN ₹100 PER REFERRAL</p>
+        </div>
+        {/* Decorative Crown */}
+        <Crown className="absolute -right-4 -bottom-4 text-white/5 rotate-12" size={120} />
+    </div>
+
+</div>
+
+{/* LOYALTY TIER BADGE */}
+<div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/10 rounded-full border border-[#D4AF37]/20">
+    <ShieldCheck size={14} className="text-[#D4AF37]" />
+    <span className="text-[10px] font-black uppercase tracking-[2px] text-[#D4AF37]">
+        Tier: {dashData?.loyaltyTier || "Silver Vault"}
+    </span>
+</div>
 
                 {/* Gifting Suite */}
                 <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>

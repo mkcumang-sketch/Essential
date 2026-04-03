@@ -28,8 +28,8 @@ export async function GET(req: Request) {
 
         const email = session.user.email;
 
-        // ✅ DATA FETCHING & TYPING
-        const profile: any = await User.findOne({ email }).lean() || {};
+        // ✅ DATA FETCHING & TYPING WITH SECURITY FIX
+        const profile: any = await User.findOne({ email }).select('-password -__v').lean() || {};
         const orders: any[] = await Order.find({ 'customer.email': email }).sort({ createdAt: -1 }).lean();
         
         // ✅ ELITE LOYALTY PROGRAM (Phase 2)

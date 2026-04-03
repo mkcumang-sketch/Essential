@@ -22,8 +22,8 @@ export async function POST(req: Request) {
             await mongoose.connect(process.env.MONGODB_URI as string);
         }
 
-        // 3. Check if someone else is already using this phone number
-        const existingPhone = await User.findOne({ phone });
+        // 3. Check if someone else is already using this phone number (SECURITY: Exclude sensitive fields)
+        const existingPhone = await User.findOne({ phone }).select('-password -__v');
         if (existingPhone) {
             return NextResponse.json({ error: "This phone number is already registered!" }, { status: 400 });
         }
