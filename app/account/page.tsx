@@ -17,49 +17,52 @@ export default function PremiumAccountDashboard() {
     const [dashData, setDashData] = useState<any>(null);
     const [toastMsg, setToastMsg] = useState("");
 
-    // 🚨 Handle redirect before any conditional returns
+    // 🚨 ALL HOOKS MUST RUN BEFORE ANY CONDITIONAL RETURNS (React Rules of Hooks)
+    
+    // Handle redirect when unauthenticated
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
         }
     }, [status, router]);
 
+    // Fetch dashboard data when authenticated - wrapped in try-catch to prevent error loop
     useEffect(() => {
         if (status !== "authenticated") return;
 
-        fetch(`/api/user/dashboard?t=${Date.now()}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-        })
-            .then((res) => res.json())
-            .then((json) => {
+        const fetchData = async () => {
+            try {
+                const res = await fetch(`/api/user/dashboard?t=${Date.now()}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    cache: "no-store",
+                });
+                
+                if (!res.ok) {
+                    // If response not OK, set null but don't throw
+                    setDashData(null);
+                    return;
+                }
+                
+                const json = await res.json();
                 const data = json?.data ?? null;
                 setDashData(data);
-            })
-            .catch(() => {
+            } catch (err) {
+                // Silently handle error - don't throw to prevent error.tsx from showing
+                console.log("Dashboard fetch failed (non-critical):", err);
                 setDashData(null);
-            });
+            }
+        };
+
+        fetchData();
     }, [status]);
 
-    // 🚨 Single loading guard clause
-    if (status === "loading") {
-        return (
-            <div className="min-h-screen bg-[#FAFAFA] text-black flex flex-col justify-center items-center">
-                <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
-                    Loading Vault...
-                </p>
-            </div>
-        );
-    }
-
-    // 🚨 Final gatekeeper
-    if (status === "unauthenticated" || !session) return null;
-
+    // Define all hook-based values BEFORE conditional returns
     const CuratedGiftingSuite = useMemo(
         () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
         []
     );
+    
     const VirtualVault = useMemo(
         () => dynamic(() => import("@/components/VirtualVault"), { ssr: false }),
         []
@@ -101,6 +104,24 @@ export default function PremiumAccountDashboard() {
             showToast("Failed to copy code");
         }
     };
+
+    // 🚨 CONDITIONAL RETURNS AFTER ALL HOOKS
+    
+    // Loading state
+    if (status === "loading") {
+        return (
+            <div className="min-h-screen bg-[#FAFAFA] text-black flex flex-col justify-center items-center">
+                <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
+                    Loading Vault...
+                </p>
+            </div>
+        );
+    }
+
+    // Unauthenticated or no session
+    if (!session) {
+        return null;
+    }
 
     const email = session?.user?.email || "Unknown";
     const name = session?.user?.name || "Elite Member";

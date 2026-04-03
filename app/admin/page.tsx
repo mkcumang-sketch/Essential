@@ -20,7 +20,9 @@ export default function AdminDashboard() {
     const [editForm, setEditForm] = useState({ totalSpent: "", loyaltyTier: "" });
     const [toast, setToast] = useState("");
 
-    // 🚨 FIREWALL: Check admin access
+    // 🚨 ALL HOOKS MUST RUN BEFORE ANY CONDITIONAL RETURNS
+    
+    // Check admin access and fetch data
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
@@ -29,7 +31,7 @@ export default function AdminDashboard() {
         } else if (status === "authenticated") {
             fetchUsers();
         }
-    }, [status, session]);
+    }, [status, session, router]);
 
     const fetchUsers = async () => {
         try {
@@ -94,6 +96,9 @@ export default function AdminDashboard() {
         user.phone?.includes(searchQuery)
     );
 
+    // 🚨 CONDITIONAL RETURNS AFTER ALL HOOKS
+    
+    // Loading state
     if (status === "loading") {
         return (
             <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -108,7 +113,8 @@ export default function AdminDashboard() {
         );
     }
 
-    if (status === "unauthenticated" || (session?.user as any)?.role !== "SUPER_ADMIN") {
+    // Unauthenticated or not admin
+    if (!session || (session?.user as any)?.role !== "SUPER_ADMIN") {
         return null;
     }
 

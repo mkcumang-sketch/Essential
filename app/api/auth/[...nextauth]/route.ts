@@ -141,7 +141,10 @@ export const authOptions: NextAuthOptions = {
                 (user as any).loyaltyTier = existingUser.loyaltyTier;
                 user.id = existingUser._id.toString();
                 
-                console.log('🔧 New User Created - Referral Code:', existingUser.myReferralCode); // Debug log
+                // Debug log only in development
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('🔧 New User Created - Referral Code:', existingUser.myReferralCode);
+                }
             }
             return true;
         },

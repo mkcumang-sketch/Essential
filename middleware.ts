@@ -1,18 +1,108 @@
 import { getToken } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/ratelimit';
 
 export async function middleware(req: NextRequest) {
     const { pathname, origin } = req.nextUrl;
+    const response = NextResponse.next();
 
+    // ==========================================
+    // 🛡️ ZERO-TRUST SECURITY HEADERS
+    // ==========================================
+    
+    // Content Security Policy - Block inline scripts, only allow trusted sources
+    const cspHeader = `
+        default-src 'self';
+        script-src 'self' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://js.stripe.com https://checkout.razorpay.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        img-src 'self' https://images.unsplash.com https://res.cloudinary.com https://*.googleusercontent.com data: blob:;
+        font-src 'self' https://fonts.gstatic.com;
+        connect-src 'self' https://api.resend.com https://*.mongodb.net https://*.upstash.io https://www.google.com;
+        frame-src 'self' https://www.google.com https://checkout.razorpay.com https://js.stripe.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+        upgrade-insecure-requests;
+    `.replace(/\s{2,}/g, ' ').trim();
+
+    response.headers.set('Content-Security-Policy', cspHeader);
+    
+    // Prevent clickjacking
+    response.headers.set('X-Frame-Options', 'DENY');
+    
+    // Prevent MIME type sniffing
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    
+    // XSS Protection
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    
+    // Referrer Policy
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // HSTS (HTTPS Strict Transport Security)
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    
+    // Permissions Policy
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
+
+    // ==========================================
     // 🚨 1. FIX: NEXTAUTH LOGIN LOOP PREVENTER
-    // Agar route NextAuth ka hai, toh middleware ko usme ungli mat karne do
+    // ==========================================
     if (pathname.startsWith('/api/auth')) {
-        return NextResponse.next();
+        return response;
     }
 
     // ==========================================
-    // 2. 🚀 SEO REDIRECT MANAGER
+    // 2. 🚀 RATE LIMITING (BOT PROTECTION)
+    // ==========================================
+    // Get client IP from headers (works with Vercel, AWS, and other platforms)
+    const forwarded = req.headers.get('x-forwarded-for');
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+    const userAgent = req.headers.get('user-agent') ?? 'unknown';
+    
+    // Determine rate limit type based on route
+    let rateLimitType: 'user' | 'auth' | 'admin' = 'user';
+    if (pathname.startsWith('/api/auth')) {
+        rateLimitType = 'auth';
+    } else if (pathname.startsWith('/api/admin') || pathname.startsWith('/godmode')) {
+        rateLimitType = 'admin';
+    }
+    
+    // Create unique identifier (IP + UserAgent hash for auth routes, just IP for others)
+    const identifier = rateLimitType === 'auth' 
+        ? `${clientIp}:${userAgent}` 
+        : clientIp;
+    
+    const rateLimitResult = await checkRateLimit(identifier, rateLimitType);
+    
+    // Add rate limit headers to all responses
+    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
+    Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value);
+    });
+    
+    // Block if rate limit exceeded
+    if (!rateLimitResult.success) {
+        return NextResponse.json(
+            { 
+                success: false, 
+                error: 'Rate limit exceeded. Please try again later.',
+                retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+            }, 
+            { 
+                status: 429,
+                headers: {
+                    ...rateLimitHeaders,
+                    'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+                }
+            }
+        );
+    }
+
+    // ==========================================
+    // 3. 🚀 SEO REDIRECT MANAGER
     // ==========================================
     if (!pathname.startsWith('/api') && 
         !pathname.startsWith('/_next') && 
@@ -28,7 +118,7 @@ export async function middleware(req: NextRequest) {
                 }
             }
         } catch (error) {
-            console.error("Redirect check skipped");
+            // Silent fail for SEO redirects
         }
     }
 
@@ -64,7 +154,7 @@ export async function middleware(req: NextRequest) {
         }
     }
 
-    return NextResponse.next();
+    return response;
 }
 
 export const config = {

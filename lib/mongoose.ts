@@ -19,8 +19,21 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
-    const opts = { bufferCommands: false };
+    const opts = {
+      bufferCommands: false,
+      // SSL/TLS SECURITY: Force SSL connection
+      ssl: true,
+      tls: true,
+      tlsAllowInvalidCertificates: false,
+      tlsAllowInvalidHostnames: false,
+      // Connection pool settings for production
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log(' MongoDB connected with SSL/TLS encryption');
       return mongoose;
     });
   }
@@ -29,6 +42,7 @@ async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error(' MongoDB connection failed:', e);
     throw e;
   }
 
