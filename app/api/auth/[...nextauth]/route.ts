@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import User from "@/models/user"; // Apne path ke hisaab se adjust kar lena
+import User from "@/models/User"; // Apne path ke hisaab se adjust kar lena
 
 let isConnected = false; 
 const connectDB = async () => {
