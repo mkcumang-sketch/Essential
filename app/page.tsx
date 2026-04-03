@@ -152,10 +152,10 @@ const Isolated4DHero = ({ config }: { config: any }) => {
             <motion.div key={currentSlideIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
               {currentSlide?.type === 'image' ? (
                  <img 
-    src={currentSlide.url} 
-    className="w-full h-full object-cover opacity-70" 
-    alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
-/>
+                    src={currentSlide.url} 
+                    className="w-full h-full object-cover opacity-70" 
+                    alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
+                 />
               ) : (
                  <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-70">
                    <source src={currentSlide?.url} type="video/mp4" />
@@ -186,7 +186,8 @@ const FadeUp = ({ children, delay = 0, className = "" }: any) => (
   <motion.div initial={{ y: 30, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, delay, ease: "easeOut" }} viewport={{ once: true, margin: "-50px" }} className={className}>{children}</motion.div>
 );
 
-function FrontPageStore() {
+// Yahan export default hataya hai, taaki neeche dynamic export kaam kare
+export default function Home () {;
   const router = useRouter();
   const { data: session, status } = useSession();
   const { scrollYProgress } = useScroll();
@@ -344,7 +345,6 @@ function FrontPageStore() {
             })
         });
 
-        // Recovery Vault lead capture (email/phone based) for abandoned cart flow.
         if (session?.user?.email || (session.user as any)?.phone) {
             await fetch(`/api/cart/verify-lead?t=${Date.now()}`, {
                 method: 'POST',
@@ -397,7 +397,8 @@ function FrontPageStore() {
     } catch (err) { setReviewStatus('error'); }
   };
 
-  if (isDataLoading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin"></div></div>;
+  // 🚨 FIXED: Don't block UI while loading - render with skeleton states
+  // if (isDataLoading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
     <div className="bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white overflow-x-hidden scroll-smooth">
@@ -414,7 +415,8 @@ function FrontPageStore() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-className="fixed inset-0 z-[1100] bg-black/70 backdrop-blur-3xl..."          >
+            className="fixed inset-0 z-[1100] bg-black/70 backdrop-blur-3xl flex flex-col p-8 md:p-24 overflow-hidden border-t border-[#D4AF37]/30"
+          >
             <div
               aria-hidden
               className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(212,175,55,0.25),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.10),transparent_40%),linear-gradient(to_bottom,rgba(0,0,0,0.65),rgba(0,0,0,0.9))]"
@@ -469,7 +471,7 @@ className="fixed inset-0 z-[1100] bg-black/70 backdrop-blur-3xl..."          >
                    <>
                        <h3 className="text-2xl font-serif font-bold text-black mb-6">Write a Review</h3>
                        <div className="space-y-4">
-                           {PhantomGuard && <PhantomGuard value={honeyPot} onChange={setHoneyPot} />}
+                           <PhantomGuard value={honeyPot} onChange={setHoneyPot} />
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Name</label><input value={reviewForm.userName} onChange={e=>setReviewForm({...reviewForm, userName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="John Doe"/></div>
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Rating</label><div className="flex gap-2">{[1,2,3,4,5].map(star => (<button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-transform hover:scale-110 ${reviewForm.rating >= star ? 'text-black' : 'text-gray-200'}`}><Star size={28} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>))}</div></div>
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Review</label><textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black custom-scrollbar" placeholder="What do you think?"/></div>
@@ -562,10 +564,10 @@ className="fixed inset-0 z-[1100] bg-black/70 backdrop-blur-3xl..."          >
           <section className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
              <div className="absolute inset-0 z-0">
                 <img 
-   src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
-   className="w-full h-full object-cover opacity-30 grayscale" 
-   alt="Essential Rush Heritage Collection Background"
-/>
+                   src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
+                   className="w-full h-full object-cover opacity-30 grayscale" 
+                   alt="Essential Rush Heritage Collection Background"
+                />
                  <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFA] via-[#FAFAFA]/90 to-[#FAFAFA]"></div>
              </div>
 
@@ -860,4 +862,3 @@ className="fixed inset-0 z-[1100] bg-black/70 backdrop-blur-3xl..."          >
   );
 }
 
-export default dynamic(() => Promise.resolve(FrontPageStore), { ssr: false });

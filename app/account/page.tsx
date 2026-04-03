@@ -26,35 +26,23 @@ export default function PremiumAccountDashboard() {
         }
     }, [status, router]);
 
-    // Fetch dashboard data when authenticated - wrapped in try-catch to prevent error loop
+    // Fetch dashboard data when authenticated
     useEffect(() => {
         if (status !== "authenticated") return;
 
-        const fetchData = async () => {
-            try {
-                const res = await fetch(`/api/user/dashboard?t=${Date.now()}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    cache: "no-store",
-                });
-                
-                if (!res.ok) {
-                    // If response not OK, set null but don't throw
-                    setDashData(null);
-                    return;
-                }
-                
-                const json = await res.json();
+        fetch(`/api/user/dashboard?t=${Date.now()}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+        })
+            .then((res) => res.json())
+            .then((json) => {
                 const data = json?.data ?? null;
                 setDashData(data);
-            } catch (err) {
-                // Silently handle error - don't throw to prevent error.tsx from showing
-                console.log("Dashboard fetch failed (non-critical):", err);
+            })
+            .catch(() => {
                 setDashData(null);
-            }
-        };
-
-        fetchData();
+            });
     }, [status]);
 
     // Define all hook-based values BEFORE conditional returns
@@ -182,7 +170,7 @@ export default function PremiumAccountDashboard() {
                     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                         <div>
                             <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>Account</p>
-                            <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">
+                            <h1 className="text-3xl md:text-4xl font-serif text-gray-900">
                                 {name}
                             </h1>
                             <p className={`text-sm mt-2 ${mutedText}`}>
@@ -225,7 +213,7 @@ export default function PremiumAccountDashboard() {
                 {/* Orders */}
                 <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>
                     <div className="flex items-center justify-between gap-4">
-                        <h2 className="text-2xl md:text-3xl font-serif font-bold text-gray-900 flex items-center gap-2">
+                        <h2 className="text-2xl md:text-3xl font-serif text-gray-900 flex items-center gap-2">
                             <Package size={18} className="text-[#D4AF37]" />
                             Order History
                         </h2>
@@ -252,7 +240,7 @@ export default function PremiumAccountDashboard() {
                                                 <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>
                                                     Acquisition #{orderId}
                                                 </p>
-                                                <p className="mt-1 text-xl font-serif font-bold text-gray-900 flex items-center gap-2">
+                                                <p className="mt-1 text-xl font-serif text-gray-900 flex items-center gap-2">
                                                     <Clock size={16} className="text-[#D4AF37]" />
                                                     ₹{Number.isFinite(total) ? total.toLocaleString() : "0"}
                                                 </p>
@@ -289,7 +277,7 @@ export default function PremiumAccountDashboard() {
                                                             </div>
 
                                                             <div className="mt-4">
-                                                                <p className="text-sm font-bold text-gray-900 line-clamp-1">
+                                                                <p className="text-sm text-gray-900 line-clamp-1">
                                                                     {item?.name || "Awaiting your first acquisition"}
                                                                 </p>
                                                                 <p className={`mt-1 text-xs ${mutedText}`}>
@@ -311,7 +299,7 @@ export default function PremiumAccountDashboard() {
                         </div>
                     ) : (
                         <div className="mt-8 rounded-[26px] p-10 border border-gray-200 bg-gray-50 shadow-sm">
-                            <h3 className="text-xl font-serif font-bold text-gray-900">Awaiting your first acquisition</h3>
+                            <h3 className="text-xl font-serif text-gray-900">Awaiting your first acquisition</h3>
                             <p className={`mt-2 text-sm ${mutedText}`}>Your vault will populate instantly after your first successful order.</p>
                             <Link
                                 href="/shop"
@@ -330,7 +318,7 @@ export default function PremiumAccountDashboard() {
     <div className="bg-white border border-gray-200 p-8 rounded-[34px] shadow-sm flex items-center justify-between">
         <div>
             <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-400">Vault Balance</p>
-            <h3 className="text-3xl font-serif font-bold text-gray-900 mt-2">₹{dashData?.walletPoints || 0}</h3>
+            <h3 className="text-3xl font-serif text-gray-900 mt-2">₹{dashData?.walletPoints || 0}</h3>
             <p className="text-[10px] text-green-600 font-bold mt-1">TOTAL EARNED: ₹{dashData?.totalEarned || 0}</p>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
@@ -343,7 +331,7 @@ export default function PremiumAccountDashboard() {
         <div className="relative z-10">
             <p className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">My Referral Code</p>
             <div className="flex items-center gap-4 mt-2">
-                <h3 className="text-2xl font-mono font-bold tracking-widest uppercase">
+                <h3 className="text-2xl font-mono tracking-widest uppercase">
                     {dashData?.myReferralCode || "GENERATING..."}
                 </h3>
                 <button 
@@ -371,7 +359,7 @@ export default function PremiumAccountDashboard() {
 
                 {/* Gifting Suite */}
                 <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>
-                    <h2 className="text-2xl md:text-3xl font-serif font-bold text-gray-900">Curated Gifting Suite</h2>
+                    <h2 className="text-2xl md:text-3xl font-serif text-gray-900">Curated Gifting Suite</h2>
                     <p className={`mt-2 text-sm ${mutedText}`}>Bundle timepieces with a premium note for an elevated gifting experience.</p>
                     <div className="mt-8">
                         <CuratedGiftingSuite watches={giftingWatches} isLight={true} onToast={showToast} />
@@ -380,7 +368,7 @@ export default function PremiumAccountDashboard() {
 
                 {/* Virtual Vault */}
                 <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>
-                    <h2 className="text-2xl md:text-3xl font-serif font-bold text-gray-900">Virtual Vault</h2>
+                    <h2 className="text-2xl md:text-3xl font-serif text-gray-900">Virtual Vault</h2>
                     <p className={`mt-2 text-sm ${mutedText}`}>Save pieces you admire — your vault remembers.</p>
                     <div className="mt-8">
                         <VirtualVault isLight={true} />
