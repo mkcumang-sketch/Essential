@@ -12,30 +12,6 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useSession } from "next-auth/react";
 
-// 🚨 DEBUG LOG: Track home page rendering
-console.log("🚀 page.tsx: Starting home page component");
-
-export default function Home() {
-  console.log("🚀 Home component: Rendering");
-  
-  return (
-    <div>
-      <div id="debug-home" style={{position: 'fixed', top: 30, left: 0, background: 'blue', color: 'white', padding: '4px', zIndex: 99999, fontSize: '12px'}}>
-        HOME PAGE RENDERED
-      </div>
-      
-      <div className="min-h-screen bg-[#FAFAFA]">
-        <h1 className="text-center text-4xl font-bold text-gray-900 p-8">
-          Essential Rush - Home Page
-        </h1>
-        <p className="text-center text-gray-600">
-          If you can see this, the basic layout is working!
-        </p>
-      </div>
-    </div>
-  );
-}
-
 const LUXURY_BRANDS = ["ROLEX", "PATEK PHILIPPE", "AUDEMARS PIGUET", "RICHARD MILLE", "CARTIER", "OMEGA", "VACHERON CONSTANTIN"];
 const DEFAULT_GALLERY_IMAGES = [
   "https://images.unsplash.com/photo-1587836374828-cb4387df3c56?q=80&w=1000",
@@ -176,11 +152,10 @@ const Isolated4DHero = ({ config }: { config: any }) => {
             <motion.div key={currentSlideIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }} className="absolute inset-0 w-full h-full">
               {currentSlide?.type === 'image' ? (
                  <img 
-                    src={currentSlide.url} 
-                    className="w-full h-full object-cover opacity-70" 
-                    alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
-                    priority={currentSlideIndex === 0}
-                 />
+    src={currentSlide.url} 
+    className="w-full h-full object-cover opacity-70" 
+    alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
+/>
               ) : (
                  <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-70">
                    <source src={currentSlide?.url} type="video/mp4" />
@@ -439,8 +414,7 @@ function FrontPageStore() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1100] relative bg-black/70 backdrop-blur-3xl flex flex-col p-8 md:p-24 overflow-hidden border-t border-[#D4AF37]/30"
-          >
+className="fixed inset-0 z-[1100] bg-black/70 backdrop-blur-3xl..."          >
             <div
               aria-hidden
               className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(212,175,55,0.25),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.10),transparent_40%),linear-gradient(to_bottom,rgba(0,0,0,0.65),rgba(0,0,0,0.9))]"
@@ -587,12 +561,11 @@ function FrontPageStore() {
       {latestWatches.length > 0 && (
           <section className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
              <div className="absolute inset-0 z-0">
-                 <img 
-                    src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
-                    className="w-full h-full object-cover opacity-30 grayscale" 
-                    alt="Essential Rush Heritage Collection Background"
-                    priority={false}
-                 />
+                <img 
+   src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
+   className="w-full h-full object-cover opacity-30 grayscale" 
+   alt="Essential Rush Heritage Collection Background"
+/>
                  <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFA] via-[#FAFAFA]/90 to-[#FAFAFA]"></div>
              </div>
 
