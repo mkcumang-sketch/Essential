@@ -3,10 +3,9 @@ import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
 import { GlobalProvider } from './GlobalProvider';
 import { ToastProvider } from '@/context/ToastContext';
-import AppAnalytics from '@/components/Analytics';
 
-// 🌟 NAYA IMPORT: Apna Security Guard 🌟
-import PhoneGuard from '@/components/PhoneGuard';
+// 🚨 DEBUG LOG: Track layout rendering
+console.log("🚀 Layout.tsx: Starting layout rendering");
 
 export const metadata: Metadata = {
   title: 'Essential | Fine Horology',
@@ -14,25 +13,24 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  console.log("🚀 Layout.tsx: Layout component rendering");
+  
   return (
     <html lang="en">
       <body className="bg-[#FAFAFA] text-gray-900 antialiased overflow-x-hidden">
+        <div id="debug-layout" style={{position: 'fixed', top: 0, left: 0, background: 'red', color: 'white', padding: '4px', zIndex: 99999, fontSize: '12px'}}>
+          LAYOUT RENDERED
+        </div>
         
         <GlobalProvider>
           <ToastProvider>
-            
-            {/* 🛡️ THE VAULT GUARD: Ye hamesha check karega ki phone number hai ya nahi */}
-            <PhoneGuard />
-
             <main> 
               {children}
             </main>
-
           </ToastProvider>
-          <Analytics />
-          <AppAnalytics />
         </GlobalProvider>
 
+        <Analytics />
       </body>
     </html>
   )

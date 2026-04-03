@@ -12,6 +12,30 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useSession } from "next-auth/react";
 
+// 🚨 DEBUG LOG: Track home page rendering
+console.log("🚀 page.tsx: Starting home page component");
+
+export default function Home() {
+  console.log("🚀 Home component: Rendering");
+  
+  return (
+    <div>
+      <div id="debug-home" style={{position: 'fixed', top: 30, left: 0, background: 'blue', color: 'white', padding: '4px', zIndex: 99999, fontSize: '12px'}}>
+        HOME PAGE RENDERED
+      </div>
+      
+      <div className="min-h-screen bg-[#FAFAFA]">
+        <h1 className="text-center text-4xl font-bold text-gray-900 p-8">
+          Essential Rush - Home Page
+        </h1>
+        <p className="text-center text-gray-600">
+          If you can see this, the basic layout is working!
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const LUXURY_BRANDS = ["ROLEX", "PATEK PHILIPPE", "AUDEMARS PIGUET", "RICHARD MILLE", "CARTIER", "OMEGA", "VACHERON CONSTANTIN"];
 const DEFAULT_GALLERY_IMAGES = [
   "https://images.unsplash.com/photo-1587836374828-cb4387df3c56?q=80&w=1000",
