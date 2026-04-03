@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useSession, signOut } from "next-auth/react"; // ✅ Added signOut
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ShieldCheck, Crown, Package, Clock, LogOut } from "lucide-react"; // ✅ Added LogOut icon
+import { ShieldCheck, Crown, Package, Clock } from "lucide-react";
 
 export default function PremiumAccountDashboard() {
     const { data: session, status } = useSession();
@@ -17,9 +17,6 @@ export default function PremiumAccountDashboard() {
     const [theme, setTheme] = useState<"dark" | "light">("dark");
     const isLight = theme === "light";
 
-    // ✅ FIX 1: Hydration / First Visit Anomaly Guard
-    const [hasMounted, setHasMounted] = useState(false);
-
     const CuratedGiftingSuite = useMemo(
         () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
         []
@@ -29,17 +26,11 @@ export default function PremiumAccountDashboard() {
         []
     );
 
-    // ✅ Tell Next.js that the component has safely mounted in the browser
     useEffect(() => {
-        setHasMounted(true);
-    }, []);
-
-    useEffect(() => {
-        // ✅ Only redirect if mounted
-        if (hasMounted && status === "unauthenticated") {
+        if (status === "unauthenticated") {
             router.push("/login");
         }
-    }, [status, router, hasMounted]);
+    }, [status, router]);
 
     useEffect(() => {
         if (status !== "authenticated") return;
@@ -69,15 +60,14 @@ export default function PremiumAccountDashboard() {
         window.setTimeout(() => setToastMsg(""), 2600);
     };
 
-    // ✅ FIX 2: Stop server from rendering this prematurely (Kills the Anomaly)
-    if (!hasMounted || status === "loading") {
+    if (status === "loading") {
         return (
             <div className="min-h-screen bg-[#050505] text-white flex flex-col justify-center items-center">
                 <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
                     Loading Account...
                 </p>
-            </div>
-        );
+        </div>
+    );
     }
 
     if (status === "unauthenticated") return null;
@@ -154,10 +144,10 @@ export default function PremiumAccountDashboard() {
                         } transition-colors`}
                     >
                         Exit
-                    </Link>
+                </Link>
 
                     <div className="flex items-center gap-3">
-                        <span className={`text-[10px] font-black uppercase tracking-[4px] ${mutedText} hidden sm:block`}>Theme</span>
+                        <span className={`text-[10px] font-black uppercase tracking-[4px] ${mutedText}`}>Theme</span>
                         <div
                             className={`flex rounded-full overflow-hidden border ${
                                 isLight ? "border-black/10 bg-white/80" : "border-white/10 bg-black/30"
@@ -188,22 +178,8 @@ export default function PremiumAccountDashboard() {
                                 }`}
                             >
                                 White
-                            </button>
+                    </button>
                         </div>
-
-                        {/* ✅ FIX 3: Premium Sign Out Button added next to theme selector */}
-                        <div className="h-6 w-[1px] bg-[#D4AF37]/30 mx-2 hidden sm:block"></div>
-                        <button
-                            onClick={() => signOut({ callbackUrl: "/" })}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[4px] border transition-colors ${
-                                isLight 
-                                ? "border-red-500/40 text-red-600 hover:bg-red-50" 
-                                : "border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
-                            }`}
-                        >
-                            <LogOut size={14} />
-                            <span className="hidden sm:block">Logout</span>
-                        </button>
                     </div>
                 </div>
             </header>
@@ -222,7 +198,7 @@ export default function PremiumAccountDashboard() {
                                 <span className="font-semibold">Email:</span> {email}
                             </p>
                         </div>
-
+                        
                         <div className="min-w-[280px]">
                             <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>Elite Vault Tier</p>
                             <div className="mt-3 flex items-center justify-between gap-3">
@@ -265,7 +241,7 @@ export default function PremiumAccountDashboard() {
                         <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>
                             Orders: {(Array.isArray(dashData?.orders) ? dashData.orders : [])?.length || 0}
                         </p>
-                    </div>
+                                    </div>
 
                     {(Array.isArray(dashData?.orders) ? dashData.orders : [])?.length ? (
                         <div className="mt-8 space-y-6">
@@ -306,7 +282,7 @@ export default function PremiumAccountDashboard() {
                                                 {statusText}
                                             </span>
                                         </div>
-
+                                        
                                         {items?.length ? (
                                             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 {items?.map((item: any, idx: number) => {
@@ -332,8 +308,8 @@ export default function PremiumAccountDashboard() {
                                                                     <div className={`w-full h-full flex items-center justify-center text-xs ${mutedText}`}>
                                                                         Awaiting image
                                                                     </div>
-                                                                )}
-                                                            </div>
+                                                            )}
+                                                        </div>
 
                                                             <div className="mt-4">
                                                                 <p className={`text-sm font-bold ${isLight ? "text-black" : "text-white"} line-clamp-1`}>
@@ -346,7 +322,7 @@ export default function PremiumAccountDashboard() {
                                                         </div>
                                                     );
                                                 })}
-                                            </div>
+                                                    </div>
                                         ) : (
                                             <div
                                                 className={`mt-6 rounded-[22px] p-6 border ${
@@ -359,7 +335,7 @@ export default function PremiumAccountDashboard() {
                                     </div>
                                 );
                             })}
-                        </div>
+                                    </div>
                     ) : (
                         <div className={`mt-8 rounded-[26px] p-10 border ${isLight ? "border-black/10 bg-black/5" : "border-white/10 bg-white/5"}`}>
                             <h3 className={`text-xl font-serif font-bold ${isLight ? "text-black" : "text-white"}`}>Awaiting your first acquisition</h3>
@@ -370,7 +346,7 @@ export default function PremiumAccountDashboard() {
                             >
                                 Enter Shop
                             </Link>
-                        </div>
+                                </div>
                     )}
                 </section>
 
@@ -380,7 +356,7 @@ export default function PremiumAccountDashboard() {
                     <p className={`mt-2 text-sm ${mutedText}`}>Bundle timepieces with a premium note for an elevated gifting experience.</p>
                     <div className="mt-8">
                         <CuratedGiftingSuite watches={giftingWatches} isLight={isLight} onToast={showToast} />
-                    </div>
+                                </div>
                 </section>
 
                 {/* Virtual Vault */}
@@ -389,7 +365,7 @@ export default function PremiumAccountDashboard() {
                     <p className={`mt-2 text-sm ${mutedText}`}>Save pieces you admire — your vault remembers.</p>
                     <div className="mt-8">
                         <VirtualVault isLight={isLight} />
-                    </div>
+                                    </div>
                 </section>
 
                 <div className={`text-center text-[10px] font-black uppercase tracking-[5px] ${subMutedText} pb-2`}>
