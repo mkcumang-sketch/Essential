@@ -32,15 +32,15 @@ function CartPage() {
         <div className="min-h-screen bg-[#FAFAFA] text-black selection:bg-[#D4AF37] selection:text-white">
             {/* LUXURY HEADER */}
             <header className="w-full bg-white/90 backdrop-blur-xl border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50 shadow-sm">
-                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors"><ArrowLeft size={16}/> Continue Exploring</Link>
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors"><ArrowLeft size={16}/> Keep shopping</Link>
                 <h1 className="text-2xl font-serif font-black tracking-[5px] uppercase absolute left-1/2 -translate-x-1/2 text-black">Essential</h1>
-                <div className="flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest hidden md:flex"><ShieldCheck size={14}/> Secure AES-256</div>
+                <div className="flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest hidden md:flex"><ShieldCheck size={14}/> Safe checkout</div>
             </header>
 
             <main className="max-w-5xl mx-auto pt-16 pb-32 px-6 md:px-12">
                 <div className="flex items-center gap-4 mb-12">
                     <ShoppingBag size={36} className="text-[#D4AF37]"/> 
-                    <h2 className="text-4xl md:text-5xl font-serif text-black tracking-tighter">Your Vault</h2>
+                    <h2 className="text-4xl md:text-5xl font-serif text-black tracking-tighter">Your cart</h2>
                 </div>
                 
                 {cart.length === 0 ? (
@@ -48,10 +48,10 @@ function CartPage() {
                         <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-8 border border-gray-100">
                             <ShoppingBag size={40} className="text-gray-300"/>
                         </div>
-                        <h3 className="text-3xl font-serif mb-4 text-black">Your vault is currently empty</h3>
-                        <p className="text-gray-500 text-base mb-10 font-serif italic">Discover our exclusive collection and secure your premium timepieces.</p>
+                        <h3 className="text-3xl font-serif mb-4 text-black">Your cart is empty</h3>
+                        <p className="text-gray-500 text-base mb-10 font-serif italic">Browse our watches and add one you love.</p>
                         <Link href="/" className="px-10 py-5 bg-black text-white font-black uppercase tracking-[4px] text-[10px] rounded-full hover:bg-[#D4AF37] hover:text-black transition-all hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] flex items-center gap-3">
-                            Enter Gallery <ArrowRight size={14}/>
+                            Browse watches <ArrowRight size={14}/>
                         </Link>
                     </motion.div>
                 ) : (
@@ -85,16 +85,16 @@ function CartPage() {
                             <div className="bg-[#050505] text-white p-10 rounded-[40px] shadow-2xl sticky top-32 border border-[#D4AF37]/20 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-40 h-40 bg-[#D4AF37] blur-[80px] opacity-10 pointer-events-none"></div>
                                 
-                                <h3 className="text-2xl font-serif text-white mb-8 border-b border-white/10 pb-6">Acquisition Summary</h3>
+                                <h3 className="text-2xl font-serif text-white mb-8 border-b border-white/10 pb-6">Order summary</h3>
                                 
                                 <div className="space-y-4 mb-8 text-sm font-bold text-gray-400">
                                     <div className="flex justify-between items-center"><span>Subtotal</span><span className="text-white font-mono">₹{cartTotal.toLocaleString('en-IN')}</span></div>
-                                    <div className="flex justify-between items-center"><span>Global Insured Shipping</span><span className="text-green-400 font-black uppercase tracking-widest text-[10px]">Complimentary</span></div>
-                                    <div className="flex justify-between items-center"><span>Duties & Taxes</span><span className="text-white font-mono">Included</span></div>
+                                    <div className="flex justify-between items-center"><span>Insured shipping</span><span className="text-green-400 font-black uppercase tracking-widest text-[10px]">Free</span></div>
+                                    <div className="flex justify-between items-center"><span>Taxes</span><span className="text-white font-mono">Included</span></div>
                                 </div>
 
                                 <div className="flex justify-between items-end mb-10 border-t border-white/10 pt-8">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Investment</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total</span>
                                     <span className="text-4xl font-serif font-black text-[#D4AF37] tracking-tighter">₹{cartTotal.toLocaleString('en-IN')}</span>
                                 </div>
 
@@ -104,7 +104,7 @@ function CartPage() {
                                 
                                 <div className="flex items-center justify-center gap-3 mt-8 text-gray-500">
                                     <ShieldCheck size={16} className="text-gray-400"/>
-                                    <p className="text-[9px] uppercase font-black tracking-widest">End-to-End Encrypted</p>
+                                    <p className="text-[9px] uppercase font-black tracking-widest">Protected checkout</p>
                                 </div>
                             </div>
                         </div>

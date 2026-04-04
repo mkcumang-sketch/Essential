@@ -28,7 +28,7 @@ export default function GrandHero({ content }: { content: any }) {
           transition={{ duration: 2, ease: "easeOut" }}
           className="absolute inset-0"
         >
-          <img src={slides[index]} className="w-full h-full object-cover" alt="Luxury Background" />
+          <img src={slides[index]} className="w-full h-full object-cover" alt="Hero background" />
         </motion.div>
       </AnimatePresence>
 
@@ -57,11 +57,11 @@ export default function GrandHero({ content }: { content: any }) {
             {content?.homeHero?.subHeading || "ESTABLISHED 2026"}
           </h2>
           <h1 className="text-white font-serif italic text-6xl md:text-[10rem] leading-none tracking-tighter mb-8">
-            {content?.homeHero?.heading || "The Vault"}
+            {content?.homeHero?.heading || "Essential Rush"}
           </h1>
           <div className="pointer-events-auto">
             <Link href="/collection" className="bg-white text-black px-12 py-5 font-black uppercase text-[10px] tracking-[0.3em] hover:bg-gold-500 hover:text-black transition-all duration-500 rounded-full">
-              Explore Collection
+              Browse watches
             </Link>
           </div>
         </motion.div>

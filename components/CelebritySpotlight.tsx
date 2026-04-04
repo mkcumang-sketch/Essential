@@ -12,8 +12,8 @@ export default function CelebritySpotlight({ celebrities }: { celebrities: any[]
     <section className="py-32 bg-[#050505] px-6 md:px-12">
       <div className="max-w-[1800px] mx-auto">
         <header className="mb-16 text-center">
-          <h2 className="text-gold-500 font-bold uppercase tracking-[0.5em] text-[10px] mb-4">Elite Owners</h2>
-          <h3 className="text-white font-serif italic text-5xl md:text-7xl tracking-tighter">Hall of Fame</h3>
+          <h2 className="text-gold-500 font-bold uppercase tracking-[0.5em] text-[10px] mb-4">On the wrist</h2>
+          <h3 className="text-white font-serif italic text-5xl md:text-7xl tracking-tighter">Stars and their watches</h3>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

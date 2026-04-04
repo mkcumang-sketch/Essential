@@ -22,7 +22,7 @@ const LuxuryToast = ({ show, message, type = "success" }: any) => (
                     {type === 'success' ? <CheckCircle size={20} /> : <X size={20} />}
                 </div>
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Vault System</p>
+                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Checkout</p>
                     <p className="text-white text-sm font-serif italic">{message}</p>
                 </div>
             </motion.div>
@@ -69,7 +69,7 @@ export default function CheckoutPage() {
         const updatedCart = cart.filter((_, index) => index !== indexToRemove);
         setCart(updatedCart);
         localStorage.setItem('luxury_cart', JSON.stringify(updatedCart));
-        showLuxuryToast("Item removed from Vault", "success");
+        showLuxuryToast("Removed from cart.", "success");
 
         if(updatedCart.length === 0) {
              setPromoDetails(null); 
@@ -114,7 +114,7 @@ export default function CheckoutPage() {
             const isProductCode = cart.some(item => item.vipVaultKey?.toUpperCase() === code);
             if (isProductCode) {
                 setPromoDetails({ code, type: 'product', discountValue: 0 }); 
-                showLuxuryToast(`VIP Access Granted: Watch Code Applied!`, 'success');
+                showLuxuryToast(`Watch code applied.`, 'success');
                 setIsVerifying(false);
                 return;
             }
@@ -132,10 +132,10 @@ export default function CheckoutPage() {
                 showLuxuryToast(data.isReferral ? `Referral Applied: 10% Off!` : `Code Applied: ${data.discountValue}% Off!`, 'success');
             } else {
                 setPromoDetails(null);
-                showLuxuryToast("Invalid Vault Key or Referral Code.", "error");
+                showLuxuryToast("That code is not valid. Try again.", "error");
             }
         } catch (err) {
-            showLuxuryToast("Error connecting to Vault. Try again.", "error");
+            showLuxuryToast("Something went wrong. Try again.", "error");
         } finally {
             setIsVerifying(false);
         }
@@ -175,7 +175,7 @@ export default function CheckoutPage() {
                 localStorage.removeItem('guest_lead_captured');
                 setOrderPlaced(true); 
             } else {
-                showLuxuryToast("Acquisition failed. Please verify details.", "error");
+                showLuxuryToast("Order did not go through. Check your details.", "error");
             }
         } catch (error) {
             showLuxuryToast("Connection interrupted. Try again.", "error");
@@ -188,9 +188,9 @@ export default function CheckoutPage() {
         return (
             <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white">
                 <motion.div initial={{scale:0}} animate={{scale:1}}><CheckCircle size={100} className="text-[#D4AF37] mb-6 shadow-[0_0_50px_rgba(212,175,55,0.3)] rounded-full" /></motion.div>
-                <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 tracking-tighter uppercase">Order Secured</h1>
-                <p className="text-gray-400 mb-10 max-w-md font-serif italic text-lg">Acquisition successful. Your timepieces are being prepared for armored transit.</p>
-                <Link href="/shop" className="px-12 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-2xl">Return to Vault</Link>
+                <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 tracking-tighter uppercase">Order placed</h1>
+                <p className="text-gray-400 mb-10 max-w-md font-serif italic text-lg">Thank you. We are getting your watch ready to ship.</p>
+                <Link href="/shop" className="px-12 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-2xl">Keep shopping</Link>
             </div>
         );
     }
@@ -225,7 +225,7 @@ export default function CheckoutPage() {
                         </div>
 
                         <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-6 bg-black text-white font-black uppercase tracking-[5px] text-[11px] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all shadow-2xl disabled:opacity-50">
-                            {isSubmitting ? 'Authenticating...' : 'Confirm Acquisition'}
+                            {isSubmitting ? 'Please wait...' : 'Place order'}
                         </button>
                     </form>
                 </div>
@@ -233,11 +233,11 @@ export default function CheckoutPage() {
                 {/* --- Right Side: Summary --- */}
                 <div className="lg:col-span-5">
                     <div className="bg-white border border-gray-100 p-8 md:p-10 rounded-[40px] sticky top-24 shadow-2xl">
-                        <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4">Vault Summary</h3>
+                        <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4">Order summary</h3>
                         
                         <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
                             {cart.length === 0 ? (
-                                <p className="text-sm text-gray-500 italic text-center py-4">Your vault is currently empty.</p>
+                                <p className="text-sm text-gray-500 italic text-center py-4">Your cart is empty.</p>
                             ) : (
                                 cart.map((item, i) => (
                                     <div key={i} className="flex gap-4 relative group">
@@ -268,7 +268,7 @@ export default function CheckoutPage() {
                         
                         {/* --- PROMO & REFERRAL BOX --- */}
                         <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200">
-                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Friend's Referral Code / Vault Key</label>
+                            <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Friend referral or VIP code</label>
                             <div className="flex gap-2">
                                 <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: REFER-A9B2" />
                                 <button onClick={handleApplyPromoCode} disabled={isVerifying || cart.length === 0} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
@@ -281,7 +281,7 @@ export default function CheckoutPage() {
                             <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
                             
                             {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest">
-                                <span>{promoDetails?.type === 'referral' ? 'Friend Referral (10% OFF)' : 'Vault Benefit'}</span>
+                                <span>{promoDetails?.type === 'referral' ? 'Friend referral (10% off)' : 'Discount'}</span>
                                 <span>-₹{totalDiscount.toLocaleString()}</span>
                             </div>}
                             

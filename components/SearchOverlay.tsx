@@ -43,7 +43,7 @@ export default function SearchOverlay({ onClose = () => {} }: { onClose?: () => 
         <input 
           autoFocus
           type="text" 
-          placeholder="Search Vault (e.g. Rolex, Gold, Sport)..." 
+          placeholder="Search watches (e.g. Rolex, gold, sport)..." 
           className="w-full bg-transparent border-b border-gray-700 text-2xl md:text-5xl py-4 text-center focus:outline-none focus:border-yellow-600 transition-colors uppercase tracking-widest italic placeholder:normal-case placeholder:text-gray-600 placeholder:italic"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -53,7 +53,7 @@ export default function SearchOverlay({ onClose = () => {} }: { onClose?: () => 
       {/* Results List */}
       <div className="max-w-6xl mx-auto w-full mt-16 overflow-y-auto pb-20 custom-scrollbar h-full">
         {loading ? (
-          <div className="text-center text-yellow-600 animate-pulse tracking-[0.3em] text-xs uppercase font-bold">Scanning Vault...</div>
+          <div className="text-center text-yellow-600 animate-pulse tracking-[0.3em] text-xs uppercase font-bold">Searching…</div>
         ) : results.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((product) => (

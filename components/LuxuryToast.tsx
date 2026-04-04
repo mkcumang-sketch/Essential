@@ -16,7 +16,7 @@ export const LuxuryToast = ({ show, message, onClose }: any) => {
             <ShoppingBag size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Vault Updated</p>
+            <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Cart updated</p>
             <p className="text-white text-sm font-serif italic">{message}</p>
           </div>
           <button onClick={onClose} className="ml-auto text-gray-500 hover:text-white transition-colors">

@@ -39,19 +39,19 @@ function WishlistPage() {
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-black">
             <header className="w-full bg-white border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
-                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black"><ArrowLeft size={16}/> Back to Vault</Link>
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black"><ArrowLeft size={16}/> Home</Link>
                 <h1 className="text-2xl font-serif font-black tracking-[5px] uppercase absolute left-1/2 -translate-x-1/2">Essential</h1>
             </header>
 
             <main className="max-w-4xl mx-auto pt-16 pb-20 px-6">
-                <h2 className="text-4xl font-serif text-black mb-10 flex items-center gap-4"><Heart size={32} className="text-[#D4AF37]"/> Saved Assets</h2>
+                <h2 className="text-4xl font-serif text-black mb-10 flex items-center gap-4"><Heart size={32} className="text-[#D4AF37]"/> Wishlist</h2>
                 
                 {wishlist.length === 0 ? (
                     <div className="bg-white p-12 rounded-[30px] border border-gray-200 text-center shadow-sm">
                         <Heart size={60} className="mx-auto text-gray-300 mb-6"/>
                         <h3 className="text-2xl font-serif mb-2">Your wishlist is empty</h3>
-                        <p className="text-gray-500 text-sm mb-8">Save your favorite timepieces here for later.</p>
-                        <Link href="/" className="px-8 py-4 bg-black text-white font-bold uppercase text-xs rounded-full hover:bg-[#D4AF37] hover:text-black transition-colors inline-block">Explore Vault</Link>
+                        <p className="text-gray-500 text-sm mb-8">Save watches you like and come back anytime.</p>
+                        <Link href="/" className="px-8 py-4 bg-black text-white font-bold uppercase text-xs rounded-full hover:bg-[#D4AF37] hover:text-black transition-colors inline-block">Browse watches</Link>
                     </div>
                 ) : (
                     <div className="space-y-6">

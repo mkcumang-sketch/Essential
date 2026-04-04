@@ -431,7 +431,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
 
 
   if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">AUTHENTICATING...</p></div></div>;
-  if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Login to Vault</button></div>;
+  if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Admin sign in</button></div>;
 
   return (
     <div className="flex h-screen bg-[#050505] text-white overflow-hidden selection:bg-[#D4AF37] selection:text-black relative font-sans">
@@ -491,7 +491,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
         </nav>
 
         <div className="p-6 border-t border-white/10 bg-black/40">
-            <button onClick={() => handleAdminLogout()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Close Vault</button>
+            <button onClick={() => handleAdminLogout()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Sign out</button>
         </div>
       </aside>
 
@@ -523,7 +523,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                  <div className="lg:col-span-2 bg-[#111] border border-white/10 p-8 rounded-[30px] relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
                    <div className="absolute -right-10 -top-10 text-[#D4AF37] opacity-5 group-hover:opacity-10 transition-opacity"><BarChart3 size={200}/></div>
-                   <p className="text-gray-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"><Wallet size={16}/> Total Vault Revenue</p>
+                   <p className="text-gray-400 text-xs font-bold uppercase mb-4 flex items-center gap-2"><Wallet size={16}/> Total sales</p>
                    <p className="text-4xl md:text-5xl font-bold text-white">₹{(fullAnalytics?.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
                  </div>
 
@@ -548,7 +548,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                  <div className="lg:col-span-2 bg-[#111] border border-white/10 rounded-[30px] p-8 min-h-[400px]">
                     <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
                        <h3 className="text-xl font-bold text-white">
-                          {dashboardView === 'orders' ? 'Recent Dispatches' : 'Abandoned Acquisitions'}
+                          {dashboardView === 'orders' ? 'Recent orders' : 'Abandoned carts'}
                        </h3>
                     </div>
 
@@ -578,7 +578,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                        {dashboardView === 'abandoned' && (
                           leads.length === 0 ? (
                             <p className="text-gray-600 text-sm uppercase tracking-widest text-center py-10 font-bold">
-                              Recovery Vault is Clear
+                              No cart reminders pending
                             </p>
                           ) : (
                             leads.map((lead: any, i: number) => {
@@ -620,7 +620,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                                             : "bg-white/10 text-gray-200 border-white/10 hover:bg-[#D4AF37]/15 hover:text-[#D4AF37] hover:border-[#D4AF37]/45"
                                         }`}
                                       >
-                                        ✉️ VIP Email
+                                        ✉️ Email
                                       </button>
 
                                       <button
@@ -633,7 +633,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                                             : "bg-white/10 text-gray-200 border-white/10 hover:bg-[#D4AF37]/15 hover:text-[#D4AF37] hover:border-[#D4AF37]/45"
                                         }`}
                                       >
-                                        📱 VIP SMS
+                                        📱 Text
                                       </button>
 
                                       <button
@@ -646,7 +646,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                                             : "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/25 hover:bg-[#D4AF37]/20 hover:text-black hover:border-[#D4AF37]/55"
                                         }`}
                                       >
-                                        💬 VIP WhatsApp
+                                        💬 WhatsApp
                                       </button>
                                     </div>
 
@@ -655,7 +655,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                                         onClick={() => handleDeleteLead(lead._id)}
                                         className="text-red-500/70 text-[10px] uppercase font-bold tracking-widest hover:text-red-500 transition-colors flex items-center justify-end gap-1 ml-auto"
                                       >
-                                        <Trash2 size={12} /> Remove Lead
+                                        <Trash2 size={12} /> Remove
                                       </button>
                                     </div>
                                   </div>
@@ -713,7 +713,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                  </div>
 
                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10 shadow-lg relative overflow-hidden">
-                     <h3 className="text-2xl font-bold text-white mb-6">Vault Product Addition</h3>
+                     <h3 className="text-2xl font-bold text-white mb-6">Add a product</h3>
                      <div className="space-y-5 relative z-10">
                         <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
                         
@@ -745,7 +745,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                         <div className="space-y-6 pt-4 border-t border-white/10">
                             <div className="flex justify-between items-center border-b border-white/10 pb-2">
                                 <label className="text-sm font-bold text-white flex items-center gap-2">
-                                    <ImageIcon size={16}/> Media Acquisition
+                                    <ImageIcon size={16}/> Add photos or video
                                 </label>
                             </div>
                             
@@ -857,18 +857,18 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                         <div className="mt-8 p-6 bg-black/40 border border-[#D4AF37]/30 rounded-2xl shadow-inner relative overflow-hidden">
                             <div className="absolute -right-10 -top-10 opacity-5 pointer-events-none"><ShieldCheck size={120} className="text-[#D4AF37]"/></div>
                             <h3 className="text-lg font-serif font-bold mb-6 flex items-center gap-2 text-white relative z-10">
-                                <ShieldCheck size={20} className="text-[#D4AF37]" /> Vault Pricing Rules
+                                <ShieldCheck size={20} className="text-[#D4AF37]" /> Price and VIP code
                             </h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10">
                                 <div className="p-4 bg-black rounded-xl border border-white/10">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 flex justify-between">
-                                        VIP Vault Key <span className="text-gray-500 font-mono">(Optional)</span>
+                                        VIP product code <span className="text-gray-500 font-mono">(optional)</span>
                                     </label>
                                     <input value={watchForm.vipVaultKey} onChange={(e) => setWatchForm({...watchForm, vipVaultKey: e.target.value.toUpperCase()})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] uppercase text-[#D4AF37]" placeholder="e.g. ROLEXVIP" />
                                 </div>
                                 <div className="p-4 bg-black rounded-xl border border-white/10">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Vault Discount (₹)</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">VIP discount (₹)</label>
                                     <input type="number" value={watchForm.vipDiscount} onChange={(e) => setWatchForm({...watchForm, vipDiscount: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="5000" />
                                 </div>
                             </div>
@@ -913,7 +913,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                      <span className="text-xs font-bold bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg">{liveWatches.length} Active</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                     {liveWatches.length === 0 ? <p className="col-span-2 text-center text-gray-600 py-20 font-bold uppercase tracking-widest">Vault is Empty</p> : liveWatches.map((watch, idx) => (
+                     {liveWatches.length === 0 ? <p className="col-span-2 text-center text-gray-600 py-20 font-bold uppercase tracking-widest">No products yet</p> : liveWatches.map((watch, idx) => (
                        <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} transition={{delay: idx*0.05}} key={watch._id || idx} className="bg-[#111] p-6 rounded-[20px] border border-white/10 flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all shadow-lg relative overflow-hidden">
                           <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
                              {watch.badge && <span className="bg-[#D4AF37] text-black text-[10px] font-bold px-2 py-1 rounded uppercase">{watch.badge}</span>}
@@ -970,7 +970,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                           </div>
                           <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-48 bg-black border border-white/30 text-white font-bold uppercase rounded-xl p-4 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center">
                             <option value="PENDING">Clearance Pending</option>
-                            <option value="PROCESSING">Processing Vault</option>
+                            <option value="PROCESSING">Processing</option>
                             <option value="DISPATCHED">In Transit</option>
                             <option className="text-green-500" value="DELIVERED">Secured Delivery</option>
                             <option className="text-red-500" value="CANCELLED">Aborted</option>
@@ -999,7 +999,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                         <tr>
                           <th className="p-6 pl-10">Client Identity</th>
                           <th className="p-6 text-center">Access Vector</th>
-                          <th className="p-6 text-center">Vault Credits</th>
+                          <th className="p-6 text-center">Store credit</th>
                           <th className="p-6 text-right pr-10">Portfolio Value</th>
                           <th className="p-6 text-center pr-10">Actions</th>
                         </tr>
@@ -1202,17 +1202,17 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                 <div className="lg:col-span-4 space-y-8">
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
                      <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                        <h3 className="text-lg font-bold text-white">Active Nodes</h3>
+                        <h3 className="text-lg font-bold text-white">Policy pages</h3>
                         <button 
                             onClick={() => {
-                                const cinematicTemplate = `<h1>New Core Protocol</h1>\n\n<p>Initialization of <strong>ESSENTIAL RUSH</strong> protocol. Replace this matrix with operational guidelines.</p>\n\n<h2>01. Primary Directive</h2>\n<p>Insert data constraints here. Utilize the asset injector to map visual coordinates.</p>`;
+                                const cinematicTemplate = `<h1>New page</h1>\n\n<p>Add your policy text for <strong>Essential Rush</strong> here.</p>\n\n<h2>Section one</h2>\n<p>Write clear, simple sentences your customers can understand.</p>`;
                                 const newId = Date.now().toString();
-                                setLegalPages([...legalPages, { id: newId, title: 'New Protocol', slug: 'new-protocol', content: cinematicTemplate }]);
+                                setLegalPages([...legalPages, { id: newId, title: 'New policy', slug: 'new-policy', content: cinematicTemplate }]);
                                 setActiveLegalPageId(newId);
                             }} 
                             className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest bg-[#D4AF37]/10 px-3 py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
                         >
-                            + Instantiate
+                            + Add page
                         </button>
                      </div>
                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">

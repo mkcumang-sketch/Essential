@@ -21,7 +21,7 @@ export default function AddToCartButton({ product }: { product: any }) {
     localStorage.setItem("cart", JSON.stringify(cart));
     // Custom event taaki Navbar/Drawer ko pata chale ki cart update hua hai
     window.dispatchEvent(new Event("storage"));
-    alert("Masterpiece added to your selection! ✨");
+    alert("Added to your cart.");
   };
 
   // ✅ Buy Now: Pehle cart mein daalo, phir Checkout pe bhago
@@ -49,7 +49,7 @@ export default function AddToCartButton({ product }: { product: any }) {
         className="flex-1 bg-black text-white py-5 flex items-center justify-center text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gold hover:text-black transition-all duration-500 shadow-xl"
       >
         <Zap className="w-4 h-4 mr-3 fill-current" />
-        {loading ? "Authenticating..." : "Buy Now"}
+        {loading ? "Please wait..." : "Buy now"}
       </button>
     </div>
   );

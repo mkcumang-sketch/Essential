@@ -72,7 +72,7 @@ export default function VirtualVault({ isLight }: { isLight: boolean }) {
             </div>
             <div>
               <h3 className={`text-2xl md:text-3xl font-serif font-bold ${textClass} uppercase tracking-[6px]`}>
-                Virtual Vault
+                Saved watches
               </h3>
               <p className={`${mutedText} text-sm mt-2`}>
                 Your saved assets, rendered with luxury motion.
@@ -94,14 +94,14 @@ export default function VirtualVault({ isLight }: { isLight: boolean }) {
             <div className="flex items-center justify-center gap-3">
               <Sparkles size={18} className="text-[#D4AF37]" />
               <p className={`${mutedText} text-[10px] font-black uppercase tracking-[4px]`}>
-                Vault is currently empty
+                Nothing saved yet
               </p>
             </div>
             <h4 className={`text-xl font-serif font-bold mt-4 ${textClass}`}>
               Save your favorite watches
             </h4>
             <p className={`${mutedText} text-sm mt-2 max-w-md mx-auto`}>
-              Tap “Wishlist” anywhere to build your Virtual Vault.
+              Tap “Wishlist” on a watch to save it here.
             </p>
             <Link
               href="/shop"
@@ -111,7 +111,7 @@ export default function VirtualVault({ isLight }: { isLight: boolean }) {
                   : "bg-[#D4AF37] text-black hover:bg-white hover:text-black"
               }`}
             >
-              Explore Vault <ArrowRight size={14} />
+              Browse watches <ArrowRight size={14} />
             </Link>
           </div>
         ) : (
@@ -172,7 +172,7 @@ export default function VirtualVault({ isLight }: { isLight: boolean }) {
 
                     <div className="mt-5 flex items-center justify-between gap-3">
                       <div className={`${mutedText} text-[10px] font-black uppercase tracking-[4px]`}>
-                        Vault item
+                        Saved watch
                       </div>
 
                       <button

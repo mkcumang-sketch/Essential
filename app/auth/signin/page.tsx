@@ -14,9 +14,9 @@ export default function SignIn() {
           alt="Login Visual"
         />
         <div className="absolute inset-0 flex flex-col justify-end p-12 text-white">
-          <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Join the Elite.</h2>
+          <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Join Essential Rush</h2>
           <p className="text-gray-400 tracking-wide font-light border-l-2 border-[#D32F2F] pl-4">
-            Access exclusive collections, priority shipping, and concierge services.
+            Member prices, faster shipping, and help when you need it.
           </p>
         </div>
       </div>

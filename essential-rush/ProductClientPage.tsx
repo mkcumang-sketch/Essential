@@ -59,15 +59,15 @@ const GuestLeadModal = ({ isOpen, onClose, onSubmit, productPrice }: any) => {
                         
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Identity</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Your name</label>
                                 <input required value={name} onChange={e=>setName(e.target.value)} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-sm outline-none focus:border-black transition-colors" placeholder="Full Name" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Direct Contact</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Phone or WhatsApp</label>
                                 <input required value={phone} onChange={e=>setPhone(e.target.value)} type="tel" className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-sm outline-none focus:border-black transition-colors" placeholder="Phone Number / WhatsApp" />
                             </div>
                             <button type="submit" disabled={loading} className="w-full py-5 bg-black text-[#D4AF37] font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-[#D4AF37] hover:text-black transition-all mt-6 shadow-xl disabled:opacity-50">
-                                {loading ? 'Securing...' : 'Continue to Vault'}
+                                {loading ? 'Please wait...' : 'Continue'}
                             </button>
                         </form>
                     </motion.div>
@@ -159,7 +159,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         localStorage.setItem('luxury_cart', JSON.stringify(newCart)); 
         
         setShowLeadModal(false); 
-        showToast("Asset added to your Vault Collection!", "success");
+        showToast("Added to your cart.", "success");
         setTimeout(() => router.push('/cart'), 500);
     };
 
@@ -173,13 +173,13 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
             const res = await fetch("/api/upload", { method: "POST", body: fd }); 
             const data = await res.json(); 
             if(data.success) setReviewMedia(p=>[...p, data.url]); 
-            else showToast("Upload failed. Secure connection interrupted.", "error");
-        } catch(e){ showToast("Network Error connecting to secure server.", "error"); } 
+            else showToast("Upload failed. Check your connection.", "error");
+        } catch(e){ showToast("Network error. Try again.", "error"); } 
         finally { setIsUploadingMedia(false); }
     }
 
     const submitReview = async () => {
-        if (!reviewForm.userName || !reviewForm.comment) return showToast("Please provide your identity and experience.", "error");
+        if (!reviewForm.userName || !reviewForm.comment) return showToast("Please add your name and review.", "error");
         setReviewStatus('submitting');
         
         const payload = { ...reviewForm, media: reviewMedia, product: product._id, visibility: 'pending', isAdminGenerated: false };
@@ -194,11 +194,11 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                 setReviewStatus('success'); 
                 setTimeout(() => { setIsReviewModalOpen(false); setReviewStatus('idle'); setReviewForm({ userName: '', comment: '', rating: 5 }); setReviewMedia([]); }, 2000);
             } else {
-                showToast("Failed to transmit review.", "error");
+                showToast("Could not send your review.", "error");
                 setReviewStatus('idle');
             }
         } catch (e) {
-            showToast("Secure connection interrupted.", "error");
+            showToast("Connection lost. Try again.", "error");
             setReviewStatus('idle');
         }
     }
@@ -208,7 +208,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
             
             {/* LUXURY HEADER */}
             <header className="w-full bg-white/90 backdrop-blur-xl border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center z-50 sticky top-0 shadow-sm">
-                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors"><ArrowLeft size={16}/> Back to Vault</Link>
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors"><ArrowLeft size={16}/> Home</Link>
                 <h1 className="text-2xl font-serif font-black tracking-[5px] uppercase absolute left-1/2 -translate-x-1/2">Essential</h1>
                 <div className="relative cursor-pointer group" onClick={() => router.push('/cart')}>
                     <ShoppingBag size={24} className="text-black group-hover:scale-110 transition-transform"/>
@@ -265,7 +265,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                 {/* RIGHT: PRODUCT INFO & ACCORDIONS */}
                 <div className="lg:col-span-5 flex flex-col pt-4 lg:pt-10">
                     <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[4px] mb-4 flex items-center gap-2">
-                        <ShieldCheck size={14}/> Certified Authentic
+                        <ShieldCheck size={14}/> Checked for quality
                     </p>
                     <h2 className="text-xl font-bold text-gray-400 uppercase tracking-widest mb-1">{product.brand}</h2>
                     <h1 className="text-4xl md:text-5xl font-serif text-black leading-[1.1] mb-6 tracking-tighter">{product.name}</h1>
@@ -286,7 +286,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                             <AnimatePresence>
                                 {activeAccordion === 'description' && (
                                     <motion.div initial={{height: 0, opacity: 0}} animate={{height: 'auto', opacity: 1}} exit={{height: 0, opacity: 0}} className="overflow-hidden px-5 pb-5">
-                                        <p className="text-gray-600 font-serif text-base leading-relaxed italic">{product.description || "A masterpiece of meticulous craftsmanship."}</p>
+                                        <p className="text-gray-600 font-serif text-base leading-relaxed italic">{product.description || "Fine build and careful finish."}</p>
                                         {product.amazonDetails && product.amazonDetails.length > 0 && (
                                             <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
                                                 {product.amazonDetails.map((detail: any, i: number) => detail.key && detail.value && (
@@ -310,7 +310,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                             <AnimatePresence>
                                 {activeAccordion === 'shipping' && (
                                     <motion.div initial={{height: 0, opacity: 0}} animate={{height: 'auto', opacity: 1}} exit={{height: 0, opacity: 0}} className="overflow-hidden px-5 pb-5 space-y-4">
-                                        <div className="flex gap-4 items-start"><Truck size={20} className="text-[#D4AF37] shrink-0 mt-1"/><div><p className="font-bold text-sm">Insured Global Shipping</p><p className="text-xs text-gray-500 mt-1">Complimentary fully insured delivery via secure courier within 3-5 business days.</p></div></div>
+                                        <div className="flex gap-4 items-start"><Truck size={20} className="text-[#D4AF37] shrink-0 mt-1"/><div><p className="font-bold text-sm">Insured shipping</p><p className="text-xs text-gray-500 mt-1">Free insured delivery in about 3–5 business days.</p></div></div>
                                         <div className="flex gap-4 items-start"><Clock size={20} className="text-[#D4AF37] shrink-0 mt-1"/><div><p className="font-bold text-sm">14-Day Returns</p><p className="text-xs text-gray-500 mt-1">Returns accepted within 14 days in unworn condition.</p></div></div>
                                     </motion.div>
                                 )}
@@ -321,7 +321,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                     <div className="mt-auto">
                         {/* 🚨 THE SECURE ACQUISITION BUTTON 🚨 */}
                         <button onClick={handleAddToCartClick} className="w-full py-6 bg-black text-white rounded-[20px] font-black uppercase text-sm tracking-[4px] hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3">
-                            <ShoppingBag size={18}/> Secure Acquisition
+                            <ShoppingBag size={18}/> Add to cart
                         </button>
                     </div>
                 </div>
@@ -331,10 +331,10 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
             <section className="max-w-[1400px] mx-auto px-6 md:px-12 pb-32 pt-20 border-t border-gray-200">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-16">
                     <div className="text-center md:text-left">
-                        <h2 className="text-4xl font-serif text-black mb-3">Client Experiences</h2>
+                        <h2 className="text-4xl font-serif text-black mb-3">Reviews</h2>
                         <div className="flex items-center justify-center md:justify-start gap-2 text-[#D4AF37]">
                             <Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/><Star size={20} fill="currentColor"/>
-                            <span className="text-xs font-black uppercase tracking-widest text-gray-500 ml-3">Based on {productReviews.length} verifications</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-gray-500 ml-3">{productReviews.length} reviews</span>
                         </div>
                     </div>
                     <button onClick={() => setIsReviewModalOpen(true)} className="mt-8 md:mt-0 px-10 py-5 bg-white border border-gray-200 shadow-sm text-black font-black uppercase tracking-widest text-[10px] rounded-full hover:border-black hover:bg-black hover:text-white transition-all flex items-center gap-3">
@@ -357,7 +357,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                                     <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-gray-400"><User size={20}/></div>
                                     <div>
                                         <p className="font-bold text-lg text-black">{rev.userName}</p>
-                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-widest flex items-center gap-1 mt-0.5"><CheckCircle size={10}/> Verified Acquisition</p>
+                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-widest flex items-center gap-1 mt-0.5"><CheckCircle size={10}/> Verified buyer</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-1 text-[#D4AF37]">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={14} fill="currentColor"/>)}</div>
@@ -402,7 +402,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                                         </div>
                                         
                                         <div>
-                                            <label className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-2 block">Asset Rating</label>
+                                            <label className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-2 block">Your rating</label>
                                             <div className="flex gap-2">
                                                 {[1,2,3,4,5].map(star => (
                                                     <button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-all hover:scale-110 ${reviewForm.rating >= star ? 'text-[#D4AF37]' : 'text-gray-300'}`}><Star size={32} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>

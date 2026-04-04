@@ -70,14 +70,14 @@ export default function VaultPage() {
   const privileges = useMemo(() => {
     return isGold
       ? [
-          "Early Access to New Drops",
-          "Complimentary Engraving",
-          "Priority Concierge Support",
+          "See new watches first",
+          "Free engraving",
+          "Faster help when you need it",
         ]
       : [
-          "Members-Only Pricing",
-          "Vault Updates Before Public Release",
-          "Concierge Priority Scheduling",
+          "Member prices",
+          "News before everyone else",
+          "Priority booking for help",
         ];
   }, [isGold]);
 
@@ -91,7 +91,7 @@ export default function VaultPage() {
           className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-6"
         />
         <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px]">
-          Securing Your Vault
+          Loading…
         </p>
       </div>
     );
@@ -101,9 +101,9 @@ export default function VaultPage() {
     return (
       <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center selection:bg-[#D4AF37] selection:text-black p-6 text-center">
         <ShieldCheck className="text-[#D4AF37] mb-6" size={60} />
-        <h1 className="text-3xl font-serif mb-2">Vault Unavailable</h1>
+        <h1 className="text-3xl font-serif mb-2">Could not load this page</h1>
         <p className="text-gray-400 max-w-md mb-8">
-          We could not load your loyalty tier. Please refresh to continue.
+          We could not load your member level. Refresh the page or go back to your account.
         </p>
         <Link
           href="/account"
@@ -138,14 +138,14 @@ export default function VaultPage() {
               Essential
             </Link>
             <span className="text-[#D4AF37]">/</span>
-            <span>Elite Vault</span>
+            <span>Member perks</span>
           </nav>
 
           <h1 className="text-5xl md:text-7xl font-serif font-bold italic tracking-tight">
-            The Vault
+            Your perks
           </h1>
           <p className="mt-4 text-gray-400 max-w-2xl font-serif italic">
-            Your loyalty status, privileges, and progress—kept exclusive.
+            Your member level, benefits, and how close you are to Gold.
           </p>
         </header>
 
@@ -171,12 +171,12 @@ export default function VaultPage() {
                           Your Tier
                         </p>
                         <h2 className="text-3xl md:text-4xl font-serif font-bold mt-1">
-                          {tier}
+                          {tier === "Gold Vault" ? "Gold" : tier === "Silver Vault" ? "Silver" : tier}
                         </h2>
                       </div>
                     </div>
                     <p className="text-gray-400 mt-4 font-serif italic">
-                      Total spending counted from successful acquisitions.
+                      We count money you spent on orders that went through.
                     </p>
                   </div>
 
@@ -212,10 +212,10 @@ export default function VaultPage() {
 
                   <div className="mt-3 text-sm text-gray-400 font-serif italic">
                     {isGold
-                      ? "You have unlocked Gold Vault privileges. Welcome."
-                      : `Complete your next ₹${Math.max(0, threshold - totalSpent).toLocaleString(
+                      ? "You are a Gold member. Welcome."
+                      : `Spend ₹${Math.max(0, threshold - totalSpent).toLocaleString(
                           "en-IN"
-                        )} to reach Gold.`}
+                        )} more to reach Gold.`}
                   </div>
                 </div>
 
@@ -243,13 +243,13 @@ export default function VaultPage() {
                     href="/shop"
                     className="flex-1 px-7 py-4 bg-[#D4AF37] text-black font-black uppercase tracking-[5px] text-[11px] rounded-full hover:bg-white transition-all shadow-[0_20px_60px_rgba(212,175,55,0.18)] border border-[#D4AF37]/40 hover:scale-[1.02] duration-1000"
                   >
-                    Discover New Drops <ArrowRight size={14} className="inline-block ml-2" />
+                    Shop new watches <ArrowRight size={14} className="inline-block ml-2" />
                   </Link>
                   <Link
                     href="/account"
                     className="flex-1 px-7 py-4 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[5px] text-[11px] rounded-full hover:bg-white/10 transition-all duration-1000 hover:scale-[1.02]"
                   >
-                    Your Vault <ArrowRight size={14} className="inline-block ml-2" />
+                    Your account <ArrowRight size={14} className="inline-block ml-2" />
                   </Link>
                 </div>
               </div>
@@ -265,11 +265,11 @@ export default function VaultPage() {
             >
               <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[40px] p-8 md:p-10 overflow-hidden">
                 <p className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">
-                  Elite Notes
+                  Good to know
                 </p>
-                <h3 className="text-2xl font-serif font-bold mt-2">Kept Simple. Kept Exclusive.</h3>
+                <h3 className="text-2xl font-serif font-bold mt-2">Simple and clear</h3>
                 <p className="text-gray-400 mt-4 font-serif italic">
-                  Your tier updates after successful acquisitions. No surprises.
+                  Your level updates after paid orders. No hidden rules.
                 </p>
 
                 <div className="mt-8 space-y-4">
@@ -282,7 +282,7 @@ export default function VaultPage() {
                   <div className="bg-black/30 border border-white/10 rounded-[24px] p-5 hover:scale-[1.02] transition-all duration-1000 hover:shadow-[0_0_26px_rgba(212,175,55,0.14)]">
                     <p className="text-sm font-serif font-bold">Gold benefits</p>
                     <p className="text-gray-400 text-sm mt-2">
-                      Early access and complimentary engraving for Gold Vault members.
+                      Gold members get early access and free engraving.
                     </p>
                   </div>
                 </div>

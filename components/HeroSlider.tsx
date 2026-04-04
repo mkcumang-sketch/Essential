@@ -38,7 +38,7 @@ export default function HeroSlider({ slides }: { slides: any[] }) {
               {slides[current].heading}
             </motion.h1>
             <button className="bg-[#D4AF37] text-black px-12 py-4 rounded-full font-black uppercase tracking-[6px] text-[10px]">
-              Explore Allocation
+              Shop now
             </button>
           </div>
         </motion.div>

@@ -50,7 +50,7 @@ const LuxuryToast = ({ show, message, type = "success" }: any) => (
                     {type === 'success' ? <ShoppingBag size={20} /> : <X size={20} />}
                 </motion.div>
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Vault Updated</p>
+                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Cart updated</p>
                     <p className="text-gray-900 text-sm font-serif italic">{message}</p>
                 </div>
             </motion.div>
@@ -352,7 +352,7 @@ export default function Home() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: session.user?.name || 'Vault Client',
+                    name: session.user?.name || 'Guest',
                     email: session.user?.email || '',
                     phone: (session.user as any)?.phone || '',
                     cartItems: newCart,
@@ -515,7 +515,7 @@ export default function Home() {
 
       {/* 🌟 HEADER STACK 🌟 */}
       <div className="bg-[#050505] text-white py-2.5 px-4 md:px-12 flex justify-between items-center text-[8px] md:text-[9px] font-bold uppercase tracking-[3px] z-[601] relative border-b border-gray-800">
-        <div className="flex items-center gap-2"><Lock size={10}/> Secure Checkout</div>
+        <div className="flex items-center gap-2"><Lock size={10}/> Safe checkout</div>
         <div className="hidden sm:block text-gray-300">Free Shipping in India</div>
         <div className="flex gap-4"><span>Cash on Delivery</span></div>
       </div>
@@ -852,7 +852,7 @@ export default function Home() {
       <footer className="bg-black text-white pt-24 pb-12 border-t border-gray-800 relative z-20">
          <div className="max-w-[1600px] mx-auto px-8 md:px-20">
             <div className="flex flex-col md:flex-row justify-between border-b border-gray-800 pb-16 mb-16 gap-12">
-                <div><h3 className="text-4xl md:text-6xl font-serif font-bold text-white tracking-tight mb-4">Stay Updated.</h3><p className="text-gray-400 text-sm md:text-base">Sign up for new watches and exclusive sales.</p></div>
+                <div><h3 className="text-4xl md:text-6xl font-serif font-bold text-white tracking-tight mb-4">Stay Updated.</h3><p className="text-gray-400 text-sm md:text-base">Get emails about new watches and sales.</p></div>
                 <div className="flex w-full md:w-auto h-max self-center border-b border-gray-600 focus-within:border-white transition-all pb-2"><input type="email" placeholder="Your Email" className="bg-transparent p-4 text-white outline-none text-lg w-full md:w-[300px]" /><button className="text-white font-bold uppercase tracking-[2px] text-xs px-6 hover:text-gray-300 transition-all">Sign Up</button></div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-20 text-left">

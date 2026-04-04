@@ -186,7 +186,7 @@ export default function AdminDashboard() {
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-500 mb-1">Gold Vault Members</p>
+                                <p className="text-sm text-gray-500 mb-1">Gold members</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {users.filter(u => u.loyaltyTier === "Gold Vault").length}
                                 </p>
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                                     <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">User</th>
                                     <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Contact</th>
                                     <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Total Spent</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Loyalty Tier</th>
+                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Member level</th>
                                     <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Wallet</th>
                                     <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Actions</th>
                                 </tr>
@@ -281,8 +281,8 @@ export default function AdminDashboard() {
                                                     onChange={(e) => setEditForm(prev => ({ ...prev, loyaltyTier: e.target.value }))}
                                                     className="px-2 py-1 border border-gray-300 rounded text-sm focus:border-[#D4AF37] outline-none"
                                                 >
-                                                    <option value="Silver Vault">Silver Vault</option>
-                                                    <option value="Gold Vault">Gold Vault</option>
+                                                    <option value="Silver Vault">Silver</option>
+                                                    <option value="Gold Vault">Gold</option>
                                                 </select>
                                             ) : (
                                                 <div className="flex items-center gap-2">
@@ -291,7 +291,7 @@ export default function AdminDashboard() {
                                                     ) : (
                                                         <Shield className="text-gray-400" size={16} />
                                                     )}
-                                                    <span className="text-sm font-medium text-gray-900">{user.loyaltyTier || "Silver Vault"}</span>
+                                                    <span className="text-sm font-medium text-gray-900">{user.loyaltyTier === "Gold Vault" ? "Gold" : user.loyaltyTier === "Silver Vault" ? "Silver" : user.loyaltyTier || "Silver"}</span>
                                                 </div>
                                             )}
                                         </td>

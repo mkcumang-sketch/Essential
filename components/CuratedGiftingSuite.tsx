@@ -216,7 +216,7 @@ export default function CuratedGiftingSuite({
                 <span className={`${mutedText} text-sm ml-2`}>items</span>
               </div>
               <div className={`${mutedText} text-[10px] font-black uppercase tracking-[4px]`}>
-                #EssentialVault
+                #EssentialRush
               </div>
             </div>
 

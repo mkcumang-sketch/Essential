@@ -42,13 +42,13 @@ export const VipWhatsAppHook = ({ isOpen, onClose, onUnlock }: { isOpen: boolean
                         {status === 'success' ? (
                             <div className="text-center py-8">
                                 <CheckCircle size={50} className="text-green-500 mx-auto mb-6" />
-                                <h3 className="text-2xl font-serif text-white font-bold mb-2">Vault Unlocked</h3>
-                                <p className="text-gray-400 text-sm mb-6">Your VIP code has been applied automatically.</p>
+                                <h3 className="text-2xl font-serif text-white font-bold mb-2">Almost done</h3>
+                                <p className="text-gray-400 text-sm mb-6">Your discount code is ready to use.</p>
                                 <div className="bg-[#D4AF37]/10 border border-[#D4AF37] border-dashed rounded-xl p-4 mb-6">
                                     <span className="text-[#D4AF37] font-mono text-xl tracking-[5px] font-bold">ESSENTIAL10</span>
                                 </div>
                                 <button onClick={onClose} className="w-full py-4 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-gray-200 transition-all">
-                                    Continue to Secure Checkout
+                                    Go to checkout
                                 </button>
                             </div>
                         ) : (
@@ -56,9 +56,9 @@ export const VipWhatsAppHook = ({ isOpen, onClose, onUnlock }: { isOpen: boolean
                                 <div className="w-16 h-16 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <Gift size={28} className="text-[#D4AF37]" />
                                 </div>
-                                <h2 className="text-2xl font-serif text-white font-bold mb-2 tracking-tight">Unlock 10% VIP Discount</h2>
+                                <h2 className="text-2xl font-serif text-white font-bold mb-2 tracking-tight">Get 10% off</h2>
                                 <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-                                    Enter your WhatsApp number to receive your secret VIP Vault key and instant support.
+                                    Enter your WhatsApp number. We will send your discount code and help you on chat.
                                 </p>
 
                                 <div className="space-y-4">
@@ -77,7 +77,7 @@ export const VipWhatsAppHook = ({ isOpen, onClose, onUnlock }: { isOpen: boolean
                                         disabled={phone.length < 10 || status === 'loading'}
                                         className="w-full py-4 bg-[#D4AF37] text-black font-bold uppercase tracking-widest text-[10px] rounded-xl flex justify-center items-center gap-2 hover:bg-[#F3E5AB] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {status === 'loading' ? 'Verifying...' : 'Unlock My Discount'} <ArrowRight size={14} />
+                                        {status === 'loading' ? 'Please wait...' : 'Get my code'} <ArrowRight size={14} />
                                     </button>
                                 </div>
                                 <p className="text-[9px] text-gray-600 mt-6 uppercase tracking-[1px]">

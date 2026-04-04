@@ -23,7 +23,7 @@ export default function CartSidebar() {
         
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-gray-100 bg-white">
-          <h2 className="text-2xl font-serif font-bold text-royal-900 italic">Your Vault</h2>
+          <h2 className="text-2xl font-serif font-bold text-royal-900 italic">Your cart</h2>
           <button 
             onClick={closeCart} 
             className="p-2 text-gray-400 hover:text-royal-900 hover:rotate-90 transition-all duration-500"
@@ -43,9 +43,9 @@ export default function CartSidebar() {
               </div>
               
               <div>
-                <p className="text-xl font-serif font-bold text-royal-900">The Vault is Empty</p>
+                <p className="text-xl font-serif font-bold text-royal-900">Your cart is empty</p>
                 <p className="text-xs text-gray-500 mt-2 max-w-[250px] mx-auto leading-relaxed tracking-wide">
-                  "Time waits for no one." <br/> Secure your legacy piece before it's gone.
+                  Good watches go fast. <br/> Add one you love before it sells out.
                 </p>
               </div>
 
@@ -53,7 +53,7 @@ export default function CartSidebar() {
                 onClick={closeCart} 
                 className="group flex items-center gap-2 px-8 py-4 bg-royal-900 text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-gold-500 transition-all duration-500 shadow-xl"
               >
-                Explore Collection <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
+                Browse watches <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
               </button>
             </div>
 
@@ -84,7 +84,7 @@ export default function CartSidebar() {
                   <button 
                     onClick={() => removeFromCart(item._id)} 
                     className="text-gray-300 hover:text-red-500 transition-colors p-2"
-                    title="Remove from Vault"
+                    title="Remove from cart"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -111,7 +111,7 @@ export default function CartSidebar() {
               onClick={closeCart} 
               className="block w-full text-center bg-royal-900 text-white text-xs font-bold uppercase tracking-[0.3em] py-5 hover:bg-gold-500 transition-all duration-500 shadow-lg"
             >
-              Secure Checkout
+              Checkout
             </Link>
           </div>
         )}

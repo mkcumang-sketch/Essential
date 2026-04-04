@@ -52,7 +52,7 @@ export default function ImperialCollectionNode() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#050505] font-sans">
       <nav className="h-28 bg-white/90 backdrop-blur-2xl border-b border-gray-100 flex items-center justify-between px-6 md:px-20 sticky top-0 z-[100]">
-        <Link href="/" className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[4px] hover:text-[#D4AF37] transition-all"><ArrowLeft size={20}/> <span className="hidden sm:inline">Imperial Home</span></Link>
+        <Link href="/" className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[4px] hover:text-[#D4AF37] transition-all"><ArrowLeft size={20}/> <span className="hidden sm:inline">Home</span></Link>
         <div className="text-center absolute left-1/2 -translate-x-1/2 group cursor-pointer" onClick={() => router.push('/')}>
           <div className="text-[#002B19] text-3xl mb-0.5 group-hover:scale-110 transition-transform">♞</div><h1 className="text-[12px] font-serif font-black tracking-[10px] uppercase">Essential</h1>
         </div>
@@ -67,13 +67,13 @@ export default function ImperialCollectionNode() {
         </section>
 
         <section className="max-w-[2200px] mx-auto p-6 md:p-12 lg:p-24">
-          <div className="flex justify-between items-center mb-16 border-b border-gray-200 pb-10"><div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[5px] text-gray-500"><LayoutGrid size={16}/> {loading ? "Scanning Vault..." : `${watches.length} Assets Found`}</div></div>
+          <div className="flex justify-between items-center mb-16 border-b border-gray-200 pb-10"><div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[5px] text-gray-500"><LayoutGrid size={16}/> {loading ? "Loading…" : `${watches.length} watches`}</div></div>
 
           <AnimatePresence mode="wait">
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">{[...Array(6)].map((_, i) => (<div key={i} className="bg-white p-10 rounded-[60px] border border-gray-100 animate-pulse h-[550px]"><div className="aspect-[4/5] bg-gray-50 rounded-[40px] mb-8"></div></div>))}</div>
             ) : watches.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center"><div className="text-7xl md:text-9xl text-gray-200 mb-10 italic font-serif">Empty Vault</div><button onClick={() => router.push('/catalogue')} className="mt-12 px-12 py-5 bg-[#002B19] text-[#D4AF37] rounded-full text-[10px] font-black uppercase tracking-[5px] shadow-2xl hover:bg-black transition-all">Return to Global Catalogue</button></motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center"><div className="text-7xl md:text-9xl text-gray-200 mb-10 italic font-serif">No watches yet</div><button onClick={() => router.push('/catalogue')} className="mt-12 px-12 py-5 bg-[#002B19] text-[#D4AF37] rounded-full text-[10px] font-black uppercase tracking-[5px] shadow-2xl hover:bg-black transition-all">Browse all watches</button></motion.div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
                 {watches.map((watch, i) => (

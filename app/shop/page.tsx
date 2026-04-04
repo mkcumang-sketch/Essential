@@ -114,7 +114,7 @@ export default function CataloguePage() {
             : [...cart, {...product, qty: 1}];
         
         localStorage.setItem('luxury_cart', JSON.stringify(newCart));
-        showToast("Added to your Vault Collection!", "success");
+        showToast("Added to your cart.", "success");
         
         // Optional: Dispatch event to update navbar cart count if using event listeners
         if (typeof window !== 'undefined') {

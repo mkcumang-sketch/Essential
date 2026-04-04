@@ -62,7 +62,7 @@ function NewArrivalsPage() {
                 <div className="mb-16 flex flex-col items-center text-center">
                     <Sparkles size={40} className="text-[#D4AF37] mb-6" />
                     <h2 className="text-5xl md:text-7xl font-serif italic text-black tracking-tighter mb-4">New Arrivals</h2>
-                    <p className="text-[10px] font-black uppercase tracking-[5px] text-gray-500">The Latest Additions to Our Vault</p>
+                    <p className="text-[10px] font-black uppercase tracking-[5px] text-gray-500">Fresh watches just in</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">

@@ -20,7 +20,7 @@ export default function OrderTracker() {
       if (data.success) setOrder(data.order);
       else setError(data.message);
     } catch (err) {
-      setError("Vault connection failed.");
+      setError("Could not connect. Try again.");
     } finally {
       setLoading(false);
     }
@@ -35,8 +35,8 @@ export default function OrderTracker() {
       <div className="max-w-4xl mx-auto space-y-12">
         
         <div className="text-center space-y-4">
-          <h1 className="text-5xl uppercase tracking-tighter italic">Live Ledger Tracking</h1>
-          <p className="text-gold text-[10px] font-bold uppercase tracking-[0.4em]">Essential Rush Logistic Vault</p>
+          <h1 className="text-5xl uppercase tracking-tighter italic">Track your order</h1>
+          <p className="text-gold text-[10px] font-bold uppercase tracking-[0.4em]">Essential Rush shipping</p>
         </div>
 
         {/* Search Bar */}

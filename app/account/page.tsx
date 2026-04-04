@@ -134,7 +134,7 @@ export default function PremiumAccountDashboard() {
   };
 
   const email = su?.email || "—";
-  const name = su?.name || "Elite Member";
+  const name = su?.name || "Member";
 
   const walletPoints =
     Number(dashData?.walletPoints) ||
@@ -199,7 +199,7 @@ export default function PremiumAccountDashboard() {
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]/80 mb-3">
-                Private member
+                Your account
               </p>
               <h1 className="text-3xl md:text-5xl font-serif tracking-tight text-white">
                 {name}
@@ -215,7 +215,7 @@ export default function PremiumAccountDashboard() {
 
             <div className="w-full lg:max-w-sm">
               <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40 mb-3">
-                Vault progression
+                Loyalty progress
               </p>
               <div className="flex items-center justify-between gap-3 mb-2">
                 <span className="text-sm font-serif text-white flex items-center gap-2">
@@ -240,10 +240,10 @@ export default function PremiumAccountDashboard() {
               </div>
               <p className="mt-3 text-xs text-white/45">
                 {tier === "Gold"
-                  ? "Gold unlocked — priority access is active."
-                  : remaining > 0
-                    ? `₹${remaining.toLocaleString("en-IN")} to Gold Vault.`
-                    : "Progress syncing…"}
+                  ? "Gold unlocked — you get priority help."
+                    : remaining > 0
+                    ? `Spend ₹${remaining.toLocaleString("en-IN")} more to reach Gold.`
+                    : "Updating your progress…"}
               </p>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function PremiumAccountDashboard() {
                 </button>
               </div>
               <p className="text-[10px] text-white/40 mt-4 uppercase tracking-[0.2em] leading-relaxed">
-                Share your code — rewards credit to your vault balance.
+                Share your code — you earn when friends buy.
               </p>
             </div>
             <Crown
@@ -316,7 +316,7 @@ export default function PremiumAccountDashboard() {
               Order history
             </h2>
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/35">
-              {dashLoading ? "…" : `${orders.length} acquisitions`}
+              {dashLoading ? "…" : `${orders.length} orders`}
             </p>
           </div>
 
@@ -426,7 +426,7 @@ export default function PremiumAccountDashboard() {
                 Your vault is ready
               </h3>
               <p className="mt-2 text-sm text-white/45 max-w-md mx-auto">
-                Complete a purchase to see acquisitions and progression here.
+                After you buy something, your orders and progress show up here.
               </p>
               <Link
                 href="/shop"
@@ -443,7 +443,7 @@ export default function PremiumAccountDashboard() {
             Curated gifting suite
           </h2>
           <p className="mt-2 text-sm text-white/45">
-            Bundle pieces with a premium note for elevated gifting.
+            Pair watches with a gift note for someone special.
           </p>
           <div className="mt-8">
             <CuratedGiftingSuite
@@ -459,7 +459,7 @@ export default function PremiumAccountDashboard() {
             Virtual vault
           </h2>
           <p className="mt-2 text-sm text-white/45">
-            Pieces you admire — saved for later.
+            Watches you save show up here.
           </p>
           <div className="mt-8">
             <VirtualVault isLight={false} />
@@ -467,7 +467,7 @@ export default function PremiumAccountDashboard() {
         </section>
 
         <p className="text-center text-[10px] font-black uppercase tracking-[0.4em] text-white/25 pb-4">
-          Essential Rush · Private member area
+          Essential Rush · Your account
         </p>
       </main>
     </div>

@@ -37,7 +37,7 @@ export default function SearchBar({ isOpen, onClose }: any) {
             <Search className="w-8 h-8 mr-6 text-gold" />
             <input 
               autoFocus
-              placeholder="Search by Model or Brand..." 
+              placeholder="Search by model or brand..." 
               className="text-4xl md:text-6xl font-serif italic uppercase outline-none w-full placeholder:text-gray-100"
               onChange={(e) => setQuery(e.target.value)}
               value={query}
@@ -48,7 +48,7 @@ export default function SearchBar({ isOpen, onClose }: any) {
 
         {/* Results Area */}
         <div className="flex-1 overflow-y-auto mt-12 space-y-8">
-          {loading && <p className="text-center font-serif italic text-gold animate-pulse">Scanning the Vault...</p>}
+          {loading && <p className="text-center font-serif italic text-gold animate-pulse">Searching…</p>}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {results.map((watch: any) => (

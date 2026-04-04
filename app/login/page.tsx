@@ -41,7 +41,6 @@ export default function LoginPortal() {
     // 🌟 Handle Sign Up 🌟
  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Bhai, Button Zinda Hai!"); // 👈 Ye line add kar de
 
     if (!name || !phone || !password) return alert("Please fill all details.");
     // ... baaki poora code waisa hi rahega
@@ -158,7 +157,7 @@ export default function LoginPortal() {
                         </div>
 
                         {isLogin && (
-                            <div className="text-right"><button type="button" className="text-[10px] text-gray-400 hover:text-black font-bold uppercase tracking-widest">Recovery Access?</button></div>
+                            <div className="text-right"><button type="button" className="text-[10px] text-gray-400 hover:text-black font-bold uppercase tracking-widest">Forgot password?</button></div>
                         )}
 
                         <button type="submit" disabled={isLoading} className="w-full py-5 mt-4 bg-black text-white font-bold uppercase tracking-[4px] text-[10px] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all flex justify-center items-center gap-3 disabled:opacity-70 group shadow-xl active:scale-[0.98]">
@@ -166,7 +165,7 @@ export default function LoginPortal() {
                                 <RefreshCcw size={16} className="animate-spin" />
                             ) : (
                                 <>
-                                    {isLogin ? 'Open Vault' : 'Create Account'}
+                                    {isLogin ? 'Sign in' : 'Create account'}
                                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
                                 </>
                             )}
@@ -175,15 +174,15 @@ export default function LoginPortal() {
 
                     <div className="mt-10 pt-8 border-t border-gray-50">
                         <p className="text-[9px] text-gray-400 text-center uppercase tracking-[2px] leading-relaxed">
-                            Secured for Localhost <br/>
-                            Access is <span className="text-black font-black">Encrypted</span>
+                            For testing on this device <br/>
+                            Your sign-in is <span className="text-black font-black">protected</span>
                         </p>
                     </div>
                 </div>
             </main>
 
             <footer className="p-10 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[5px] text-gray-300">© 2026 Essential Enterprise</p>
+                <p className="text-[10px] font-black uppercase tracking-[5px] text-gray-300">© 2026 Essential Rush</p>
             </footer>
         </div>
     );

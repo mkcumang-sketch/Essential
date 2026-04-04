@@ -30,11 +30,11 @@ export default function AssetRequisition() {
       
       {/* Breadcrumb Protocol */}
       <nav className="flex items-center gap-3 text-[9px] font-black uppercase tracking-[4px] text-gray-600 mb-12">
-        <Link href="/" className="hover:text-white">Base</Link>
+        <Link href="/" className="hover:text-white">Home</Link>
         <ChevronRight size={10} />
-        <Link href="/vault" className="hover:text-white">Private Vault</Link>
+        <Link href="/vault" className="hover:text-white">Member perks</Link>
         <ChevronRight size={10} />
-        <span className="text-[#D4AF37]">Asset #{asset.series}</span>
+        <span className="text-[#D4AF37]">{asset.series}</span>
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
@@ -48,7 +48,7 @@ export default function AssetRequisition() {
           <div className="absolute -inset-1 bg-gradient-to-tr from-[#D4AF37]/20 to-transparent blur-2xl rounded-full opacity-30 group-hover:opacity-60 transition-all duration-1000"></div>
           <div className="aspect-square bg-[#0A0A0A] border border-white/5 rounded-[40px] flex items-center justify-center overflow-hidden relative">
             {/* Asset Image Placeholder */}
-            <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[8px] animate-pulse">Scanning Asset...</p>
+            <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[8px] animate-pulse">Loading image…</p>
             
             {/* Floating Spec Tags */}
             <div className="absolute bottom-8 left-8 flex gap-3">
@@ -66,12 +66,12 @@ export default function AssetRequisition() {
         >
           <header>
             <h1 className="text-5xl md:text-7xl font-serif italic mb-2 tracking-tighter">{asset.name}</h1>
-            <p className="text-[#D4AF37] text-xs font-black uppercase tracking-[6px]">{asset.series} | Master Class</p>
+            <p className="text-[#D4AF37] text-xs font-black uppercase tracking-[6px]">{asset.series}</p>
           </header>
 
           <div className="flex items-end gap-4">
              <span className="text-4xl font-serif font-black">₹{asset.valuation.toLocaleString('en-IN')}</span>
-             <span className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-2">Valuation inclusive of Protocol Taxes</span>
+             <span className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-2">Price includes taxes</span>
           </div>
 
           <p className="text-gray-400 font-serif italic text-lg leading-relaxed max-w-lg">
@@ -96,15 +96,15 @@ export default function AssetRequisition() {
                 <span className="w-12 text-center font-mono text-sm">{quantity}</span>
                 <button onClick={() => setQuantity(q => q+1)} className="p-3 hover:text-[#D4AF37] transition-colors"><Plus size={16}/></button>
               </div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Select Units for Requisition</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">How many?</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button className="flex-1 py-6 bg-[#D4AF37] text-black font-black uppercase tracking-[5px] text-[10px] rounded-2xl hover:bg-white transition-all flex items-center justify-center gap-3">
-                Secure Asset <ArrowRight size={14}/>
+                Buy now <ArrowRight size={14}/>
               </button>
               <button className="px-10 py-6 border border-white/10 text-white font-black uppercase tracking-[5px] text-[10px] rounded-2xl hover:bg-white hover:text-black transition-all">
-                Add to Registry
+                Add to cart
               </button>
             </div>
           </div>
@@ -113,11 +113,11 @@ export default function AssetRequisition() {
           <div className="pt-10 border-t border-white/5 flex items-center gap-8">
             <div className="flex items-center gap-3">
               <ShieldCheck className="text-[#D4AF37]" size={18} />
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">2 Year Protocol Warranty</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">2-year warranty</span>
             </div>
             <div className="flex items-center gap-3">
               <Zap className="text-[#D4AF37]" size={18} />
-              <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Priority Dispatch</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Fast shipping</span>
             </div>
           </div>
         </motion.div>
@@ -125,17 +125,17 @@ export default function AssetRequisition() {
 
       {/* ASSET STORY SECTION */}
       <section className="mt-40 pt-40 border-t border-white/5 text-center">
-         <h2 className="text-4xl font-serif italic mb-10 text-gray-600">The Blueprint Details</h2>
+         <h2 className="text-4xl font-serif italic mb-10 text-gray-600">Details</h2>
          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
             <div className="p-10 bg-[#0A0A0A] rounded-[40px] border border-white/5">
                <Info className="text-[#D4AF37] mb-6" size={24} />
-               <h4 className="text-xs font-black uppercase tracking-[4px] mb-4">Material Governance</h4>
+               <h4 className="text-xs font-black uppercase tracking-[4px] mb-4">Materials</h4>
                <p className="text-sm text-gray-500 leading-relaxed font-serif italic">Humne high-grade stainless steel aur scratch-resistant sapphire glass ka use kiya hai jo Kanpur ki garmi aur rough use ko dhyan mein rakh kar banaya gaya hai.</p>
             </div>
             <div className="p-10 bg-[#0A0A0A] rounded-[40px] border border-white/5">
                <CreditCard className="text-[#D4AF37] mb-6" size={24} />
-               <h4 className="text-xs font-black uppercase tracking-[4px] mb-4">Empire Wallet Integration</h4>
-               <p className="text-sm text-gray-500 leading-relaxed font-serif italic">Is asset ki acquisition par aapko ₹1,200 ka instant cashback aapke **Empire Wallet** mein protocol transfer kiya jayega.</p>
+               <h4 className="text-xs font-black uppercase tracking-[4px] mb-4">Cashback</h4>
+               <p className="text-sm text-gray-500 leading-relaxed font-serif italic">On this watch you get ₹1,200 back to your store wallet after you buy.</p>
             </div>
          </div>
       </section>

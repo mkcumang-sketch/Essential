@@ -88,7 +88,7 @@ export default function Navbar() {
                             {/* Dynamic Mobile Auth Link */}
                             {status === 'authenticated' ? (
                                 <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-serif text-green-700 hover:text-green-900 flex items-center justify-center gap-3">
-                                    <ShieldCheck size={28}/> Access Vault
+                                    <ShieldCheck size={28}/> Your account
                                 </Link>
                             ) : (
                                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-3xl font-serif text-gray-900 hover:text-gray-500 flex items-center justify-center gap-3">

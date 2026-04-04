@@ -121,7 +121,7 @@ export function GoldVaultBadge({ tier = "Gold" }: { tier?: string }) {
                     className={`text-[10px] font-black uppercase tracking-[2px] ${isGold ? 'text-[#D4AF37]' : 'text-gray-500'}`}
                     style={{ fontFamily: "'Geist Mono', monospace" }}
                 >
-                    {isGold ? 'Gold Vault' : 'Silver Vault'}
+                    {isGold ? 'Gold' : 'Silver'}
                 </span>
             </div>
         </GoldShimmer>

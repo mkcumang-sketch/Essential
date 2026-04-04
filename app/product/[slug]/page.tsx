@@ -51,7 +51,7 @@ export async function generateMetadata(
   const resolvedParams = await params; // 👈 Unwrapping the Promise
   const product = await getProductData(resolvedParams.slug);
 
-  if (!product) return { title: 'Asset Not Found | Essential Vault' };
+  if (!product) return { title: 'Watch Not Found | Essential Rush' };
 
   const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   const seoTitle = product.seo?.metaTitle || `${product.name} | Essential Fine Horology`;
@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProductData(resolvedParams.slug);
 
   if (!product) {
-      return <div className="h-screen bg-[#050505] text-[#D4AF37] flex items-center justify-center font-serif text-2xl">Vault Asset Unreachable</div>;
+      return <div className="h-screen bg-[#050505] text-[#D4AF37] flex items-center justify-center font-serif text-2xl">We can&apos;t load this watch right now</div>;
   }
 
   return (

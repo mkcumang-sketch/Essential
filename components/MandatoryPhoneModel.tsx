@@ -65,10 +65,10 @@ export default function MandatoryPhoneModal() {
                             <ShieldCheck size={30}/>
                         </div>
                         
-                        <h3 className="text-3xl font-serif font-bold text-white mb-2">Vault Security</h3>
+                        <h3 className="text-3xl font-serif font-bold text-white mb-2">Confirm your phone</h3>
                         <p className="text-[10px] text-gray-400 uppercase tracking-[3px] mb-8 font-bold leading-relaxed">
-                            Welcome {session?.user?.name?.split(' ')[0]}. <br/> 
-                            Please verify your contact number to activate your account.
+                            Hi {session?.user?.name?.split(' ')[0]}. <br/> 
+                            Add your phone number so we can reach you about your order.
                         </p>
                         
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -84,7 +84,7 @@ export default function MandatoryPhoneModal() {
                                 />
                             </div>
                             <button type="submit" disabled={loading} className="w-full py-5 bg-[#D4AF37] text-black font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-white transition-all shadow-xl disabled:opacity-50">
-                                {loading ? 'Authenticating...' : 'Secure & Enter Vault'}
+                                {loading ? 'Please wait...' : 'Continue'}
                             </button>
                         </form>
                     </motion.div>

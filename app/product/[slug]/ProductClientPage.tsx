@@ -67,7 +67,7 @@ const GuestLeadModal = ({ isOpen, onClose, onSubmit, productPrice }: any) => {
                                 <input required value={phone} onChange={e=>setPhone(e.target.value)} type="tel" className="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl text-sm outline-none focus:border-black transition-colors" placeholder="Phone Number / WhatsApp" />
                             </div>
                             <button type="submit" disabled={loading} className="w-full py-5 bg-black text-[#D4AF37] font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-[#D4AF37] hover:text-black transition-all mt-6 shadow-xl disabled:opacity-50">
-                                {loading ? 'Securing...' : 'Continue to Vault'}
+                                {loading ? 'Please wait...' : 'Continue'}
                             </button>
                         </form>
                     </motion.div>
@@ -159,7 +159,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         localStorage.setItem('luxury_cart', JSON.stringify(newCart)); 
         
         setShowLeadModal(false); 
-        showToast("Asset added to your Vault Collection!", "success");
+        showToast("Added to your saved list!", "success");
         setTimeout(() => router.push('/cart'), 500);
     };
 
@@ -208,7 +208,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
             
             {/* LUXURY HEADER */}
             <header className="w-full bg-white/90 backdrop-blur-xl border-b border-gray-200 py-6 px-6 md:px-12 flex justify-between items-center z-50 sticky top-0 shadow-sm">
-                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors"><ArrowLeft size={16}/> Back to Vault</Link>
+                <Link href="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors"><ArrowLeft size={16}/> Back to shop</Link>
                 <h1 className="text-2xl font-serif font-black tracking-[5px] uppercase absolute left-1/2 -translate-x-1/2">Essential</h1>
                 <div className="relative cursor-pointer group" onClick={() => router.push('/cart')}>
                     <ShoppingBag size={24} className="text-black group-hover:scale-110 transition-transform"/>
@@ -321,7 +321,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                     <div className="mt-auto">
                         {/* 🚨 THE SECURE ACQUISITION BUTTON 🚨 */}
                         <button onClick={handleAddToCartClick} className="w-full py-6 bg-black text-white rounded-[20px] font-black uppercase text-sm tracking-[4px] hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3">
-                            <ShoppingBag size={18}/> Secure Acquisition
+                            <ShoppingBag size={18}/> Add to cart
                         </button>
                     </div>
                 </div>
@@ -357,7 +357,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                                     <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center text-gray-400"><User size={20}/></div>
                                     <div>
                                         <p className="font-bold text-lg text-black">{rev.userName}</p>
-                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-widest flex items-center gap-1 mt-0.5"><CheckCircle size={10}/> Verified Acquisition</p>
+                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-widest flex items-center gap-1 mt-0.5"><CheckCircle size={10}/> Checked by us</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-1 text-[#D4AF37]">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={14} fill="currentColor"/>)}</div>
@@ -402,7 +402,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                                         </div>
                                         
                                         <div>
-                                            <label className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-2 block">Asset Rating</label>
+                                            <label className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-2 block">Your rating</label>
                                             <div className="flex gap-2">
                                                 {[1,2,3,4,5].map(star => (
                                                     <button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-all hover:scale-110 ${reviewForm.rating >= star ? 'text-[#D4AF37]' : 'text-gray-300'}`}><Star size={32} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>
@@ -412,7 +412,7 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
 
                                         <div>
                                             <label className="text-[10px] font-black tracking-widest text-gray-500 uppercase mb-2 block">Chronicle</label>
-                                            <textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black custom-scrollbar transition-colors" placeholder="Share the details of your acquisition..."/>
+                                            <textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black custom-scrollbar transition-colors" placeholder="Tell us what you think about this watch..."/>
                                         </div>
                                         
                                         <div className="border-t border-gray-100 pt-6">

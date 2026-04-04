@@ -40,21 +40,21 @@ function SuccessPage() {
                     <CheckCircle size={50} className="text-green-500" />
                 </motion.div>
 
-                <h1 className="text-4xl md:text-5xl font-serif italic text-white mb-4 tracking-tighter">Acquisition Secured</h1>
-                <p className="text-gray-400 font-serif text-lg mb-8">Welcome to the exclusive club. Your premium timepiece is now being prepared for global dispatch.</p>
+                <h1 className="text-4xl md:text-5xl font-serif italic text-white mb-4 tracking-tighter">Order confirmed</h1>
+                <p className="text-gray-400 font-serif text-lg mb-8">Thank you. We are packing your watch and will ship it soon.</p>
 
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-10 text-left space-y-4">
                     <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Transaction Vector</span>
+                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Order ref</span>
                         <span className="text-xs font-mono text-[#D4AF37] tracking-widest">{txnId}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Security Status</span>
-                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">AES-256 Verified</span>
+                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Status</span>
+                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Confirmed</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center gap-2"><Package size={12}/> Next Step</span>
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Awaiting Dispatch</span>
+                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center gap-2"><Package size={12}/> Next step</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Getting ready to ship</span>
                     </div>
                 </div>
 
@@ -63,7 +63,7 @@ function SuccessPage() {
                         Track Order <MapPin size={14}/>
                     </button>
                     <button onClick={() => router.push('/')} className="px-8 py-5 bg-transparent border border-white/20 text-white font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                        Return to Vault <ArrowRight size={14}/>
+                        Back home <ArrowRight size={14}/>
                     </button>
                 </div>
             </motion.div>
@@ -71,7 +71,7 @@ function SuccessPage() {
             {/* SECURE FOOTER */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 text-gray-600 opacity-50">
                 <ShieldCheck size={16}/>
-                <p className="text-[8px] uppercase font-black tracking-[4px]">Essential Rush • Secure Logistics Layer</p>
+                <p className="text-[8px] uppercase font-black tracking-[4px]">Essential Rush • Insured shipping</p>
             </div>
         </div>
     );

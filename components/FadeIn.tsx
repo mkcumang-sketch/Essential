@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="md:col-span-5 space-y-8">
           <h2 className="text-4xl font-serif italic font-bold tracking-tight text-white">Essential <span className="text-gold-500">Rush</span></h2>
           <p className="text-gray-400 text-sm leading-loose max-w-sm font-light">
-            We are the guardians of time. Curating an exclusive collection of the world's finest horological masterpieces for the discerning collector.
+            Premium watches, chosen with care. Straight talk, clear photos, and service you can count on.
           </p>
           <div className="flex gap-4">
             {[Instagram, Facebook, Twitter, Mail].map((Icon, i) => (
@@ -23,7 +23,7 @@ export default function Footer() {
 
         {/* Links (Col 1) */}
         <div className="md:col-span-2">
-          <h3 className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-8">Maison</h3>
+          <h3 className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-8">Shop</h3>
           <ul className="space-y-6 text-xs font-medium text-gray-300 uppercase tracking-widest">
             <li><Link href="/collection" className="hover:text-gold-400 transition-colors flex items-center gap-2 group">Collection <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity"/></Link></li>
             <li><Link href="/about" className="hover:text-gold-400 transition-colors">Heritage</Link></li>
@@ -34,9 +34,9 @@ export default function Footer() {
 
         {/* Contact (Col 2) */}
         <div className="md:col-span-5">
-          <h3 className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-8">Concierge</h3>
+          <h3 className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-8">Contact</h3>
           <p className="text-3xl font-serif text-white mb-2">+91 98765 43210</p>
-          <p className="text-gray-500 text-xs uppercase tracking-widest mb-10">Available 24/7 for Private Viewing</p>
+          <p className="text-gray-500 text-xs uppercase tracking-widest mb-10">We answer day or night</p>
 
           <form className="flex border-b border-white/20 pb-4">
             <input 
@@ -53,7 +53,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-500 uppercase tracking-widest px-6 md:px-12">
-        <p>© 2026 Essential Rush. A Legacy Company.</p>
+        <p>© 2026 Essential Rush</p>
         <div className="flex gap-8 mt-4 md:mt-0">
           <span className="hover:text-gold-500 cursor-pointer transition-colors">Privacy Policy</span>
           <span className="hover:text-gold-500 cursor-pointer transition-colors">Terms of Service</span>

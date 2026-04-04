@@ -16,7 +16,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     }
   }, [session, status, isAdmin, router]);
 
-  if (status === "loading") return <div className="p-10 text-center">Verifying Vault Access...</div>;
+  if (status === "loading") return <div className="p-10 text-center">Checking your access…</div>;
   
   // 🚨 RENDER BLOCKER
   if (!session || !isAdmin) return null;

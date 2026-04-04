@@ -62,17 +62,17 @@ export default function VendorDashboard() {
 
            <div className="bg-white p-8 rounded-[30px] border border-gray-100 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 p-6 opacity-5"><Package size={80}/></div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Active Assets in Vault</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Active listings</p>
               <h3 className="text-4xl font-black">0</h3>
            </div>
         </div>
 
         {/* VENDOR PRODUCT LIST */}
         <div className="bg-white rounded-[30px] border border-gray-100 p-8 shadow-sm">
-           <h3 className="text-lg font-bold mb-6">Your Asset Portfolio</h3>
+           <h3 className="text-lg font-bold mb-6">Your products</h3>
            <div className="border border-gray-100 rounded-2xl p-12 text-center text-gray-400 border-dashed">
               <Package size={40} className="mx-auto mb-4 opacity-50"/>
-              <p className="text-xs font-black uppercase tracking-widest">You haven't listed any assets yet.</p>
+              <p className="text-xs font-black uppercase tracking-widest">You have not listed any products yet.</p>
            </div>
         </div>
       </main>

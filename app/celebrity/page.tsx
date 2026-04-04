@@ -17,7 +17,7 @@ export default function CelebrityPage() {
     fetchCelebs();
   }, []);
 
-  if (loading) return <div className="h-screen bg-black flex items-center justify-center text-gold-500 animate-pulse tracking-widest uppercase text-xs">Accessing The Vault...</div>;
+  if (loading) return <div className="h-screen bg-black flex items-center justify-center text-gold-500 animate-pulse tracking-widest uppercase text-xs">Loading…</div>;
 
   return (
     <main className="pt-20 bg-black min-h-screen">
@@ -25,9 +25,9 @@ export default function CelebrityPage() {
       
       {/* Dynamic CTA */}
       <div className="pb-32 text-center">
-        <p className="text-gray-600 text-[10px] font-black uppercase tracking-[0.5em] mb-8 italic">Acquire the look of icons</p>
+        <p className="text-gray-600 text-[10px] font-black uppercase tracking-[0.5em] mb-8 italic">Get a similar style</p>
         <button className="bg-white text-black px-12 py-5 rounded-full font-black uppercase text-[10px] tracking-[0.3em] hover:bg-gold-500 transition-all">
-          Shop Their Selection
+          Shop the edit
         </button>
       </div>
     </main>
