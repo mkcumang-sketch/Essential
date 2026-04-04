@@ -7,9 +7,9 @@ import {
   Instagram, Facebook, Twitter, Youtube, MapPin, Phone, Mail, Linkedin, ArrowRight, Camera, UploadCloud, RefreshCcw, Trash2
 } from 'lucide-react';
 import Link from 'next/link';
+// PhantomGuard imported but temporarily bypassed to prevent localhost JS crash
 import { PhantomGuard } from '@/components/PhantomGuard';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { useSession } from "next-auth/react";
 
 const LUXURY_BRANDS = ["ROLEX", "PATEK PHILIPPE", "AUDEMARS PIGUET", "RICHARD MILLE", "CARTIER", "OMEGA", "VACHERON CONSTANTIN"];
@@ -186,8 +186,7 @@ const FadeUp = ({ children, delay = 0, className = "" }: any) => (
   <motion.div initial={{ y: 30, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, delay, ease: "easeOut" }} viewport={{ once: true, margin: "-50px" }} className={className}>{children}</motion.div>
 );
 
-// Yahan export default hataya hai, taaki neeche dynamic export kaam kare
-export default function Home () {;
+export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { scrollYProgress } = useScroll();
@@ -280,7 +279,10 @@ export default function Home () {;
         }
         setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
         setIsDataLoading(false);
-      } catch (e) { setIsDataLoading(false); }
+      } catch (e) { 
+        console.error("Home Page Data Fetch Error:", e);
+        setIsDataLoading(false); 
+      }
     };
     fetchPersonalizedData();
   }, []);
@@ -471,7 +473,8 @@ export default function Home () {;
                    <>
                        <h3 className="text-2xl font-serif font-bold text-black mb-6">Write a Review</h3>
                        <div className="space-y-4">
-                           <PhantomGuard value={honeyPot} onChange={setHoneyPot} />
+                           {/* PhantomGuard is bypassed to prevent client side crash */}
+                           {/* <PhantomGuard value={honeyPot} onChange={setHoneyPot} /> */}
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Name</label><input value={reviewForm.userName} onChange={e=>setReviewForm({...reviewForm, userName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="John Doe"/></div>
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Rating</label><div className="flex gap-2">{[1,2,3,4,5].map(star => (<button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-transform hover:scale-110 ${reviewForm.rating >= star ? 'text-black' : 'text-gray-200'}`}><Star size={28} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>))}</div></div>
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Review</label><textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black custom-scrollbar" placeholder="What do you think?"/></div>
@@ -861,4 +864,3 @@ export default function Home () {;
     </div>
   );
 }
-

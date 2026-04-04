@@ -3,6 +3,9 @@ export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getServerSession } from "next-auth";
+// 🚨 FIX: Session options import karna zaroori hai
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const connectDB = async () => {
     if (mongoose.connection.readyState < 1) {
@@ -10,14 +13,50 @@ const connectDB = async () => {
     }
 };
 
-// 🌟 1. GET ORDERS (Admin Panel Load Hone Par)
+// 🌟 1. GET ORDERS (SMART FILTER: Admin sees all, Users see their own)
 export async function GET() {
     try {
         await connectDB();
+        
+        // 🛡️ SECURITY LOCK: Pehchano kaun aaya hai
+        const session = await getServerSession(authOptions);
+
+        if (!session || !session.user) {
+            return NextResponse.json({ success: false, error: "Unauthorized access! Please login." }, { status: 401 });
+        }
+
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        const orders = await Order.find({}).sort({ createdAt: -1 });
+        const sessionUser = session.user as any;
+        let orders = [];
+
+        // 👑 SUPER_ADMIN KO SAB DIKHEGA
+        if (sessionUser.role === 'SUPER_ADMIN') {
+            orders = await Order.find({}).sort({ createdAt: -1 });
+        } 
+        // 👤 NORMAL USER KO SIRF APNA DIKHEGA
+        else {
+            const queryConditions = [];
+            
+            // Har tarah se order dhoondho (ID, Email, Phone)
+            if (sessionUser.id) {
+                queryConditions.push({ user: sessionUser.id }, { userId: sessionUser.id });
+            }
+            if (sessionUser.email) {
+                queryConditions.push({ "customer.email": sessionUser.email }, { email: sessionUser.email });
+            }
+            if (sessionUser.phone && !sessionUser.phone.startsWith('GOOG-')) {
+                queryConditions.push({ "customer.phone": sessionUser.phone }, { phone: sessionUser.phone });
+            }
+
+            // Agar koi valid ID/Email/Phone mila, tabhi search karo
+            if (queryConditions.length > 0) {
+                orders = await Order.find({ $or: queryConditions }).sort({ createdAt: -1 });
+            }
+        }
+
         return NextResponse.json({ success: true, data: orders, orders: orders });
     } catch (error) {
+        console.error("Orders Fetch Error:", error);
         return NextResponse.json({ success: false, error: "Failed to fetch orders" });
     }
 }
@@ -28,7 +67,6 @@ export async function PUT(req: Request) {
         await connectDB();
         const body = await req.json();
         
-        // Frontend 'id' bheje ya '_id', hum dono pakad lenge
         const orderId = body._id || body.id; 
         const newStatus = body.status;
 
@@ -37,8 +75,6 @@ export async function PUT(req: Request) {
         }
 
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        
-        // Database mein naya status permanent save karo
         await Order.findByIdAndUpdate(orderId, { status: newStatus });
 
         return NextResponse.json({ success: true, message: "Status updated successfully!" });
@@ -47,7 +83,6 @@ export async function PUT(req: Request) {
     }
 }
 
-// Agar frontend galti se POST ya PATCH bhejta hai, tab bhi update chalega!
 export async function POST(req: Request) { return PUT(req); }
 export async function PATCH(req: Request) { return PUT(req); }
 
@@ -69,8 +104,6 @@ export async function DELETE(req: Request) {
         }
 
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        
-        // 🚨 ZAMEEN SE MITA DO: Order hamesha ke liye delete. Customer ko kabhi nahi dikhega!
         await Order.findByIdAndDelete(orderId);
 
         return NextResponse.json({ success: true, message: "Order completely deleted" });

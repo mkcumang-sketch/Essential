@@ -8,6 +8,7 @@ import {
     Filter, ChevronDown, ShoppingBag, Star, X, Search, 
     ArrowRight, SlidersHorizontal, ArrowLeft, ShieldCheck, CheckCircle 
 } from 'lucide-react';
+
 export default function CataloguePage() {
     const [products, setProducts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,19 +21,29 @@ export default function CataloguePage() {
     const { showToast } = useToast();
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-    // Fetch Products on Mount
+    // 🚀 BULLETPROOF FETCH LOGIC
     useEffect(() => {
         const fetchProducts = async () => {
             try {
                 const ts = new Date().getTime();
                 const res = await fetch(`/api/products?t=${ts}`);
+                
+                // Agar response 200 OK nahi hai toh json parse mat karo, seedha error throw karo
+                if (!res.ok) throw new Error("Backend connection failed");
+                
                 const data = await res.json();
-                if (data.data) {
+                
+                if (data && data.data) {
                     setProducts(data.data);
+                } else if (Array.isArray(data)) {
+                    setProducts(data); // Fallback just in case API structure changes
                 }
-                setIsLoading(false);
             } catch (error) {
-                console.error("Failed to fetch catalogue", error);
+                console.error("Failed to fetch catalogue:", error);
+                // Agar error aaya toh khali array set kar do
+                setProducts([]); 
+            } finally {
+                // 'finally' block ensures ki loader hamesha band hoga, chahe error aaye ya success
                 setIsLoading(false);
             }
         };
@@ -103,10 +114,12 @@ export default function CataloguePage() {
             : [...cart, {...product, qty: 1}];
         
         localStorage.setItem('luxury_cart', JSON.stringify(newCart));
-        alert(`${product.name} added to your vault!`);
         showToast("Added to your Vault Collection!", "success");
+        
         // Optional: Dispatch event to update navbar cart count if using event listeners
-        window.dispatchEvent(new Event('cartUpdated')); 
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('cartUpdated')); 
+        }
     };
 
     if (isLoading) {

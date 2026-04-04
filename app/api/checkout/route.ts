@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { sendOrderConfirmationEmail } from "@/utils/sendOrderConfirmationEmail";
 
 const connectDB = async () => {
@@ -13,56 +14,76 @@ const connectDB = async () => {
 export async function POST(req: Request) {
     try {
         await connectDB();
-        
-        // 🔥 FRONTEND PE BHAROSA BAND. SEEDHA SESSION SE ASLI EMAIL NIKALO 🔥
-        const session = await getServerSession();
-        if (!session || !session.user || !session.user.email) {
-            return NextResponse.json({ success: false, error: "Unauthorized. Please login again." }, { status: 401 });
-        }
-        
-        const REAL_EMAIL = session.user.email.toLowerCase().trim();
 
-        const data = await req.json(); 
+        const session = await getServerSession(authOptions);
+        const currentUser = session?.user as any;
+
+        if (!currentUser || (!currentUser.email && !currentUser.phone)) {
+            return NextResponse.json({ success: false, error: "Unauthorized. Please login." }, { status: 401 });
+        }
+
+        // 🚨 MASTER FIX: Cookie ka jhanjhat chhod, seedha Database se Asli ID utha!
+        let absoluteUserId = currentUser.id;
+        const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
+        const userQuery = [];
+        if (currentUser.email) userQuery.push({ email: currentUser.email });
+        if (currentUser.phone && !currentUser.phone.startsWith('GOOG-')) userQuery.push({ phone: currentUser.phone });
+
+        if (userQuery.length > 0) {
+            const dbUser = await User.findOne({ $or: userQuery }).lean() as any;
+            if (dbUser && dbUser._id) absoluteUserId = dbUser._id.toString();
+        }
+
+        if (!absoluteUserId) {
+            return NextResponse.json({ success: false, error: "User identity unverified." }, { status: 400 });
+        }
+
+        const data = await req.json();
         let { items, totalAmount, financialBreakdown, appliedReferralCode, customer, paymentMethod } = data;
 
-        // 🚨 STRICT OVERRIDE: Customer object ko forcefully sahi email do
         if (!customer) customer = {};
-        customer.email = REAL_EMAIL; // Koi aur email yahan aa hi nahi sakti ab
-        if (session.user.name) customer.name = session.user.name;
+        if (currentUser.email) customer.email = currentUser.email.toLowerCase().trim();
+        if (!customer.phone && currentUser.phone && !currentUser.phone.startsWith('GOOG-')) {
+            customer.phone = currentUser.phone;
+        }
+        if (currentUser.name) customer.name = currentUser.name;
 
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        const orderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
-        
+
+        const uniqueNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
         const newOrder = await Order.create({
-            orderId, 
-            customer, // 100% Verified Google Email
-            items, 
-            totalAmount, 
-            financialBreakdown, 
-            appliedReferralCode, 
+            orderId: uniqueNumber,
+            orderNumber: uniqueNumber,
+            userId: absoluteUserId, // 🔒 IRONCLAD LOCK: Form mein kuch bhi likho, order issi ID ka rahega
+            user: absoluteUserId,
+            customer,
+            items,
+            totalAmount,
+            financialBreakdown,
+            appliedReferralCode,
             paymentMethod,
             status: 'PROCESSING',
             createdAt: new Date()
         });
 
-        // 🚀 Automated Order Confirmation Email (non-blocking)
-        void (async () => {
-            try {
-                await sendOrderConfirmationEmail({
-                    to: REAL_EMAIL,
-                    customerName: session.user.name || "",
-                    orderId: newOrder.orderId,
-                    amount: typeof totalAmount === "number" ? totalAmount : Number(totalAmount || 0),
-                });
-            } catch (e) {
-                console.error("Order confirmation email failed:", e);
-            }
-        })();
+        if (currentUser.email) {
+            void (async () => {
+                try {
+                    await sendOrderConfirmationEmail({
+                        to: currentUser.email.toLowerCase().trim(),
+                        customerName: currentUser.name || "Customer",
+                        orderId: newOrder.orderId,
+                        amount: Number(totalAmount || 0),
+                    });
+                } catch (e) { }
+            })();
+        }
 
-        // Cleanup Abandoned Carts
         try {
             const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
-            await AbandonedCart.deleteMany({ email: REAL_EMAIL });
+            if (currentUser.email) await AbandonedCart.deleteMany({ email: currentUser.email.toLowerCase().trim() });
+            if (currentUser.phone) await AbandonedCart.deleteMany({ phone: currentUser.phone });
         } catch (e) {}
 
         return NextResponse.json({ success: true, orderId: newOrder.orderId });

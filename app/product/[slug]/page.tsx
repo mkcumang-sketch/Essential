@@ -44,17 +44,19 @@ const getProductData = async (slug: string) => {
 
 // 🌟 2. DYNAMIC SEO METADATA GENERATOR
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
+  // 🚀 FIX: params ko Promise banana zaroori hai Next.js ke naye rule ke hisaab se
+  { params }: { params: Promise<{ slug: string }> },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const product = await getProductData(params.slug);
+  const resolvedParams = await params; // 👈 Unwrapping the Promise
+  const product = await getProductData(resolvedParams.slug);
 
   if (!product) return { title: 'Asset Not Found | Essential Vault' };
 
   const baseUrl = process.env.NEXTAUTH_URL || 'https://essential-ivory.vercel.app';
   const seoTitle = product.seo?.metaTitle || `${product.name} | Essential Fine Horology`;
   const seoDesc = product.seo?.metaDescription || product.description?.substring(0, 155) || 'Discover luxury timepieces.';
-  const canonical = product.seo?.canonicalUrl || `${baseUrl}/product/${params.slug}`;
+  const canonical = product.seo?.canonicalUrl || `${baseUrl}/product/${resolvedParams.slug}`;
   const ogImage = product.seo?.ogImage || product.imageUrl || (product.images && product.images[0]);
 
   return {
@@ -127,8 +129,10 @@ const JsonLdSchema = ({ product, slug }: { product: any, slug: string }) => {
 };
 
 // 🌟 4. MAIN PAGE RENDERER
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await getProductData(params.slug);
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  // 🚀 FIX: Yahan bhi pehle await lagana zaroori hai
+  const resolvedParams = await params;
+  const product = await getProductData(resolvedParams.slug);
 
   if (!product) {
       return <div className="h-screen bg-[#050505] text-[#D4AF37] flex items-center justify-center font-serif text-2xl">Vault Asset Unreachable</div>;
@@ -136,8 +140,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   return (
     <>
-      <JsonLdSchema product={product} slug={params.slug} />
-      <ProductClientPage initialProduct={product} slug={params.slug} />
+      <JsonLdSchema product={product} slug={resolvedParams.slug} />
+      <ProductClientPage initialProduct={product} slug={resolvedParams.slug} />
     </>
   );
 }

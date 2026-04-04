@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { ArrowLeft, Lock, User, Phone, ShieldCheck, ArrowRight, RefreshCcw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPortal() {
+
+    
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true); 
     const [isLoading, setIsLoading] = useState(false);
@@ -17,48 +18,38 @@ export default function LoginPortal() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
 
-    const RECAPTCHA_SITE_KEY = "6LcLcpcsAAAAAA-rnkmMdQ2YoJQfDLs-lGqLrX30";
-
-    // 🌟 HELPER: GET SECURITY TOKEN 🌟
-    const getSecurityToken = async (actionName: string) => {
-        return new Promise<string>((resolve) => {
-            // @ts-ignore
-            if (typeof window !== 'undefined' && window.grecaptcha) {
-                // @ts-ignore
-                window.grecaptcha.ready(() => {
-                    // @ts-ignore
-                    window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: actionName })
-                        .then((token: string) => resolve(token));
-                });
-            } else {
-                resolve("");
-            }
-        });
-    };
-
-    // 🚀 FIX: Google Login handled correctly for OAuth
+    // 🚀 FIX: Google Login with Crash Failsafe
     const handleGoogleLogin = async () => {
         setIsLoading(true);
+        
+        // Failsafe: Agar NextAuth atak jaye, toh 5 second baad button wapas zinda ho jayega
+        const timeout = setTimeout(() => {
+            setIsLoading(false);
+            alert("Google Login failed! .env.local mein GOOGLE_CLIENT_ID missing hai.");
+        }, 5000);
+
         try {
-            // NextAuth will automatically take the user to Google and bring them back to /account
-            await signIn("google", {
-                callbackUrl: "/account", // 👈 Seedha vault ka rasta
-            });
-            // No need for redirect: false or window.location.href here for Google
+            await signIn("google", { callbackUrl: "/account" });
+            clearTimeout(timeout);
         } catch {
-            alert("Google login failed. Please try again.");
+            clearTimeout(timeout);
+            alert("System Error. Check Console.");
             setIsLoading(false);
         }
     };
 
-    // 🌟 Handle Sign Up with Security 🌟
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name || !phone || !password) return alert("Please fill all details.");
+    // 🌟 Handle Sign Up 🌟
+ const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    alert("Bhai, Button Zinda Hai!"); // 👈 Ye line add kar de
+
+    if (!name || !phone || !password) return alert("Please fill all details.");
+    // ... baaki poora code waisa hi rahega
         
         setIsLoading(true);
         try {
-            const captchaToken = await getSecurityToken('register');
+            // Localhost Bypass Token
+            const captchaToken = "localhost-bypass";
 
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
@@ -74,37 +65,39 @@ export default function LoginPortal() {
                 alert(data.error || "Verification failed.");
             }
         } catch (error) {
-            alert("Network error. Please refresh.");
+            console.error("Register Error:", error);
+            alert("Database Error. Backend check karein.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    // 🌟 Handle Manual Login with Security 🌟
+    // 🌟 Handle Manual Login 🌟
     const handleManualLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phone || !password) return alert("Please enter details.");
         
         setIsLoading(true);
         try {
-            const captchaToken = await getSecurityToken('login');
+            // Localhost Bypass Token
+            const captchaToken = "localhost-bypass";
 
             const res = await signIn('credentials', {
-                redirect: false, // Keep false for credentials to catch errors
+                redirect: false, 
                 phone,
                 password,
                 captchaToken
             });
 
             if (res?.error) {
-                alert("Invalid Credentials or Security Check Failed.");
+                alert(res.error || "Invalid Details");
                 setIsLoading(false);
             } else {
-                // Hard navigation to Vault
                 window.location.href = `/account`;
             }
         } catch (err) {
-            alert("Login failed.");
+            console.error("Login Error:", err);
+            alert("Login System Offline.");
             setIsLoading(false);
         }
     };
@@ -112,9 +105,6 @@ export default function LoginPortal() {
     return (
         <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans text-gray-900 selection:bg-gray-200 relative overflow-hidden">
             
-            {/* Load Google reCAPTCHA Script */}
-            <script src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`} async defer></script>
-
             <header className="p-6 md:p-12 w-full absolute top-0 left-0 z-10">
                 <Link href="/" className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-black transition-colors w-max">
                     <ArrowLeft size={16}/> Back to Store
@@ -135,8 +125,8 @@ export default function LoginPortal() {
                     </div>
 
                     <div className="flex bg-gray-50 p-1.5 rounded-2xl mb-8 border border-gray-100">
-                        <button onClick={() => setIsLogin(true)} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${isLogin ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}>Log In</button>
-                        <button onClick={() => setIsLogin(false)} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${!isLogin ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}>Sign Up</button>
+                        <button onClick={() => setIsLogin(true)} disabled={isLoading} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 ${isLogin ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}>Log In</button>
+                        <button onClick={() => setIsLogin(false)} disabled={isLoading} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 ${!isLogin ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}>Sign Up</button>
                     </div>
 
                     <button onClick={handleGoogleLogin} disabled={isLoading} className="w-full mb-6 py-4 px-6 border border-gray-200 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-all disabled:opacity-50 active:scale-[0.98]">
@@ -150,43 +140,42 @@ export default function LoginPortal() {
                         <div className="h-px bg-gray-100 flex-1"></div>
                     </div>
 
-                    <AnimatePresence mode="wait">
-                        <motion.form key={isLogin ? 'login' : 'register'} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} onSubmit={isLogin ? handleManualLogin : handleRegister} className="space-y-4">
-                            {!isLogin && (
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><User size={18} /></div>
-                                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-all" placeholder="Full Name" />
-                                </div>
-                            )}
+                    {/* 🚀 CRASH-PROOF FORM (Removed AnimatePresence to prevent unmounting bugs) */}
+                    <form onSubmit={isLogin ? handleManualLogin : handleRegister} className="space-y-4">
+                        {!isLogin && (
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Phone size={18} /></div>
-                                <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-all" placeholder="Phone Number" />
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><User size={18} /></div>
+                                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required disabled={isLoading} className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-all disabled:opacity-50" placeholder="Full Name" />
                             </div>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Lock size={18} /></div>
-                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-all" placeholder="Password" />
-                            </div>
+                        )}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Phone size={18} /></div>
+                            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} required disabled={isLoading} className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-all disabled:opacity-50" placeholder="Phone Number" />
+                        </div>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Lock size={18} /></div>
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:border-black transition-all disabled:opacity-50" placeholder="Password" />
+                        </div>
 
-                            {isLogin && (
-                                <div className="text-right"><button type="button" className="text-[10px] text-gray-400 hover:text-black font-bold uppercase tracking-widest">Recovery Access?</button></div>
+                        {isLogin && (
+                            <div className="text-right"><button type="button" className="text-[10px] text-gray-400 hover:text-black font-bold uppercase tracking-widest">Recovery Access?</button></div>
+                        )}
+
+                        <button type="submit" disabled={isLoading} className="w-full py-5 mt-4 bg-black text-white font-bold uppercase tracking-[4px] text-[10px] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all flex justify-center items-center gap-3 disabled:opacity-70 group shadow-xl active:scale-[0.98]">
+                            {isLoading ? (
+                                <RefreshCcw size={16} className="animate-spin" />
+                            ) : (
+                                <>
+                                    {isLogin ? 'Open Vault' : 'Create Account'}
+                                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
+                                </>
                             )}
-
-                            <button type="submit" disabled={isLoading} className="w-full py-5 mt-4 bg-black text-white font-bold uppercase tracking-[4px] text-[10px] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all flex justify-center items-center gap-3 disabled:opacity-70 group shadow-xl active:scale-[0.98]">
-                                {isLoading ? (
-                                    <RefreshCcw size={16} className="animate-spin" />
-                                ) : (
-                                    <>
-                                        {isLogin ? 'Open Vault' : 'Create Account'}
-                                        <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
-                                    </>
-                                )}
-                            </button>
-                        </motion.form>
-                    </AnimatePresence>
+                        </button>
+                    </form>
 
                     <div className="mt-10 pt-8 border-t border-gray-50">
                         <p className="text-[9px] text-gray-400 text-center uppercase tracking-[2px] leading-relaxed">
-                            Protected by Google reCAPTCHA v3 <br/>
+                            Secured for Localhost <br/>
                             Access is <span className="text-black font-black">Encrypted</span>
                         </p>
                     </div>

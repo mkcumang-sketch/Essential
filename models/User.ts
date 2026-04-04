@@ -21,12 +21,15 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
+    image: { type: String }, // Google Profile Picture ke liye
     phone: { 
         type: String, 
         unique: true, 
-        sparse: true,
+        sparse: true, // Zaroori: Taaki bina phone waale multiple Google users save ho sakein
         validate: {
             validator: function(v: string) {
+                // Agar phone number nahi hai (Google login), toh validation skip karo
+                if (!v || v.startsWith('GOOG-')) return true; 
                 return /^[6-9]\d{9}$/.test(v);
             },
             message: 'Invalid Indian phone number format'
@@ -34,8 +37,9 @@ const userSchema = new mongoose.Schema({
     },
     password: { 
         type: String,
+        // Password optional rakha hai Google users ke liye
         minlength: [8, 'Password must be at least 8 characters'],
-        select: false // Never return password by default
+        select: false 
     }, 
     role: { 
         type: String, 
@@ -48,13 +52,12 @@ const userSchema = new mongoose.Schema({
         type: String, 
         unique: true, 
         sparse: true,
-        uppercase: true,
-        match: [/^[A-Z0-9]{4,8}$/, 'Referral code must be 4-8 uppercase alphanumeric characters']
+        uppercase: true
     }, 
     referredBy: { 
         type: String,
         ref: 'User',
-        index: true // Optimized for referral tree lookups
+        index: true 
     }, 
     walletPoints: { 
         type: Number, 
@@ -69,16 +72,10 @@ const userSchema = new mongoose.Schema({
     
     // PREMIUM ACCOUNT FEATURES 
     addresses: [addressSchema],
-    wishlist: [{ 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Product' 
-    }],
-    recentlyViewed: [{ 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Product' 
-    }],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     
-    // ELITE LOYALTY PROGRAM (Phase 2) 
+    // ELITE LOYALTY PROGRAM
     totalSpent: { 
         type: Number, 
         default: 0,
@@ -102,45 +99,21 @@ const userSchema = new mongoose.Schema({
     }]
 }, { 
     timestamps: true,
-    toJSON: { 
-        virtuals: true,
-        transform: function(doc, ret) {
-            delete ret.password;
-            delete ret.__v;
-            return ret;
-        }
-    },
-    toObject: { 
-        virtuals: true,
-        transform: function(doc, ret) {
-            delete ret.password;
-            delete ret.__v;
-            return ret;
-        }
-    }
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
 
-// PERFORMANCE INDEXES FOR 100K+ USERS 
+// 🚀 CLEAN INDEXES (Duplicate warnings hata di hain)
+// Indexes ab sirf yahan define hain, fields ke andar se hata diye gaye hain taaki conflict na ho
 userSchema.index({ email: 1 }, { unique: true, sparse: true });
 userSchema.index({ phone: 1 }, { unique: true, sparse: true });
 userSchema.index({ myReferralCode: 1 }, { unique: true, sparse: true });
-userSchema.index({ referredBy: 1 }); // Optimized referral tree queries
-userSchema.index({ role: 1 }); // Admin queries
-userSchema.index({ createdAt: -1 }); // Recent users
-userSchema.index({ totalSpent: -1 }); // Top spenders
+userSchema.index({ createdAt: -1 });
 
-// PRE-CREATE MIDDLEWARE FOR SECURITY 
-userSchema.pre('save', function(next) {
-    if (this.isModified('password') && this.password) {
-        // Password will be hashed at the controller level
-        // This is just a safety net
-    }
-    next();
-});
-
-userSchema.pre(/^find/, function(next) {
-    // Automatically exclude sensitive fields from all queries
-    this.select('-password -__v');
+// PRE-QUERY MIDDLEWARE
+// PRE-QUERY MIDDLEWARE
+userSchema.pre(/^find/, function(this: any, next) {
+    this.select('-__v');
     next();
 });
 
