@@ -46,10 +46,10 @@ function HeritageEngine() {
   const imageScale = useTransform(smoothScroll, [0, 1], [1, 1.2]);
 
   const timeline = [
-    { year: "1839", title: "The Horological Dawn", desc: "The foundational blueprints of our first grand complication were drafted by master artisans in Geneva." },
-    { year: "1926", title: "Defying the Elements", desc: "Introduction of the world's first hermetically sealed case, ensuring precision in extreme depths." },
-    { year: "1969", title: "The Automatic Era", desc: "Revolutionizing kinematics with the first self-winding chronograph caliber." },
-    { year: "2026", title: "Essential Rush", desc: "The modern apex of luxury acquisition, curating history's greatest timepieces for the next generation." }
+    { year: "1839", title: "Where it began", desc: "Craftsmen in Geneva set the standard for fine watchmaking that we still follow today." },
+    { year: "1926", title: "Built to last", desc: "Tough cases and careful seals so watches keep time even in harsh conditions." },
+    { year: "1969", title: "Self-winding wins", desc: "Watches that wind as you move—less fuss, more wear." },
+    { year: "2026", title: "Essential Rush", desc: "We pick standout watches for people who want quality without the noise." }
   ];
 
   return (
@@ -79,9 +79,9 @@ function HeritageEngine() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]"></div>
         
         <motion.div style={{ y: textY, opacity: textOpacity }} className="relative z-10 text-center px-6">
-           <p className="text-[#D4AF37] text-[10px] md:text-xs font-black uppercase tracking-[20px] md:tracking-[30px] mb-8">Our Genesis</p>
+           <p className="text-[#D4AF37] text-[10px] md:text-xs font-black uppercase tracking-[20px] md:tracking-[30px] mb-8">Since day one</p>
            <h1 className="text-6xl md:text-[140px] lg:text-[180px] font-serif tracking-tighter leading-[0.8] text-white italic drop-shadow-2xl">
-             Legacy in <br/> Motion.
+             Built for <br/> the long run.
            </h1>
         </motion.div>
       </section>
@@ -91,9 +91,9 @@ function HeritageEngine() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4AF37] blur-[250px] opacity-[0.05] rounded-full pointer-events-none"></div>
         <FadeUp>
           <div className="text-[#D4AF37] mb-12 flex justify-center"><ShieldCheck size={50} strokeWidth={1}/></div>
-          <h2 className="text-4xl md:text-7xl font-serif italic mb-16 leading-tight tracking-tighter">"We do not merely sell timepieces. We act as custodians for mechanical masterpieces transitioning between generations."</h2>
+          <h2 className="text-4xl md:text-7xl font-serif italic mb-16 leading-tight tracking-tighter">"We do not just sell watches. We help you own something worth passing down."</h2>
           <p className="text-gray-400 font-serif text-xl md:text-3xl leading-relaxed max-w-4xl mx-auto italic">
-            At Essential Rush, our philosophy is rooted in absolute provenance. Every asset that enters our vault undergoes a rigorous 30-day horological authentication process in our Geneva laboratory, ensuring the legacy you acquire is mathematically perfect.
+            Every watch we offer is checked with care. Our team in Geneva runs a full 30-day review so you know what you buy is real, sound, and ready to wear for years.
           </p>
         </FadeUp>
       </section>
@@ -102,7 +102,7 @@ function HeritageEngine() {
       <section className="py-32 md:py-48 bg-[#0A0A0A] border-t border-white/5 relative">
         <div className="max-w-[1600px] mx-auto px-6 md:px-20">
           <FadeUp className="text-center mb-32">
-            <h2 className="text-5xl md:text-8xl font-serif italic tracking-tighter text-white">The Timeline.</h2>
+            <h2 className="text-5xl md:text-8xl font-serif italic tracking-tighter text-white">Our path</h2>
           </FadeUp>
           
           <div className="relative">
@@ -136,16 +136,16 @@ function HeritageEngine() {
         <div className="max-w-[2000px] mx-auto px-6 md:px-20">
           <FadeUp className="mb-24 flex flex-col md:flex-row justify-between items-end border-b border-white/10 pb-12">
             <div>
-              <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[10px] mb-6">The Ateliers</p>
-              <h2 className="text-6xl md:text-[100px] font-serif tracking-tighter italic">Swiss Mastery.</h2>
+              <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[10px] mb-6">The workshop</p>
+              <h2 className="text-6xl md:text-[100px] font-serif tracking-tighter italic">Swiss skill</h2>
             </div>
           </FadeUp>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { title: "Anglage & Polishing", desc: "Hours of microscopic hand-finishing on every bridge.", img: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?q=80&w=800" },
-              { title: "Chronometric Testing", desc: "Regulated to superlative standards exceeding COSC.", img: "https://images.unsplash.com/photo-1508685096489-77a46807e604?q=80&w=800" },
-              { title: "Final Assembly", desc: "Assembled by master watchmakers with decades of lineage.", img: "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=800" }
+              { title: "Hand finish", desc: "Tiny details polished by hand so the movement looks as good as it runs.", img: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?q=80&w=800" },
+              { title: "Timing tests", desc: "Checked to run accurately—stricter than everyday factory checks.", img: "https://images.unsplash.com/photo-1508685096489-77a46807e604?q=80&w=800" },
+              { title: "Final build", desc: "Put together by watchmakers who have done this for decades.", img: "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=800" }
             ].map((craft, i) => (
               <FadeUp key={i} delay={i * 0.2}>
                 <div className="group relative h-[600px] rounded-[40px] overflow-hidden bg-black shadow-2xl">
@@ -165,10 +165,10 @@ function HeritageEngine() {
       <section className="py-40 bg-[#001A0F] text-center border-t border-[#D4AF37]/20">
         <FadeUp>
           <div className="w-20 h-20 mx-auto rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] mb-10"><Compass size={32}/></div>
-          <h2 className="text-5xl md:text-7xl font-serif italic mb-10">Own the Heritage.</h2>
-          <p className="text-gray-400 text-xl md:text-2xl font-serif italic max-w-2xl mx-auto mb-16">Enter the vault to acquire pieces that transcend time.</p>
+          <h2 className="text-5xl md:text-7xl font-serif italic mb-10">Find your watch</h2>
+          <p className="text-gray-400 text-xl md:text-2xl font-serif italic max-w-2xl mx-auto mb-16">Browse watches chosen for quality and lasting style.</p>
           <button onClick={() => router.push('/catalogue')} className="bg-[#D4AF37] text-black px-16 py-6 rounded-full text-[10px] font-black uppercase tracking-[8px] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.4)] flex items-center gap-4 mx-auto group">
-            Explore Registry <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform"/>
+            Browse catalogue <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform"/>
           </button>
         </FadeUp>
       </section>

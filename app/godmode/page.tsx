@@ -1094,7 +1094,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                       <div className="grid grid-cols-3 gap-4">
                         {[0, 1, 2, 3, 4, 5].map((idx) => (
                             <div key={idx} className="p-4 bg-black border border-white/20 rounded-xl relative group flex flex-col items-center min-h-[140px] justify-center">
-                                <span className="absolute top-2 left-2 text-[10px] text-gray-500 font-bold z-20">Matrix {idx + 1}</span>
+                                <span className="absolute top-2 left-2 text-[10px] text-gray-500 font-bold z-20">Slide {idx + 1}</span>
                                 {galleryImages[idx] ? (
                                     <div className="absolute inset-2 rounded-lg overflow-hidden mt-6">
                                         <img src={galleryImages[idx]} className="w-full h-full object-cover" />
@@ -1114,7 +1114,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
 
                <div className="space-y-8">
                  <div className="bg-[#111] p-10 rounded-[30px] border border-white/10">
-                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">Hero Projection Matrix</h3>
+                    <h3 className="text-[#D4AF37] text-lg font-bold mb-6 border-b border-white/10 pb-4">Home page hero</h3>
                     <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mb-4">
                        {heroSlides.length === 0 ? <p className="text-gray-600 text-xs font-bold tracking-widest uppercase py-4">No Projections Active</p> : heroSlides.map((slide, i) => (
                           <div key={slide.id || i} className="p-6 bg-black border border-white/20 rounded-2xl space-y-4 relative">
@@ -1216,7 +1216,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                         </button>
                      </div>
                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {legalPages.length === 0 ? <p className="text-gray-600 text-xs font-bold text-center uppercase tracking-widest py-4">No Nodes Active</p> : legalPages.map((page) => (
+                        {legalPages.length === 0 ? <p className="text-gray-600 text-xs font-bold text-center uppercase tracking-widest py-4">No pages yet</p> : legalPages.map((page) => (
                            <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]' : 'bg-black border-white/20 hover:border-gray-500'}`}>
                               <div>
                                  <h4 className={`font-bold text-sm ${activeLegalPageId === page.id ? 'text-[#D4AF37]' : 'text-white'}`}>{page.title}</h4>
@@ -1229,12 +1229,12 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                   </div>
 
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10">
-                     <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Entity Coordinates</h3>
+                     <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Business details</h3>
                      <div className="space-y-4">
-                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Corporate Entity Name" />
-                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Physical Location" />
-                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Primary Comm Channel" />
-                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Digital Comm Channel" />
+                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Company name" />
+                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Address" />
+                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Phone" />
+                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full bg-black border border-white/20 p-3 rounded-lg text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Email" />
                      </div>
                   </div>
                 </div>
@@ -1244,21 +1244,21 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                       <div className="space-y-6 flex flex-col h-full">
                          <div className="grid grid-cols-2 gap-6">
                             <div>
-                               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">Node Identifier</label>
-                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-lg text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Privacy Protocol"/>
+                               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">Page title</label>
+                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-lg text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Privacy policy"/>
                             </div>
                             <div>
-                               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">Routing Path</label>
-                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#00F0FF] font-mono outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-protocol"/>
+                               <label className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">URL slug</label>
+                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full bg-black border border-white/20 p-4 rounded-xl text-sm text-[#00F0FF] font-mono outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-policy"/>
                             </div>
                          </div>
                          
                          <div className="flex-1 flex flex-col">
                             <div className="flex justify-between items-end mb-3">
-                               <label className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Structural Matrix (HTML)</label>
+                               <label className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Page content (HTML)</label>
                                
                                <div className="flex items-center gap-3 bg-black border border-white/10 p-2 rounded-xl">
-                                   <span className="text-[10px] text-gray-500 uppercase font-bold ml-2">Inject Assets:</span>
+                                   <span className="text-[10px] text-gray-500 uppercase font-bold ml-2">Add media:</span>
                                    <div className="scale-75 origin-right h-12">
                                        <PremiumUploadNode 
                                           placeholder="File" 
@@ -1266,14 +1266,14 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                                              const isVideo = url.match(/\.(mp4|webm|mov)$/i);
                                              const mediaTag = isVideo 
                                                  ? `\n\n<video src="${url}" autoplay loop muted playsinline></video>\n\n` 
-                                                 : `\n\n<img src="${url}" alt="Vault Asset" />\n\n`;
+                                                 : `\n\n<img src="${url}" alt="Policy image" />\n\n`;
                                              
                                              const n = [...legalPages];
                                              const idx = n.findIndex(p => p.id === activeLegalPageId);
                                              if (idx > -1) {
                                                 n[idx].content = (n[idx].content || '') + mediaTag;
                                                 setLegalPages(n);
-                                                addLog("Asset injected into layout matrix.");
+                                                addLog("Image added to page content.");
                                              }
                                           }} 
                                        />
@@ -1336,12 +1336,12 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                              </div>
                          </div>
 
-                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Commit Node Overrides</button>
+                         <button onClick={handleSaveCMS} className="w-full py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Save size={18}/> Save site settings</button>
                       </div>
                    ) : (
                       <div className="h-full flex items-center justify-center flex-col text-gray-500 py-32 border-2 border-dashed border-white/10 rounded-2xl">
                          <Radar size={60} className="mb-4 opacity-50 text-[#D4AF37]"/>
-                         <p className="text-xs font-bold uppercase tracking-widest">Select a Node to Intercept</p>
+                         <p className="text-xs font-bold uppercase tracking-widest">Choose a page to edit</p>
                       </div>
                    )}
                 </div>
@@ -1419,7 +1419,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Active Nodes</p><h2 className="text-4xl font-bold text-white">{agents.length}</h2></div>
+                  <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Active reps</p><h2 className="text-4xl font-bold text-white">{agents.length}</h2></div>
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-[#00F0FF] text-xs font-bold uppercase tracking-widest mb-2">Total Packets</p><h2 className="text-4xl font-bold text-white">{agents.reduce((acc, a) => acc + (a.clicks || 0), 0).toLocaleString()}</h2></div>
                   <div className="bg-[#111] p-8 rounded-[30px] border border-white/10"><p className="text-green-500 text-xs font-bold uppercase tracking-widest mb-2">Total Output</p><h2 className="text-4xl font-bold text-white">₹{agents.reduce((acc, a) => acc + (a.revenue || 0), 0).toLocaleString()}</h2></div>
                </div>

@@ -217,7 +217,7 @@ export default function CheckoutPage() {
                         </div>
 
                         <div className="pt-10">
-                            <h3 className="text-xs font-black uppercase tracking-widest mb-6">Payment Selection</h3>
+                            <h3 className="text-xs font-black uppercase tracking-widest mb-6">How you pay</h3>
                             <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-xl">
                                 <div className="flex items-center gap-4"><div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div><span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span></div>
                                 <CheckCircle size={24} className="text-black"/>

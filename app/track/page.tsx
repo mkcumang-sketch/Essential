@@ -51,7 +51,7 @@ export default function OrderTracker() {
             />
           </div>
           <button className="bg-black text-white px-10 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-gold transition-all">
-            {loading ? "Locating..." : "Track"}
+            {loading ? "Loading..." : "Track"}
           </button>
         </form>
 
