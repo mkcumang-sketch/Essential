@@ -8,6 +8,7 @@ const userSchema = new Schema({
     role: { type: String, default: 'USER' },
     walletPoints: { type: Number, default: 0 },
     totalEarned: { type: Number, default: 0 },
+    totalSpent: { type: Number, default: 0 },
     loyaltyTier: { type: String, default: 'Silver Vault' },
     myReferralCode: { type: String, index: true },
 }, { 

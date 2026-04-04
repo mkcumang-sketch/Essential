@@ -64,7 +64,7 @@ export default function PremiumMediaHandler({
             </button>
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             {isVideo ? (
-                <video src={preview} className="w-full h-full max-h-[70vh] object-cover" autoPlay muted loop playsInline />
+                <video src={preview} className="w-full h-full max-h-[70vh] object-cover" autoPlay muted loop playsInline preload="none" />
             ) : (
                 <img src={preview} alt="CMS Asset" className="w-full h-full max-h-[70vh] object-cover" />
             )}

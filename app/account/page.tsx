@@ -6,379 +6,470 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { 
-    ShieldCheck, Crown, Package, Clock, LogOut, 
-    Wallet, Share2, Copy, CheckCircle2 // 👈 Ye naye icon add kiye
+import {
+  ShieldCheck,
+  Crown,
+  Package,
+  Clock,
+  LogOut,
+  Wallet,
+  Copy,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#050505] text-white">
+      <div className="h-16 border-b border-white/10 bg-black/40 animate-pulse" />
+      <div className="max-w-6xl mx-auto px-6 md:px-10 py-12 space-y-8">
+        <div className="h-48 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="h-40 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
+          <div className="h-40 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
+        </div>
+        <div className="h-72 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 export default function PremiumAccountDashboard() {
-    const { data: session, status } = useSession();
-    const router = useRouter();
-    const [dashData, setDashData] = useState<any>(null);
-    const [toastMsg, setToastMsg] = useState("");
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [dashData, setDashData] = useState<Record<string, unknown> | null>(null);
+  const [dashLoading, setDashLoading] = useState(true);
+  const [toastMsg, setToastMsg] = useState("");
 
-    // 🚨 ALL HOOKS MUST RUN BEFORE ANY CONDITIONAL RETURNS (React Rules of Hooks)
-    
-    // Handle redirect when unauthenticated
-    useEffect(() => {
-        if (status === "unauthenticated") {
-            router.push("/login");
-        }
-    }, [status, router]);
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
-    // Fetch dashboard data when authenticated
-    useEffect(() => {
-        if (status !== "authenticated") return;
+  useEffect(() => {
+    if (status !== "authenticated") return;
 
-        fetch(`/api/user/dashboard?t=${Date.now()}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-        })
-            .then((res) => res.json())
-            .then((json) => {
-                const data = json?.data ?? null;
-                setDashData(data);
-            })
-            .catch(() => {
-                setDashData(null);
-            });
-    }, [status]);
+    setDashLoading(true);
+    fetch(`/api/user/dashboard?t=${Date.now()}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        setDashData(json?.data ?? null);
+      })
+      .catch(() => setDashData(null))
+      .finally(() => setDashLoading(false));
+  }, [status]);
 
-    // Define all hook-based values BEFORE conditional returns
-    const CuratedGiftingSuite = useMemo(
-        () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
-        []
+  const CuratedGiftingSuite = useMemo(
+    () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
+    []
+  );
+
+  const VirtualVault = useMemo(
+    () => dynamic(() => import("@/components/VirtualVault"), { ssr: false }),
+    []
+  );
+
+  const giftingWatches = useMemo(() => {
+    const safeOrders: unknown[] = Array.isArray(dashData?.orders)
+      ? (dashData.orders as unknown[])
+      : [];
+    const rawItems: unknown[] = safeOrders.flatMap((o) =>
+      Array.isArray((o as { items?: unknown[] })?.items)
+        ? ((o as { items: unknown[] }).items as unknown[])
+        : []
     );
-    
-    const VirtualVault = useMemo(
-        () => dynamic(() => import("@/components/VirtualVault"), { ssr: false }),
-        []
-    );
+    const seen = new Set<string>();
+    const normalized = rawItems.map((item: unknown, idx: number) => {
+      const it = item as Record<string, unknown>;
+      const id = String(it?._id || it?.id || it?.sku || it?.name || idx);
+      return {
+        id,
+        name: (it?.name as string) || "Premium Timepiece",
+        brand: (it?.brand as string) || "Essential",
+        imageUrl: it?.imageUrl as string | undefined,
+        image: it?.image as string | undefined,
+        offerPrice: it?.offerPrice as number | undefined,
+        price: it?.price as number | undefined,
+      };
+    });
+    return normalized.filter((w) => {
+      if (seen.has(w.id)) return false;
+      seen.add(w.id);
+      return true;
+    });
+  }, [dashData]);
 
-    const giftingWatches = useMemo(() => {
-        const safeOrders: any[] = Array.isArray(dashData?.orders) ? dashData.orders : [];
-        const rawItems: any[] = safeOrders.flatMap((o: any) => (Array.isArray(o?.items) ? o.items : []));
-        const seen = new Set<string>();
-        const normalized = rawItems.map((item: any, idx: number) => {
-            const id = String(item?._id || item?.id || item?.sku || item?.name || idx);
-            return {
-                id,
-                name: item?.name || "Premium Timepiece",
-                brand: item?.brand || "Essential",
-                imageUrl: item?.imageUrl,
-                image: item?.image,
-                offerPrice: item?.offerPrice,
-                price: item?.price,
-            };
-        });
-        return normalized.filter((w) => {
-            if (seen.has(w.id)) return false;
-            seen.add(w.id);
-            return true;
-        });
-    }, [dashData]);
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    window.setTimeout(() => setToastMsg(""), 2600);
+  };
 
-    const showToast = (msg: string) => {
-        setToastMsg(msg);
-        window.setTimeout(() => setToastMsg(""), 2600);
-    };
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Referral code copied to clipboard!");
+    } catch {
+      showToast("Failed to copy code");
+    }
+  };
 
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            showToast("Referral code copied to clipboard!");
-        } catch (err) {
-            showToast("Failed to copy code");
-        }
-    };
+  if (status === "loading") {
+    return <DashboardSkeleton />;
+  }
 
-    // 🚨 CONDITIONAL RETURNS AFTER ALL HOOKS
-    
-    // Loading state
-    if (status === "loading") {
-        return (
-            <div className="min-h-screen bg-[#FAFAFA] text-black flex flex-col justify-center items-center">
-                <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] animate-pulse">
-                    Loading Vault...
-                </p>
+  if (!session) {
+    return null;
+  }
+
+  const su = session.user as {
+    email?: string | null;
+    name?: string | null;
+    walletPoints?: number;
+    loyaltyTier?: string;
+  };
+
+  const email = su?.email || "—";
+  const name = su?.name || "Elite Member";
+
+  const walletPoints =
+    Number(dashData?.walletPoints) ||
+    Number(su?.walletPoints) ||
+    0;
+  const totalEarned = Number(dashData?.totalEarned) || 0;
+  const myReferralCode =
+    (dashData?.myReferralCode as string) || "GENERATING…";
+  const loyaltyFromSession = su?.loyaltyTier || "";
+  const loyaltyTier =
+    (dashData?.loyaltyTier as string) || loyaltyFromSession || "Silver Vault";
+
+  const spent = Number(dashData?.totalSpent) || 0;
+  const goal = 100000;
+  const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
+  const tier = dashData?.tier === "Gold" ? "Gold" : "Silver";
+  const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
+
+  const orders = Array.isArray(dashData?.orders)
+    ? (dashData.orders as Record<string, unknown>[])
+    : [];
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-white pb-24 selection:bg-[#D4AF37]/30 selection:text-white">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,175,55,0.08),transparent_50%)]" />
+
+      <AnimatePresence>
+        {toastMsg ? (
+          <motion.div
+            initial={{ opacity: 0, y: 18, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 10, x: "-50%" }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="fixed bottom-8 left-1/2 z-[1000] px-6 py-4 rounded-2xl backdrop-blur-xl shadow-2xl bg-black/90 border border-[#D4AF37]/30"
+          >
+            <p className="text-sm font-serif text-[#D4AF37]">{toastMsg}</p>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="text-[10px] font-black uppercase tracking-[0.35em] text-white/50 hover:text-[#D4AF37] transition-colors flex items-center gap-2"
+          >
+            <ChevronRight className="rotate-180 w-4 h-4" />
+            Essential Rush
+          </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/15 bg-white/5 text-[10px] font-black uppercase tracking-[0.25em] text-white/80 hover:border-[#D4AF37]/50 hover:text-[#D4AF37] transition-all"
+          >
+            <LogOut size={14} />
+            Sign Out
+          </button>
+        </div>
+      </header>
+
+      <main className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pt-10 md:pt-14 space-y-10">
+        <section className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.07] to-transparent p-8 md:p-10 overflow-hidden shadow-[0_0_80px_rgba(212,175,55,0.06)]">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#D4AF37]/80 mb-3">
+                Private member
+              </p>
+              <h1 className="text-3xl md:text-5xl font-serif tracking-tight text-white">
+                {name}
+              </h1>
+              <p className="mt-3 text-sm text-white/45">{email}</p>
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+                  {loyaltyTier}
+                </span>
+              </div>
             </div>
-        );
-    }
 
-    // Unauthenticated or no session
-    if (!session) {
-        return null;
-    }
+            <div className="w-full lg:max-w-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40 mb-3">
+                Vault progression
+              </p>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <span className="text-sm font-serif text-white flex items-center gap-2">
+                  {tier === "Gold" ? (
+                    <Crown size={18} className="text-[#D4AF37]" />
+                  ) : (
+                    <ShieldCheck size={18} className="text-[#D4AF37]" />
+                  )}
+                  {tier} tier
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+                  ₹{spent.toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden bg-white/10">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                  className="h-full bg-gradient-to-r from-[#D4AF37] to-[#f5e6a8]"
+                />
+              </div>
+              <p className="mt-3 text-xs text-white/45">
+                {tier === "Gold"
+                  ? "Gold unlocked — priority access is active."
+                  : remaining > 0
+                    ? `₹${remaining.toLocaleString("en-IN")} to Gold Vault.`
+                    : "Progress syncing…"}
+              </p>
+            </div>
+          </div>
+        </section>
 
-    const email = session?.user?.email || "Unknown";
-    const name = session?.user?.name || "Elite Member";
-
-    const spent = Number(dashData?.totalSpent || 0) || 0;
-    const goal = 100000;
-    const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
-
-    const tier = dashData?.tier === "Gold" ? "Gold" : "Silver";
-    const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
-
-    // 🌟 CONSTANT CLEAN LIGHT THEME CLASSES 🌟
-    const pageClass = "min-h-screen bg-[#FAFAFA] text-gray-900 pb-20";
-    const surfaceClass = "bg-white border border-gray-200";
-    const mutedText = "text-gray-500";
-    const subMutedText = "text-gray-400";
-
-    return (
-        <div className={pageClass}>
-            <AnimatePresence>
-                {toastMsg ? (
-                    <motion.div
-                        initial={{ opacity: 0, y: 18, x: "-50%" }}
-                        animate={{ opacity: 1, y: 0, x: "-50%" }}
-                        exit={{ opacity: 0, y: 10, x: "-50%" }}
-                        transition={{ duration: 0.45, ease: "easeOut" }}
-                        className="fixed bottom-8 left-1/2 z-[1000] px-6 py-4 rounded-[22px] backdrop-blur-xl shadow-lg bg-white/95 border border-gray-200"
-                    >
-                        <p className="text-sm font-serif italic text-gray-900">{toastMsg}</p>
-                    </motion.div>
-                ) : null}
-            </AnimatePresence>
-
-            <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-200 shadow-sm">
-                <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-6 flex items-center justify-between gap-4">
-                    <Link
-                        href="/"
-                        className="text-[10px] font-black uppercase tracking-[4px] text-gray-500 hover:text-[#D4AF37] transition-colors"
-                    >
-                        Store
-                    </Link>
-
-                    {/* 🚀 FIX: Mast sa Sign Out Button */}
-                    <button
-                        onClick={() => signOut({ callbackUrl: '/login' })}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-red-200 bg-red-50 text-[10px] font-black uppercase tracking-[4px] text-red-600 hover:bg-red-100 transition-all shadow-sm"
-                    >
-                        <LogOut size={14} />
-                        Sign Out
-                    </button>
-                </div>
-            </header>
-
-            <main className="max-w-[1200px] mx-auto px-6 md:px-10 pt-10 space-y-10">
-                {/* Elite Vault Tier */}
-                <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm relative overflow-hidden`}>
-                    <div className="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-[#D4AF37]/5 blur-2xl pointer-events-none" />
-                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                        <div>
-                            <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>Account</p>
-                            <h1 className="text-3xl md:text-4xl font-serif text-gray-900">
-                                {name}
-                            </h1>
-                            <p className={`text-sm mt-2 ${mutedText}`}>
-                                <span className="font-semibold text-gray-700">Email:</span> {email}
-                            </p>
-                        </div>
-                        
-                        <div className="min-w-[280px]">
-                            <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>Elite Vault Tier</p>
-                            <div className="mt-3 flex items-center justify-between gap-3">
-                                <span className="text-sm font-serif text-gray-900 flex items-center gap-2">
-                                    {tier === "Gold" ? <Crown size={16} className="text-[#D4AF37]" /> : <ShieldCheck size={16} className="text-[#D4AF37]" />}
-                                    {tier} Vault
-                                </span>
-                                <span className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">
-                                    ₹{spent.toLocaleString()}
-                                </span>
-                            </div>
-
-                            <div className="mt-3 h-2 rounded-full overflow-hidden bg-gray-100">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progress}%` }}
-                                    transition={{ duration: 0.8, ease: "easeOut" }}
-                                    className="h-full bg-[#D4AF37]"
-                                />
-                            </div>
-
-                            <p className={`mt-3 text-xs ${mutedText}`}>
-                                {tier === "Gold"
-                                    ? "Gold Vault unlocked. Your access is prioritized."
-                                    : remaining > 0
-                                      ? `₹${remaining.toLocaleString()} away from Gold Vault privileges.`
-                                      : "Awaiting tier calculation."}
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Orders */}
-                <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>
-                    <div className="flex items-center justify-between gap-4">
-                        <h2 className="text-2xl md:text-3xl font-serif text-gray-900 flex items-center gap-2">
-                            <Package size={18} className="text-[#D4AF37]" />
-                            Order History
-                        </h2>
-                        <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>
-                            Orders: {(Array.isArray(dashData?.orders) ? dashData.orders : [])?.length || 0}
-                        </p>
-                    </div>
-
-                    {(Array.isArray(dashData?.orders) ? dashData.orders : [])?.length ? (
-                        <div className="mt-8 space-y-6">
-                            {(Array.isArray(dashData?.orders) ? dashData.orders : []).map((order: any) => {
-                                const orderId = order?.orderId || order?._id?.slice?.(-6) || "—";
-                                const statusText = String(order?.status || "PROCESSING");
-                                const total = Number(order?.totalAmount ?? 0);
-                                const items: any[] = Array.isArray(order?.items) ? order.items : [];
-
-                                return (
-                                    <div
-                                        key={order?._id || `${orderId}`}
-                                        className="bg-white rounded-[26px] border border-gray-200 p-6 md:p-8 shadow-sm"
-                                    >
-                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-gray-100">
-                                            <div>
-                                                <p className={`text-[10px] font-black uppercase tracking-[5px] ${subMutedText}`}>
-                                                    Acquisition #{orderId}
-                                                </p>
-                                                <p className="mt-1 text-xl font-serif text-gray-900 flex items-center gap-2">
-                                                    <Clock size={16} className="text-[#D4AF37]" />
-                                                    ₹{Number.isFinite(total) ? total.toLocaleString() : "0"}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[4px] border ${
-                                                    statusText === "CANCELLED"
-                                                        ? "border-red-200 text-red-600 bg-red-50"
-                                                        : "border-[#D4AF37]/30 text-[#D4AF37] bg-[#D4AF37]/10"
-                                                }`}
-                                            >
-                                                {statusText}
-                                            </span>
-                                        </div>
-                                        
-                                        {items?.length ? (
-                                            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {items?.map((item: any, idx: number) => {
-                                                    const img = item?.imageUrl || item?.image;
-                                                    const price = Number(item?.offerPrice ?? item?.price ?? 0);
-                                                    return (
-                                                        <div
-                                                            key={String(item?._id || item?.id || `${orderId}-${idx}`)}
-                                                            className="rounded-[22px] p-5 border transition-colors bg-gray-50 border-gray-200 hover:border-[#D4AF37]/50"
-                                                        >
-                                                            <div className="w-full aspect-[4/3] rounded-[18px] overflow-hidden border border-gray-200 bg-white">
-                                                                {img ? (
-                                                                    <img src={img} alt={item?.name || "product"} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className={`w-full h-full flex items-center justify-center text-xs ${mutedText}`}>
-                                                                        Awaiting image
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="mt-4">
-                                                                <p className="text-sm text-gray-900 line-clamp-1">
-                                                                    {item?.name || "Awaiting your first acquisition"}
-                                                                </p>
-                                                                <p className={`mt-1 text-xs ${mutedText}`}>
-                                                                    Qty: {item?.qty || 1} • ₹{Number.isFinite(price) ? price.toLocaleString() : "0"}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <div className="mt-6 rounded-[22px] p-6 border border-gray-200 bg-gray-50">
-                                                <p className={`text-sm font-serif italic ${mutedText}`}>Awaiting item details for this order.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="mt-8 rounded-[26px] p-10 border border-gray-200 bg-gray-50 shadow-sm">
-                            <h3 className="text-xl font-serif text-gray-900">Awaiting your first acquisition</h3>
-                            <p className={`mt-2 text-sm ${mutedText}`}>Your vault will populate instantly after your first successful order.</p>
-                            <Link
-                                href="/shop"
-                                className="inline-block mt-6 px-10 py-4 bg-[#D4AF37] text-white text-[11px] font-black uppercase tracking-[5px] rounded-full hover:bg-[#b5952f] transition-colors shadow-md"
-                            >
-                                Enter Shop
-                            </Link>
-                        </div>
-                    )}
-                </section>
-
-                {/* 🌟 EMPIRE REWARDS ENGINE UI 🌟 */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-    
-    {/* WALLET POINTS CARD */}
-    <div className="bg-white border border-gray-200 p-8 rounded-[34px] shadow-sm flex items-center justify-between">
-        <div>
-            <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-400">Vault Balance</p>
-            <h3 className="text-3xl font-serif text-gray-900 mt-2">₹{dashData?.walletPoints || 0}</h3>
-            <p className="text-[10px] text-green-600 font-bold mt-1">TOTAL EARNED: ₹{dashData?.totalEarned || 0}</p>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-            <Wallet className="text-[#D4AF37]" size={32} />
-        </div>
-    </div>
-
-    {/* REFERRAL CODE CARD */}
-    <div className="bg-black text-white p-8 rounded-[34px] shadow-xl relative overflow-hidden group">
-        <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-[4px] text-[#D4AF37]">My Referral Code</p>
-            <div className="flex items-center gap-4 mt-2">
-                <h3 className="text-2xl font-mono tracking-widest uppercase">
-                    {dashData?.myReferralCode || "GENERATING..."}
+        <div className="grid md:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[2rem] border border-white/10 bg-black/40 p-8 flex items-center justify-between gap-6"
+          >
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/40">
+                Wallet points
+              </p>
+              {dashLoading ? (
+                <div className="mt-3 h-10 w-32 bg-white/10 rounded-lg animate-pulse" />
+              ) : (
+                <h3 className="text-3xl md:text-4xl font-serif text-white mt-2 tabular-nums">
+                  {walletPoints.toLocaleString("en-IN")}
                 </h3>
-                <button 
-                    onClick={() => copyToClipboard(dashData?.myReferralCode)}
-                    className="p-2 bg-white/10 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-all"
-                >
-                    <Copy size={16} />
-                </button>
+              )}
+              <p className="text-[10px] text-[#D4AF37]/80 font-bold mt-2 uppercase tracking-wider">
+                Total earned · ₹{totalEarned.toLocaleString("en-IN")}
+              </p>
             </div>
-            <p className="text-[10px] text-gray-500 mt-4">SHARE THIS CODE TO EARN ₹100 PER REFERRAL</p>
+            <div className="p-5 rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/10">
+              <Wallet className="text-[#D4AF37]" size={32} />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-[2rem] border border-[#D4AF37]/25 bg-gradient-to-br from-[#D4AF37]/15 to-black/60 p-8 relative overflow-hidden"
+          >
+            <div className="relative z-10">
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#D4AF37]">
+                Referral code
+              </p>
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                <h3 className="text-xl md:text-2xl font-mono tracking-[0.2em] text-white uppercase">
+                  {dashLoading ? "······" : myReferralCode}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(String(myReferralCode))}
+                  disabled={dashLoading || myReferralCode === "GENERATING…"}
+                  className="p-2.5 rounded-xl border border-white/20 bg-white/5 hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-40"
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+              <p className="text-[10px] text-white/40 mt-4 uppercase tracking-[0.2em] leading-relaxed">
+                Share your code — rewards credit to your vault balance.
+              </p>
+            </div>
+            <Crown
+              className="absolute -right-6 -bottom-8 text-white/[0.04] rotate-12 pointer-events-none"
+              size={140}
+            />
+          </motion.div>
         </div>
-        {/* Decorative Crown */}
-        <Crown className="absolute -right-4 -bottom-4 text-white/5 rotate-12" size={120} />
+
+        <section className="rounded-[2rem] border border-white/10 bg-black/30 p-8 md:p-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <h2 className="text-2xl md:text-3xl font-serif flex items-center gap-3 text-white">
+              <Package size={22} className="text-[#D4AF37]" />
+              Order history
+            </h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/35">
+              {dashLoading ? "…" : `${orders.length} acquisitions`}
+            </p>
+          </div>
+
+          {dashLoading ? (
+            <div className="space-y-6">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-40 rounded-2xl bg-white/5 border border-white/10 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : orders.length ? (
+            <div className="space-y-8">
+              {orders.map((order) => {
+                const rawId = order._id;
+                const orderId =
+                  (order.orderId as string) ||
+                  (rawId != null ? String(rawId).slice(-8) : "") ||
+                  "—";
+                const statusText = String(order?.status || "PROCESSING");
+                const total = Number(order?.totalAmount ?? 0);
+                const items = Array.isArray(order?.items)
+                  ? (order.items as Record<string, unknown>[])
+                  : [];
+
+                return (
+                  <div
+                    key={String(order._id || orderId)}
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 md:p-8"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-white/10">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/35">
+                          Order #{orderId}
+                        </p>
+                        <p className="mt-2 text-xl font-serif text-white flex items-center gap-2">
+                          <Clock size={16} className="text-[#D4AF37]" />₹
+                          {Number.isFinite(total)
+                            ? total.toLocaleString("en-IN")
+                            : "0"}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.25em] border w-fit ${
+                          statusText === "CANCELLED"
+                            ? "border-red-500/40 text-red-300 bg-red-500/10"
+                            : "border-[#D4AF37]/35 text-[#D4AF37] bg-[#D4AF37]/10"
+                        }`}
+                      >
+                        {statusText}
+                      </span>
+                    </div>
+
+                    {items.length ? (
+                      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {items.map((item, idx) => {
+                          const img = (item.imageUrl || item.image) as
+                            | string
+                            | undefined;
+                          const price = Number(
+                            item.offerPrice ?? item.price ?? 0
+                          );
+                          return (
+                            <div
+                              key={String(item._id || item.id || `${orderId}-${idx}`)}
+                              className="rounded-2xl p-5 border border-white/10 bg-black/40 hover:border-[#D4AF37]/30 transition-colors"
+                            >
+                              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                                {img ? (
+                                  <img
+                                    src={img}
+                                    alt={(item.name as string) || "product"}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xs text-white/35">
+                                    No image
+                                  </div>
+                                )}
+                              </div>
+                              <p className="mt-4 text-sm text-white line-clamp-1">
+                                {(item.name as string) || "Timepiece"}
+                              </p>
+                              <p className="mt-1 text-xs text-white/40">
+                                Qty: {Number(item.qty) || 1} · ₹
+                                {Number.isFinite(price)
+                                  ? price.toLocaleString("en-IN")
+                                  : "0"}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-6 text-sm text-white/45 font-serif italic">
+                        Item details pending for this order.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-white/15 p-12 text-center bg-white/[0.02]">
+              <h3 className="text-xl font-serif text-white">
+                Your vault is ready
+              </h3>
+              <p className="mt-2 text-sm text-white/45 max-w-md mx-auto">
+                Complete a purchase to see acquisitions and progression here.
+              </p>
+              <Link
+                href="/shop"
+                className="inline-block mt-8 px-10 py-4 rounded-full bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-[0.35em] hover:bg-[#e8c85c] transition-colors"
+              >
+                Browse shop
+              </Link>
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-[2rem] border border-white/10 bg-black/25 p-8 md:p-10">
+          <h2 className="text-2xl md:text-3xl font-serif text-white">
+            Curated gifting suite
+          </h2>
+          <p className="mt-2 text-sm text-white/45">
+            Bundle pieces with a premium note for elevated gifting.
+          </p>
+          <div className="mt-8">
+            <CuratedGiftingSuite
+              watches={giftingWatches}
+              isLight={false}
+              onToast={showToast}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-white/10 bg-black/25 p-8 md:p-10">
+          <h2 className="text-2xl md:text-3xl font-serif text-white">
+            Virtual vault
+          </h2>
+          <p className="mt-2 text-sm text-white/45">
+            Pieces you admire — saved for later.
+          </p>
+          <div className="mt-8">
+            <VirtualVault isLight={false} />
+          </div>
+        </section>
+
+        <p className="text-center text-[10px] font-black uppercase tracking-[0.4em] text-white/25 pb-4">
+          Essential Rush · Private member area
+        </p>
+      </main>
     </div>
-
-</div>
-
-{/* LOYALTY TIER BADGE */}
-<div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/10 rounded-full border border-[#D4AF37]/20">
-    <ShieldCheck size={14} className="text-[#D4AF37]" />
-    <span className="text-[10px] font-black uppercase tracking-[2px] text-[#D4AF37]">
-        Tier: {dashData?.loyaltyTier || "Silver Vault"}
-    </span>
-</div>
-
-                {/* Gifting Suite */}
-                <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>
-                    <h2 className="text-2xl md:text-3xl font-serif text-gray-900">Curated Gifting Suite</h2>
-                    <p className={`mt-2 text-sm ${mutedText}`}>Bundle timepieces with a premium note for an elevated gifting experience.</p>
-                    <div className="mt-8">
-                        <CuratedGiftingSuite watches={giftingWatches} isLight={true} onToast={showToast} />
-                    </div>
-                </section>
-
-                {/* Virtual Vault */}
-                <section className={`${surfaceClass} rounded-[34px] p-8 md:p-10 shadow-sm`}>
-                    <h2 className="text-2xl md:text-3xl font-serif text-gray-900">Virtual Vault</h2>
-                    <p className={`mt-2 text-sm ${mutedText}`}>Save pieces you admire — your vault remembers.</p>
-                    <div className="mt-8">
-                        <VirtualVault isLight={true} />
-                    </div>
-                </section>
-
-                <div className={`text-center text-[10px] font-black uppercase tracking-[5px] ${subMutedText} pb-2`}>
-                    Essential Rush • Private Member Area
-                </div>
-            </main>
-        </div>
-    );
+  );
 }

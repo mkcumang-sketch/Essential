@@ -25,8 +25,8 @@ export default function HeroSlider({ slides }: { slides: any[] }) {
         >
           {slides[current].type === 'video' ? (
             <video 
-              src={slides[current].url} autoPlay muted 
-              onEnded={nextSlide} // 🚨 Video khatam hote hi slide change
+              src={slides[current].url} autoPlay muted playsInline preload="none"
+              onEnded={nextSlide}
               className="h-full w-full object-cover opacity-60"
             />
           ) : (

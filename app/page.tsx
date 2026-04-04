@@ -69,7 +69,7 @@ const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string
         >
             <motion.video 
                 src={videoUrl} 
-                autoPlay loop muted playsInline 
+                autoPlay loop muted playsInline preload="none"
                 initial={{ scale: 1.05 }}
                 animate={{ scale: 1.1 }}
                 transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
@@ -157,7 +157,7 @@ const Isolated4DHero = ({ config }: { config: any }) => {
                     alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
                  />
               ) : (
-                 <video autoPlay muted loop playsInline className="w-full h-full object-cover opacity-70">
+                 <video autoPlay muted loop playsInline preload="none" className="w-full h-full object-cover opacity-70">
                    <source src={currentSlide?.url} type="video/mp4" />
                  </video>
               )}
@@ -487,6 +487,9 @@ export default function Home() {
                     <video 
                         src={url} 
                         className="w-full h-full object-cover" 
+                        playsInline
+                        preload="none"
+                        muted
                         aria-label={`Review media ${idx + 1}`}
                     /> : 
                     <img 
@@ -616,7 +619,7 @@ export default function Home() {
       <section id="ourcollection" className="py-20 md:py-32 relative overflow-hidden bg-white">
         {promoVideos[2] && (
             <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-0 opacity-[0.03] pointer-events-none">
-                <video src={promoVideos[2]} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                <video src={promoVideos[2]} autoPlay loop muted playsInline preload="none" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
             </div>
         )}
@@ -780,7 +783,7 @@ export default function Home() {
       <section id="reviews" className="py-24 md:py-40 relative overflow-hidden border-t border-gray-200">
           {promoVideos[4] && (
               <div className="absolute inset-0 z-0">
-                 <video src={promoVideos[4]} autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80" />
+                 <video src={promoVideos[4]} autoPlay loop muted playsInline preload="none" className="w-full h-full object-cover opacity-80" />
                  <div className="absolute inset-0 bg-white/90 backdrop-blur-xl"></div>
               </div>
           )}
@@ -808,7 +811,7 @@ export default function Home() {
                                 {rev.media && rev.media.length > 0 && (
                                     <div className="flex gap-3 overflow-x-auto pt-6 mt-6 border-t border-gray-200">
                                         {rev.media.map((mediaUrl: string, mIdx: number) => (
-                                            mediaUrl.match(/\.(mp4|webm|mov)$/i) ? <video key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" /> : <img key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" />
+                                            mediaUrl.match(/\.(mp4|webm|mov)$/i) ? <video key={mIdx} src={mediaUrl} playsInline preload="none" muted className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" /> : <img key={mIdx} src={mediaUrl} className="h-16 w-16 object-cover rounded-xl border border-gray-200 shrink-0" />
                                         ))}
                                     </div>
                                 )}

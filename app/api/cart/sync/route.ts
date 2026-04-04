@@ -1,90 +1,156 @@
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import { AbandonedCart } from '@/models/AbandonedCart';
+import { NextResponse } from "next/server";
+import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { AbandonedCart } from "@/models/AbandonedCart";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
 
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    await mongoose.connect(process.env.MONGODB_URI as string);
-};
-
-// Order schema for tracking Sales and Abandoned Carts
-const OrderSchema = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema(
+  {
     orderId: String,
+    userId: String,
     customer: { name: String, email: String, phone: String },
     items: Array,
     totalAmount: Number,
-    status: { type: String, default: 'PENDING' },
-    createdAt: { type: Date, default: Date.now }
-}, { strict: false });
+    status: { type: String, default: "PENDING" },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { strict: false }
+);
 
-const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
+const Order =
+  mongoose.models.Order || mongoose.model("Order", OrderSchema);
 
 export async function POST(req: Request) {
-    try {
-        await connectDB();
-        const body = await req.json();
-        const { items, totalAmount, user } = body;
+  try {
+    await connectDB();
+    const session = await getServerSession(authOptions);
+    const body = await req.json();
+    const { items, totalAmount, user } = body;
 
-        if (!user || (!user.email && !user.phone)) {
-            return NextResponse.json({ success: false, error: "User info missing" });
-        }
+    const sessionUserId = session?.user?.id;
 
-        // 🌟 THE FIX: Dynamically build the $or conditions 🌟
-        // Isse TypeScript error nahi aayega aur empty fields search nahi hongi
-        const orConditions = [];
-        if (user.email) orConditions.push({ 'customer.email': user.email });
-        if (user.phone) orConditions.push({ 'customer.phone': user.phone });
+    if (sessionUserId) {
+      const dbUser = await User.findById(sessionUserId)
+        .select("name email phone")
+        .lean()
+        .catch(() => null);
+      const customer = {
+        name:
+          (dbUser as { name?: string } | null)?.name ||
+          user?.name ||
+          "Vault Client",
+        email:
+          (dbUser as { email?: string } | null)?.email ||
+          session.user?.email ||
+          "",
+        phone: (dbUser as { phone?: string } | null)?.phone || user?.phone || "",
+      };
 
-        // Check if an abandoned cart (PENDING order) already exists for this user
-        const existingCart = await Order.findOne({
-            $or: orConditions,
-            status: 'PENDING'
+      const existingCart = await Order.findOne({
+        userId: sessionUserId,
+        status: "PENDING",
+      });
+
+      if (existingCart) {
+        existingCart.items = items;
+        existingCart.totalAmount = totalAmount;
+        existingCart.customer = customer;
+        existingCart.createdAt = new Date();
+        await existingCart.save();
+      } else {
+        await Order.create({
+          orderId: `CART-${Date.now().toString().slice(-6)}`,
+          userId: sessionUserId,
+          customer,
+          items,
+          totalAmount,
+          status: "PENDING",
         });
+      }
 
-        if (existingCart) {
-            // Update existing cart
-            existingCart.items = items;
-            existingCart.totalAmount = totalAmount;
-            existingCart.createdAt = new Date(); // Reset time
-            await existingCart.save();
-        } else {
-            // Create new PENDING order (Abandoned Cart Lead)
-            await Order.create({
-                orderId: `CART-${Date.now().toString().slice(-6)}`,
-                customer: user,
-                items: items,
-                totalAmount: totalAmount,
-                status: 'PENDING' 
-            });
-        }
+      await AbandonedCart.findOneAndUpdate(
+        { userId: sessionUserId },
+        {
+          userId: sessionUserId,
+          name: customer.name,
+          email: String(customer.email || "").toLowerCase().trim(),
+          phone: String(customer.phone || "").trim(),
+          items: Array.isArray(items) ? items : [],
+          cartTotal: Number(totalAmount) || 0,
+          status: "ABANDONED",
+          lastInteraction: new Date(),
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
 
-        // Mirror lead into dedicated AbandonedCart collection for Recovery Vault UI.
-        const leadFilters: any[] = [];
-        if (user.email) leadFilters.push({ email: String(user.email).toLowerCase().trim() });
-        if (user.phone) leadFilters.push({ phone: String(user.phone).trim() });
-
-        if (leadFilters.length > 0) {
-            await AbandonedCart.findOneAndUpdate(
-                { $or: leadFilters },
-                {
-                    name: user.name || 'Vault Client',
-                    email: user.email ? String(user.email).toLowerCase().trim() : '',
-                    phone: user.phone ? String(user.phone).trim() : '',
-                    items: Array.isArray(items) ? items : [],
-                    cartTotal: Number(totalAmount) || 0,
-                    status: 'ABANDONED',
-                    lastInteraction: new Date(),
-                },
-                { upsert: true, new: true, setDefaultsOnInsert: true }
-            );
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("Cart Sync Error:", error);
-        return NextResponse.json({ success: false }, { status: 500 });
+      return NextResponse.json({ success: true });
     }
+
+    // Guest: marketing lead only — no session user id; match by contact from body
+    if (!user || (!user.email && !user.phone)) {
+      return NextResponse.json(
+        { success: false, error: "User info missing" },
+        { status: 400 }
+      );
+    }
+
+    const orConditions: Record<string, string>[] = [];
+    if (user.email)
+      orConditions.push({ "customer.email": String(user.email).toLowerCase().trim() });
+    if (user.phone) orConditions.push({ "customer.phone": String(user.phone).trim() });
+
+    const guestQuery =
+      orConditions.length === 1
+        ? { ...orConditions[0], status: "PENDING" as const }
+        : { $or: orConditions, status: "PENDING" as const };
+
+    const guestCart = await Order.findOne(guestQuery);
+
+    if (guestCart) {
+      guestCart.items = items;
+      guestCart.totalAmount = totalAmount;
+      guestCart.customer = user;
+      guestCart.createdAt = new Date();
+      await guestCart.save();
+    } else {
+      await Order.create({
+        orderId: `CART-${Date.now().toString().slice(-6)}`,
+        customer: user,
+        items,
+        totalAmount,
+        status: "PENDING",
+      });
+    }
+
+    const leadFilters: Record<string, string>[] = [];
+    if (user.email)
+      leadFilters.push({ email: String(user.email).toLowerCase().trim() });
+    if (user.phone) leadFilters.push({ phone: String(user.phone).trim() });
+
+    if (leadFilters.length > 0) {
+      await AbandonedCart.findOneAndUpdate(
+        { $or: leadFilters },
+        {
+          name: user.name || "Vault Client",
+          email: user.email ? String(user.email).toLowerCase().trim() : "",
+          phone: user.phone ? String(user.phone).trim() : "",
+          items: Array.isArray(items) ? items : [],
+          cartTotal: Number(totalAmount) || 0,
+          status: "ABANDONED",
+          lastInteraction: new Date(),
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Cart Sync Error:", error);
+    return NextResponse.json({ success: false }, { status: 500 });
+  }
 }

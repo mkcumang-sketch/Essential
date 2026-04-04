@@ -5,6 +5,7 @@ const abandonedSchema = new mongoose.Schema(
     name: { type: String, default: "Vault Client" },
     email: { type: String, default: "", index: true },
     phone: { type: String, default: "", index: true },
+    userId: { type: String, default: "", index: true, sparse: true },
     cartTotal: { type: Number, default: 0 },
     items: { type: Array, default: [] },
     status: {

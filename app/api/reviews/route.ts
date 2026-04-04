@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getToken } from "next-auth/jwt";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // 🌟 1. BULLETPROOF DB CONNECTION
 let isConnected = false;
@@ -17,6 +19,7 @@ const connectDB = async () => {
 // 🌟 2. SCHEMA DEFINITION
 const reviewSchema = new mongoose.Schema({
     userName: { type: String, required: true },
+    userId: { type: String, index: true, sparse: true },
     comment: { type: String, required: true },
     rating: { type: Number, default: 5 },
     product: { type: String, default: 'GLOBAL' },
@@ -65,20 +68,34 @@ export async function POST(req: NextRequest) {
         await connectDB();
         const body = await req.json();
 
-        // 🛡️ BOT CHECK: If honeyPot is filled, block it instantly!
         if (body.honeyPot && body.honeyPot.length > 0) {
             console.log("🛡️ [SECURITY] Bot submission blocked via Honeypot.");
             return NextResponse.json({ success: false, message: "Security Check Failed" }, { status: 400 });
         }
 
+        const session = await getServerSession(authOptions);
+        const userId = session?.user?.id;
+        if (!userId) {
+            return NextResponse.json(
+                { success: false, message: "Sign in required to submit a review" },
+                { status: 401 }
+            );
+        }
+
+        const userName =
+            typeof body.userName === "string" && body.userName.trim()
+                ? body.userName.trim()
+                : session.user?.name || "Member";
+
         const newReview = await Review.create({
-            userName: body.userName, 
-            comment: body.comment, 
-            rating: body.rating, 
-            product: body.product || 'GLOBAL',
-            visibility: 'pending', 
-            isAdminGenerated: body.isAdminGenerated || false, 
-            media: body.media || [] 
+            userName,
+            userId,
+            comment: String(body.comment || "").slice(0, 8000),
+            rating: Math.min(5, Math.max(1, Number(body.rating) || 5)),
+            product: body.product || "GLOBAL",
+            visibility: "pending",
+            isAdminGenerated: Boolean(session && (session.user as { role?: string }).role === "SUPER_ADMIN" && body.isAdminGenerated),
+            media: Array.isArray(body.media) ? body.media : [],
         });
 
         return NextResponse.json({ success: true, data: newReview });

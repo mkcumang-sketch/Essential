@@ -16,9 +16,10 @@ export async function middleware(req: NextRequest) {
             default-src 'self';
             script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://js.stripe.com https://checkout.razorpay.com;
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-            img-src 'self' https://images.unsplash.com https://res.cloudinary.com https://*.googleusercontent.com data: blob:;
-            font-src 'self' https://fonts.gstatic.com;
-            connect-src 'self' https://api.resend.com https://*.mongodb.net https://*.upstash.io https://www.google.com;
+            img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.pexels.com https://res.cloudinary.com https://*.googleusercontent.com https://cdn.pixabay.com;
+            font-src 'self' https://fonts.gstatic.com data:;
+            media-src 'self' blob: data: https://cdn.pixabay.com https://*.pixabay.com https://videos.pexels.com https://*.pexels.com https://www.pexels.com https://res.cloudinary.com;
+            connect-src 'self' https://api.resend.com https://*.mongodb.net https://*.upstash.io https://www.google.com https://accounts.google.com https://oauth2.googleapis.com https://api.stripe.com https://checkout.razorpay.com https://cdn.pixabay.com https://res.cloudinary.com https://*.cloudinary.com;
             frame-src 'self' https://www.google.com https://checkout.razorpay.com https://js.stripe.com;
             object-src 'none';
             base-uri 'self';
