@@ -1,35 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Vercel Build Bypass
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: '**' }],
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [320, 420, 640, 768, 1024, 1280, 1600],
-    imageSizes: [16, 24, 32, 48, 64, 96],
-    minimumCacheTTL: 60 * 60 * 24,
+    remotePatterns: [
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'images.pexels.com' },
+    ],
   },
-  
-  // 🌟 DIGITAL FIREWALL: Strict Security Headers 🌟
   async headers() {
     return [
       {
-        source: '/(.*)', // Applies to all routes
+        source: '/(.*)',
         headers: [
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          // Force HTTPS and prevent Man-in-the-Middle attacks
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          // Prevent Clickjacking (Koi aapki site ko iframe mein daal kar fake clicks nahi le sakta)
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' }, 
-          // Prevent MIME sniffing (Browser ko force karta hai strict rehne par)
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          // Privacy policy for where users come from
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.pexels.com https://lh3.googleusercontent.com; media-src 'self' https://www.pexels.com data: blob:; connect-src 'self' https://api.stripe.com;",
+          },
         ],
       },
     ];
   },
 };
-
 export default nextConfig;
