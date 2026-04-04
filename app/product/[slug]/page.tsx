@@ -1,5 +1,5 @@
 import { Metadata, ResolvingMetadata } from 'next';
-import ProductClientPage from './ProductClientPage';
+import ProductClientPage from '../../ProductClientPage';
 import mongoose from 'mongoose';
 
 // 🌟 1. DIRECT DATABASE CONNECTION (Bypasses Vercel Fetch Bugs)

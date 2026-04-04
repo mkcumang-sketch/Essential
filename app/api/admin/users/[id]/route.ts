@@ -1,36 +1,30 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+// ... baaki imports
 
-// DB Connection
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    await mongoose.connect(process.env.MONGODB_URI as string);
-};
-
-// 🌟 Ensure User Model exists 🌟
-const UserSchema = new mongoose.Schema({}, { strict: false });
-const User = mongoose.models.User || mongoose.model('User', UserSchema);
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  // 🚨 FIX 1: params ko Promise type dena padega
+  { params }: { params: Promise<{ id: string }> } 
+) {
     try {
-        await connectDB();
-        const userId = params.id;
+        // 🚨 FIX 2: params ko await karna mandatory hai
+        const resolvedParams = await params; 
+        const id = resolvedParams.id;
 
-        if (!userId) {
-            return NextResponse.json({ success: false, error: "User ID required" }, { status: 400 });
+        if (mongoose.connection.readyState < 1) {
+            await mongoose.connect(process.env.MONGODB_URI as string);
         }
 
-        // 🚀 Hard delete user personal records from MongoDB 🚀
-        const deletedUser = await User.findByIdAndDelete(userId);
+        const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
+        
+        await User.findByIdAndDelete(id);
 
-        if (!deletedUser) {
-            return NextResponse.json({ success: false, error: "User not found or already erased" }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, message: "User data permanently erased." });
-
+        return NextResponse.json({ success: true, message: "User deleted successfully" });
     } catch (error: any) {
-        console.error("User Erasure API Error:", error);
-        return NextResponse.json({ success: false, error: "Failed to erase user data" }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+// 🚨 YAAD RAKHNA: Agar is file mein GET, PATCH ya PUT functions bhi hain, 
+// unhe bhi isi tarah 'Promise' aur 'await' ke saath update karna padega.
