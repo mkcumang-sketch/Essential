@@ -36,11 +36,11 @@ export async function GET(req: Request) {
         }
 
         // 🚨 FIREWALL: Fetch user with security
-        const user = await User.findById(session.user.id).select('-password -__v').lean();
-        
-        if (!user) {
+        const userRaw = await User.findById(session.user.id).select('-password -__v').lean();
+        if (!userRaw || Array.isArray(userRaw)) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
+        const user = userRaw as { addresses?: unknown[] };
 
         return NextResponse.json({
             success: true,

@@ -43,18 +43,20 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-    const lead = await AbandonedCart.findById(leadId).lean();
-    if (!lead) {
+    const leadRaw = await AbandonedCart.findById(leadId).lean();
+    if (!leadRaw || Array.isArray(leadRaw)) {
       return NextResponse.json({ success: false, error: "Lead not found" }, { status: 404 });
     }
-    if (!lead.phone) {
+    const lead = leadRaw as { phone?: string; name?: string };
+    const phone = lead.phone?.trim();
+    if (!phone) {
       return NextResponse.json({ success: false, error: "Lead has no phone" }, { status: 400 });
     }
 
     const appUrl = process.env.NEXTAUTH_URL || "https://essential-ivory.vercel.app";
     const recoveryLink = `${appUrl}/cart`;
 
-    const ok = await sendVIPSMS(lead.phone, lead.name, recoveryLink);
+    const ok = await sendVIPSMS(phone, lead.name ?? "", recoveryLink);
     if (!ok) {
       return NextResponse.json(
         { success: false, error: "SMS dispatch failed" },

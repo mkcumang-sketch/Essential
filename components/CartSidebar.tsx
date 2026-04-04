@@ -61,7 +61,7 @@ export default function CartSidebar() {
             
             // ⌚ FILLED STATE (Jab Cart mein Items hon)
             <div className="space-y-6">
-              {cart.map((item, index) => (
+              {cart.map((item: { _id: string; images?: string[]; title?: string; brand?: string; price?: number }, index: number) => (
                 <div key={index} className="flex gap-4 items-center bg-white p-4 border border-gray-100 shadow-sm relative group hover:border-gold-500/30 transition-all duration-300">
                   
                   {/* Image */}

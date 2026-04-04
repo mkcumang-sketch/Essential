@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import connectDB from '@/lib/mongodb';
 
 export async function POST() {
     try {
-        if (mongoose.connection.readyState < 1) await mongoose.connect(process.env.MONGODB_URI!);
+        await connectDB();
         const session = await getServerSession(authOptions);
         const userId = (session?.user as any)?.id;
 

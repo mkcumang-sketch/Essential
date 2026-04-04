@@ -1,9 +1,13 @@
-export default function Loading() {
+export default function RootLoading() {
   return (
-    <div className="h-screen w-full bg-[#050505] flex flex-col items-center justify-center">
-      <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
-      <p className="mt-4 text-[#D4AF37] font-serif tracking-[0.3em] text-xs uppercase animate-pulse">
-        Initializing Vault
+    <div
+      className="flex min-h-screen flex-col items-center justify-center bg-[#FAFAFA] text-[#050505]"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <div className="mb-6 h-10 w-10 animate-spin rounded-full border-2 border-[#D4AF37] border-t-transparent" />
+      <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-500">
+        Essential
       </p>
     </div>
   );

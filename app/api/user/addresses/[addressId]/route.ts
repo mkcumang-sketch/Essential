@@ -2,30 +2,13 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import User from '@/models/User';
-
-// 🌟 BULLETPROOF DATABASE CONNECTION 🌟
-let isConnected = false;
-const connectDB = async () => {
-    if (isConnected || mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(process.env.MONGODB_URI as string, {
-            bufferCommands: true,
-            maxPoolSize: 10,
-        });
-        isConnected = true;
-        console.log("✅ MongoDB Connected Successfully");
-    } catch (error) {
-        console.error("❌ DB Connection Error:", error);
-        throw new Error("Database connection failed!");
-    }
-};
+import connectDB from '@/lib/mongodb';
 
 // DELETE: Remove specific address
-export async function DELETE(req: Request, { params }: { params: { addressId: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ addressId: string }> }) {
     try {
         await connectDB();
         
@@ -35,7 +18,7 @@ export async function DELETE(req: Request, { params }: { params: { addressId: st
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const { addressId } = params;
+        const { addressId } = await params;
 
         // 🛡️ INPUT VALIDATION
         if (!addressId || typeof addressId !== 'string') {
@@ -98,7 +81,7 @@ export async function DELETE(req: Request, { params }: { params: { addressId: st
 }
 
 // PUT: Update specific address
-export async function PUT(req: Request, { params }: { params: { addressId: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ addressId: string }> }) {
     try {
         await connectDB();
         
@@ -108,7 +91,7 @@ export async function PUT(req: Request, { params }: { params: { addressId: strin
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const { addressId } = params;
+        const { addressId } = await params;
         const { type, address, isDefault } = await req.json();
 
         // 🛡️ INPUT VALIDATION

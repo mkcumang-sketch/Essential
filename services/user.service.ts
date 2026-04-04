@@ -1,32 +1,41 @@
-import User, { IUser } from '@/models/User';
-import { ApiResponse } from '@/types';
+import User from '@/models/User';
+import type { ApiResponse, IUser } from '@/types';
+
+function leanUser(raw: unknown): IUser | null {
+  if (raw == null || Array.isArray(raw)) return null;
+  return raw as IUser;
+}
 
 // 🏆 ENTERPRISE USER SERVICE LAYER 🏆
 
 class UserService {
   // 🛡️ SECURE USER FETCH WITH ZERO TRUST
   static async findUserById(userId: string): Promise<IUser | null> {
-    return await User.findById(userId)
+    const doc = await User.findById(userId)
       .select('-password -__v')
       .lean();
+    return leanUser(doc);
   }
 
   static async findUserByPhone(phone: string): Promise<IUser | null> {
-    return await User.findOne({ phone })
+    const doc = await User.findOne({ phone })
       .select('-password -__v')
       .lean();
+    return leanUser(doc);
   }
 
   static async findUserByEmail(email: string): Promise<IUser | null> {
-    return await User.findOne({ email })
+    const doc = await User.findOne({ email })
       .select('-password -__v')
       .lean();
+    return leanUser(doc);
   }
 
   static async findUserByReferralCode(referralCode: string): Promise<IUser | null> {
-    return await User.findOne({ myReferralCode: referralCode })
+    const doc = await User.findOne({ myReferralCode: referralCode })
       .select('-password -__v')
       .lean();
+    return leanUser(doc);
   }
 
   // 🏆 EMPIRE REWARDS BUSINESS LOGIC

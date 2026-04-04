@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function SearchOverlay({ onClose }: { onClose: () => void }) {
+export default function SearchOverlay({ onClose = () => {} }: { onClose?: () => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

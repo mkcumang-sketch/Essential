@@ -16,7 +16,7 @@ export default function Collection() {
 
   return (
     <div className="bg-black min-h-screen text-white">
-      <Navbar theme="dark" />
+      <Navbar />
       <div className="pt-32 px-6 max-w-[1800px] mx-auto">
         <h2 className="text-3xl font-serif italic text-gold-500 mb-8">The Vault</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

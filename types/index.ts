@@ -89,6 +89,7 @@ declare module "next-auth" {
       name: string;
       email?: string;
       phone?: string;
+      image?: string | null;
       role: string;
       myReferralCode?: string;
       walletPoints: number;

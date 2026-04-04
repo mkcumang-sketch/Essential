@@ -1,30 +1,43 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-// ... baaki imports
+import User from '@/models/User';
 
-export async function DELETE(
-  request: Request,
-  // 🚨 FIX 1: params ko Promise type dena padega
-  { params }: { params: Promise<{ id: string }> } 
+const connectDB = async () => {
+    if (mongoose.connection.readyState < 1) {
+        await mongoose.connect(process.env.MONGODB_URI as string);
+    }
+};
+
+// 🛡️ GET SINGLE USER
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> } // 🚨 NEXT 15 FIX: Params is a Promise
 ) {
     try {
-        // 🚨 FIX 2: params ko await karna mandatory hai
-        const resolvedParams = await params; 
-        const id = resolvedParams.id;
+        await connectDB();
+        const { id } = await params; // 🚨 MUST AWAIT
 
-        if (mongoose.connection.readyState < 1) {
-            await mongoose.connect(process.env.MONGODB_URI as string);
-        }
+        const user = await User.findById(id).lean();
+        if (!user) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
 
-        const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
-        
-        await User.findByIdAndDelete(id);
-
-        return NextResponse.json({ success: true, message: "User deleted successfully" });
+        return NextResponse.json({ success: true, data: user });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
-// 🚨 YAAD RAKHNA: Agar is file mein GET, PATCH ya PUT functions bhi hain, 
-// unhe bhi isi tarah 'Promise' aur 'await' ke saath update karna padega.
+// 🛡️ DELETE USER
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> } // 🚨 NEXT 15 FIX
+) {
+    try {
+        await connectDB();
+        const { id } = await params; // 🚨 MUST AWAIT
+
+        await User.findByIdAndDelete(id);
+        return NextResponse.json({ success: true, message: "User purged from vault" });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}

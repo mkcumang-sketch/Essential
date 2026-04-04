@@ -18,7 +18,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (credentials?.email === adminEmail && credentials?.password === adminPassword) {
-          return { id: "1", name: "Admin", email: adminEmail, role: "SUPER_ADMIN" };
+          return {
+            id: "1",
+            name: "Admin",
+            email: adminEmail,
+            role: "SUPER_ADMIN",
+            walletPoints: 0,
+            loyaltyTier: "Silver Vault",
+          };
         }
         return null;
       }

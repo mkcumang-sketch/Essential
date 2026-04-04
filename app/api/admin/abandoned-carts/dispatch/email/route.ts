@@ -44,10 +44,11 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const lead = await AbandonedCart.findById(leadId).lean();
-    if (!lead) {
+    const leadRaw = await AbandonedCart.findById(leadId).lean();
+    if (!leadRaw || Array.isArray(leadRaw)) {
       return NextResponse.json({ success: false, error: "Lead not found" }, { status: 404 });
     }
+    const lead = leadRaw as { email?: string; name?: string };
     if (!lead.email) {
       return NextResponse.json({ success: false, error: "Lead has no email" }, { status: 400 });
     }

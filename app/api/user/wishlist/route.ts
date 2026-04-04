@@ -36,7 +36,7 @@ export async function GET(req: Request) {
         }
 
         // 🚨 FIREWALL: Fetch user with populated wishlist
-        const user = await User.findById(session.user.id)
+        const userRaw = await User.findById(session.user.id)
             .select('-password -__v')
             .populate({
                 path: 'wishlist',
@@ -44,9 +44,10 @@ export async function GET(req: Request) {
             })
             .lean();
 
-        if (!user) {
+        if (!userRaw || Array.isArray(userRaw)) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
+        const user = userRaw as { wishlist?: unknown[] };
 
         return NextResponse.json({
             success: true,
@@ -84,9 +85,8 @@ export async function POST(req: Request) {
 
         // 🚨 FIREWALL: Check if product exists (optional but recommended)
         const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
-        const product = await Product.findById(productId).select('_id').lean();
-        
-        if (!product) {
+        const productRaw = await Product.findById(productId).select('_id').lean();
+        if (!productRaw || Array.isArray(productRaw)) {
             return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
         }
 

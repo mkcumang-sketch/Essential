@@ -104,19 +104,23 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         // 📧 SEND REFERRAL REWARD EMAIL TO REFERRER
         try {
             // Get referrer details for email
-            const referrer = await User.findOne({ myReferralCode: referralCode })
+            const referrerRaw = await User.findOne({ myReferralCode: referralCode })
                 .select('name email')
                 .lean();
             
-            if (referrer) {
-                await sendReferralRewardEmail(
-                    referrer.email,
-                    referrer.name,
-                    currentUser.name,
-                    100 // Reward amount
-                );
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('✅ Referral reward email sent to:', referrer.email);
+            if (referrerRaw && !Array.isArray(referrerRaw)) {
+                const referrer = referrerRaw as { email?: string; name?: string };
+                const to = referrer.email?.trim();
+                if (to) {
+                    await sendReferralRewardEmail(
+                        to,
+                        referrer.name ?? '',
+                        currentUser.name,
+                        100 // Reward amount
+                    );
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('✅ Referral reward email sent to:', to);
+                    }
                 }
             }
         } catch (emailError) {

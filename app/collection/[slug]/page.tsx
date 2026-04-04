@@ -4,16 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, Search, Plus, LayoutGrid, SlidersHorizontal, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 const FadeUp = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
   <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay }}>{children}</motion.div>
 );
 
-// 🚨 FIXED: Allow all props to bypass the `{theme: string}` Next.js wrapper error
-export default function ImperialCollectionNode({ params, ...props }: any) {
+export default function ImperialCollectionNode() {
   const router = useRouter();
-  const collectionName = params.slug.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+  const params = useParams();
+  const rawSlug = params?.slug;
+  const slugStr = typeof rawSlug === 'string' ? rawSlug : Array.isArray(rawSlug) ? rawSlug[0] ?? '' : '';
+  const collectionName = slugStr
+    ? slugStr.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+    : 'Collection';
 
   const [watches, setWatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

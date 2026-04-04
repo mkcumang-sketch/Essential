@@ -11,14 +11,15 @@ cloudinary.config({
 });
 
 // PUT: Edit existing Celebrity
-export async function PUT(req: Request, { params }: { params: { id: String } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
+        const { id } = await params;
         const body = await req.json();
         const { name, title, imageUrl, cloudinaryPublicId, oldCloudinaryPublicId } = body;
         const celebrityModel = mongoose.models.Celebrity || Celebrity;
 
-        const celeb = await celebrityModel.findById(params.id);
+        const celeb = await celebrityModel.findById(id);
         if (!celeb) return NextResponse.json({ success: false, error: "Celebrity not found." }, { status: 404 });
 
         // Force delete old image if new upload happened
@@ -39,11 +40,12 @@ export async function PUT(req: Request, { params }: { params: { id: String } }) 
 }
 
 // DELETE: Deletes Celebrity (Removes DB entry AND Cloudinary image)
-export async function DELETE(req: Request, { params }: { params: { id: String } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
+        const { id } = await params;
         const celebrityModel = mongoose.models.Celebrity || Celebrity;
-        const celeb = await celebrityModel.findByIdAndDelete(params.id);
+        const celeb = await celebrityModel.findByIdAndDelete(id);
         if (!celeb) return NextResponse.json({ success: false, error: "Celebrity not found." }, { status: 404 });
         
         if (celeb.cloudinaryPublicId) {
