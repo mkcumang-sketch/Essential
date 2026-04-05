@@ -1,41 +1,50 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-
-let isConnected = false;
-const connectDB = async () => {
-    mongoose.set('strictQuery', true);
-    if (isConnected || mongoose.connection.readyState >= 1) return;
-    await mongoose.connect(process.env.MONGODB_URI as string, { maxPoolSize: 10 });
-    isConnected = true;
-};
-
-// Flexible Schemas
-const Agent = mongoose.models.Agent || mongoose.model('Agent', new mongoose.Schema({}, { strict: false }));
-const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', new mongoose.Schema({}, { strict: false }));
 
 export async function POST(req: Request) {
     try {
-        await connectDB();
-        const { code } = await req.json();
-        const upperCode = code.toUpperCase();
+        const body = await req.json();
+        const code = body.code?.toUpperCase().trim();
 
-        // 1. Check if it's an Affiliate/Referral Code
-        const agent = await Agent.findOne({ code: upperCode });
-        if (agent) {
-            // Assuming flat 10% off for referral codes
-            return NextResponse.json({ success: true, type: 'referral', discountValue: 10, message: 'Referral code applied!' });
+        if (!code) {
+            return NextResponse.json({ success: false, error: "Code is missing" });
         }
 
-        // 2. Check if it's a Marketing Coupon Code
-        const coupon = await Coupon.findOne({ code: upperCode });
-        if (coupon) {
-            return NextResponse.json({ success: true, type: 'coupon', discountValue: Number(coupon.discountValue) || 0, message: 'Discount applied!' });
+        // 🌟 1. GLOBAL BRAND CODES (Fix Discounts)
+        const globalCodes: Record<string, number> = {
+            'ESSENTIAL10': 10,
+            'WELCOME20': 20,
+            'RUSH50': 50,
+        };
+
+        if (globalCodes[code]) {
+            return NextResponse.json({ 
+                success: true, 
+                type: 'global', 
+                discountValue: globalCodes[code],
+                isReferral: false 
+            });
         }
 
-        return NextResponse.json({ success: false, error: 'That code is not valid.' }, { status: 404 });
+        // 🌟 2. SMART MLM REFERRAL SYSTEM
+        // Agar code mein 'REF', 'VIP', ya 'PRO' aata hai (Jaise: REF-UMANG, VIP-AKANSHA)
+        if (code.startsWith('REF') || code.startsWith('VIP') || code.startsWith('PRO')) {
+            return NextResponse.json({ 
+                success: true, 
+                type: 'referral', 
+                discountValue: 10, // MLM walo ko hamesha 10% off milega
+                isReferral: true 
+            });
+        }
+
+        // 🌟 3. (FUTURE) Yahan tu Database se check karne ka logic daal sakta hai
+        // const dbCode = await PromoDB.findOne({ code: code })
+        // if(dbCode) return NextResponse.json({ success: true, discountValue: dbCode.discount })
+
+        // Agar code upar kahin match nahi hua, toh reject kar do
+        return NextResponse.json({ success: false, error: "Invalid promo code" }, { status: 400 });
 
     } catch (error) {
-        console.error("Promo Verify Error:", error);
-        return NextResponse.json({ success: false, error: 'Something went wrong. Try again.' }, { status: 500 });
+        console.error("Promo Verification Error:", error);
+        return NextResponse.json({ success: false, error: "Server Error" }, { status: 500 });
     }
 }
