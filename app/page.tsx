@@ -157,9 +157,16 @@ const Isolated4DHero = ({ config }: { config: any }) => {
                     alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
                  />
               ) : (
-                 <video autoPlay muted loop playsInline preload="none" className="w-full h-full object-cover opacity-70">
-                   <source src={currentSlide?.url} type="video/mp4" />
-                 </video>
+                 <video 
+                   key={currentSlide?.url} 
+                   src={currentSlide?.url}
+                   autoPlay 
+                   muted 
+                   loop 
+                   playsInline 
+                   preload="auto" 
+                   className="w-full h-full object-cover opacity-70"
+                 />
               )}
             </motion.div>
           </AnimatePresence>
@@ -398,9 +405,6 @@ export default function Home() {
         }
     } catch (err) { setReviewStatus('error'); }
   };
-
-  // 🚨 FIXED: Don't block UI while loading - render with skeleton states
-  // if (isDataLoading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
     <div className="bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white overflow-x-hidden scroll-smooth">

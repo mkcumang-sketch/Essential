@@ -41,16 +41,11 @@ const Product = mongoose.models.Product || mongoose.model('Product', ProductSche
 // GET: Fetch all products for the frontend (WITH CACHE KILLER)
 export async function GET(req: Request) {
     try {
+        // 🚨 Sahi tareeka DB connect karne ka
         await connectDB();
-        const url = new URL(req.url);
-        const search = url.searchParams.get('search') || '';
-        
-        const query = search ? { 
-            $or: [
-                { name: { $regex: search, $options: 'i' } },
-                { brand: { $regex: search, $options: 'i' } }
-            ] 
-        } : {};
+
+        // Query ko properly define kar diya
+        const query = {};
 
         const products = await Product.find(query).sort({ priority: -1, createdAt: -1 });
         
