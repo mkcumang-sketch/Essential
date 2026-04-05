@@ -93,6 +93,7 @@ const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string
     );
 };
 
+// 🚨 UPDATED HERO SECTION TO FIX DISAPPEARING TEXT
 const Isolated4DHero = ({ config }: { config: any }) => {
   const heroRef = useRef(null);
   const router = useRouter();
@@ -113,39 +114,43 @@ const Isolated4DHero = ({ config }: { config: any }) => {
   const videoScale = useTransform(smoothScroll, [0, 1], [1, 1.1]);
 
   useEffect(() => {
-    if (!currentSlide) return;
+    if (!currentSlide || slides.length <= 1) return; 
     const timer = setInterval(() => { 
         setCurrentSlideIndex((prev) => (prev + 1) % slides.length); 
     }, 6000); 
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides.length, currentSlide]);
 
   return (
     <section 
         ref={heroRef} 
         onClick={() => router.push('/shop')} 
-        className="relative h-[100vh] md:h-[120vh] w-full bg-black cursor-pointer will-change-transform overflow-hidden"
+        className="relative h-[100vh] md:h-[120vh] w-full bg-black cursor-pointer overflow-hidden"
     >
       <div className="sticky top-0 h-screen w-full flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={currentSlideIndex} 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            exit={{ opacity: 0, scale: 1.05 }} 
-            transition={{ duration: 1 }} 
+        
+        <motion.div 
             style={{ scale: textScale, opacity: textOpacity }} 
             className="absolute z-30 text-center pointer-events-none w-full px-4"
-          >
-            <p className="text-white text-[10px] md:text-xs font-bold uppercase tracking-[15px] md:tracking-[20px] mb-6 drop-shadow-md">ESSENTIAL</p>
-            <h2 className="text-5xl md:text-[130px] lg:text-[160px] font-serif leading-none tracking-tighter text-white font-bold max-w-[95vw] mx-auto drop-shadow-2xl">
-              {currentSlide?.heading || 'Premium Watches'}
-            </h2>
-            <div className="mt-12">
-                <p className="text-white/60 text-[10px] font-bold uppercase tracking-[6px] animate-pulse">Click Here to Shop</p>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+        >
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentSlideIndex} 
+                initial={{ opacity: 0, y: 15 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -15 }} 
+                transition={{ duration: 0.8 }} 
+              >
+                <p className="text-white text-[10px] md:text-xs font-bold uppercase tracking-[15px] md:tracking-[20px] mb-6 drop-shadow-md">ESSENTIAL</p>
+                <h2 className="text-5xl md:text-[130px] lg:text-[160px] font-serif leading-none tracking-tighter text-white font-bold max-w-[95vw] mx-auto drop-shadow-2xl">
+                  {currentSlide?.heading || 'Premium Watches'}
+                </h2>
+                <div className="mt-12">
+                    <p className="text-white/80 text-[10px] font-bold uppercase tracking-[6px] animate-pulse">Click Here to Shop</p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+        </motion.div>
         
         <motion.div style={{ scale: videoScale }} className="absolute inset-0 w-full h-full z-10 overflow-hidden bg-black pointer-events-none">
           <AnimatePresence mode="wait">

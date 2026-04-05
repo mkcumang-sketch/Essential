@@ -18,8 +18,9 @@ function CartPage() {
         setIsLoaded(true);
     }, []);
 
-    const removeItem = (id: string) => {
-        const newCart = cart.filter(item => item._id !== id);
+    // 🚨 FIX: Index-based remove taaki duplicate items mein se sirf wahi delete ho jispe click kiya hai
+    const removeItem = (indexToRemove: number) => {
+        const newCart = cart.filter((_, index) => index !== indexToRemove);
         setCart(newCart); 
         localStorage.setItem('luxury_cart', JSON.stringify(newCart));
     };
@@ -50,7 +51,7 @@ function CartPage() {
                         </div>
                         <h3 className="text-3xl font-serif mb-4 text-black">Your cart is empty</h3>
                         <p className="text-gray-500 text-base mb-10 font-serif italic">Browse our watches and add one you love.</p>
-                        <Link href="/" className="px-10 py-5 bg-black text-white font-black uppercase tracking-[4px] text-[10px] rounded-full hover:bg-[#D4AF37] hover:text-black transition-all hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] flex items-center gap-3">
+                        <Link href="/shop" className="px-10 py-5 bg-black text-white font-black uppercase tracking-[4px] text-[10px] rounded-full hover:bg-[#D4AF37] hover:text-black transition-all hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] flex items-center gap-3">
                             Browse watches <ArrowRight size={14}/>
                         </Link>
                     </motion.div>
@@ -60,9 +61,16 @@ function CartPage() {
                         <div className="lg:col-span-7 space-y-6">
                             <AnimatePresence>
                                 {cart.map((item, i) => (
-                                    <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.9, x:-20}} layout key={item._id || i} className="bg-white p-6 rounded-[30px] border border-gray-100 flex flex-col md:flex-row items-center gap-6 shadow-sm group hover:border-[#D4AF37]/50 transition-colors">
+                                    <motion.div 
+                                        initial={{opacity:0, scale:0.95}} 
+                                        animate={{opacity:1, scale:1}} 
+                                        exit={{opacity:0, scale:0.9, x:-20}} 
+                                        layout 
+                                        key={`${item._id}-${i}`} // 🚨 FIX: Unique Key with Index
+                                        className="bg-white p-6 rounded-[30px] border border-gray-100 flex flex-col md:flex-row items-center gap-6 shadow-sm group hover:border-[#D4AF37]/50 transition-colors"
+                                    >
                                         <div className="w-full md:w-32 h-32 bg-gray-50 rounded-2xl p-4 shrink-0 border border-gray-100 relative overflow-hidden">
-                                            <img src={item.imageUrl || (item.images && item.images[0])} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
+                                            <img src={item.imageUrl || (item.images && item.images[0]) || '/placeholder-watch.png'} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" alt={item.name} />
                                         </div>
                                         <div className="flex-1 text-center md:text-left w-full">
                                             <p className="text-[9px] font-black text-[#D4AF37] uppercase tracking-[4px] mb-1">{item.brand}</p>
@@ -72,7 +80,7 @@ function CartPage() {
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-md">Qty: {item.qty || 1}</p>
                                             </div>
                                         </div>
-                                        <button onClick={() => removeItem(item._id)} className="w-12 h-12 shrink-0 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center md:ml-2">
+                                        <button onClick={() => removeItem(i)} className="w-12 h-12 shrink-0 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center md:ml-2">
                                             <Trash2 size={18}/>
                                         </button>
                                     </motion.div>

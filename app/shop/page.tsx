@@ -1,339 +1,338 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/context/ToastContext';
 import { 
-    Filter, ChevronDown, ShoppingBag, Star, X, Search, 
-    ArrowRight, SlidersHorizontal, ArrowLeft, ShieldCheck, CheckCircle 
+  Search, ShoppingBag, Plus, Sparkles, ChevronDown, X, ArrowLeft, Check, SlidersHorizontal
 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react";
+
+// 🌟 PREMIUM TOAST COMPONENT 🌟
+const LuxuryToast = ({ show, message, type = "success" }: any) => (
+    <AnimatePresence>
+        {show && (
+            <motion.div 
+                initial={{ opacity: 0, y: 50, x: "-50%" }}
+                animate={{ opacity: 1, y: 0, x: "-50%" }}
+                exit={{ opacity: 0, scale: 0.95, x: "-50%" }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="fixed bottom-10 left-1/2 z-[3000] bg-white/95 backdrop-blur-xl border border-gray-200 px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[320px]"
+            >
+                <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring" }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-red-500/20 text-red-500'}`}
+                >
+                    {type === 'success' ? <ShoppingBag size={20} /> : <X size={20} />}
+                </motion.div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[3px] text-[#D4AF37]">Cart updated</p>
+                    <p className="text-gray-900 text-sm font-serif italic">{message}</p>
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
 
 export default function CataloguePage() {
-    const [products, setProducts] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-    // Filter States
-    const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-    const [selectedBrand, setSelectedBrand] = useState<string>('ALL');
-    const [sortOption, setSortOption] = useState<string>('NEWEST');
-    const [searchQuery, setSearchQuery] = useState<string>('');
-    const { showToast } = useToast();
-    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState<any[]>([]);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    // 🚀 BULLETPROOF FETCH LOGIC
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const ts = new Date().getTime();
-                const res = await fetch(`/api/products?t=${ts}`);
-                
-                // Agar response 200 OK nahi hai toh json parse mat karo, seedha error throw karo
-                if (!res.ok) throw new Error("Backend connection failed");
-                
-                const data = await res.json();
-                
-                if (data && data.data) {
-                    setProducts(data.data);
-                } else if (Array.isArray(data)) {
-                    setProducts(data); // Fallback just in case API structure changes
-                }
-            } catch (error) {
-                console.error("Failed to fetch catalogue:", error);
-                // Agar error aaya toh khali array set kar do
-                setProducts([]); 
-            } finally {
-                // 'finally' block ensures ki loader hamesha band hoga, chahe error aaye ya success
-                setIsLoading(false);
-            }
-        };
-        fetchProducts();
-    }, []);
+  // 🚨 MULTI-SELECT FILTERS (AMAZON STYLE) 🚨
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("NEWEST");
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-    // Derived Filters Data (Dynamic from Database)
-    const categories = useMemo(() => {
-        const cats = new Set(products.map(p => p.category).filter(Boolean));
-        return ['ALL', ...Array.from(cats)];
-    }, [products]);
+  const showLuxuryToast = (msg: string, type: 'success' | 'error' = 'success') => {
+      setToast({ show: true, message: msg, type });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+  };
 
-    const brands = useMemo(() => {
-        const brnds = new Set(products.map(p => p.brand).filter(Boolean));
-        return ['ALL', ...Array.from(brnds)];
-    }, [products]);
-
-    // Apply Filters & Sorting
-    const filteredProducts = useMemo(() => {
-        let result = [...products];
-
-        // 1. Category Filter
-        if (selectedCategory !== 'ALL') {
-            result = result.filter(p => p.category === selectedCategory);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`/api/products?t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.data || []);
         }
-
-        // 2. Brand Filter
-        if (selectedBrand !== 'ALL') {
-            result = result.filter(p => p.brand === selectedBrand);
-        }
-
-        // 3. Search Filter
-        if (searchQuery.trim() !== '') {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(p => 
-                p.name?.toLowerCase().includes(query) || 
-                p.brand?.toLowerCase().includes(query)
-            );
-        }
-
-        // 4. Sorting
-        switch (sortOption) {
-            case 'PRICE_LOW':
-                result.sort((a, b) => (a.offerPrice || a.price) - (b.offerPrice || b.price));
-                break;
-            case 'PRICE_HIGH':
-                result.sort((a, b) => (b.offerPrice || b.price) - (a.offerPrice || a.price));
-                break;
-            case 'NEWEST':
-                result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                break;
-            case 'RELEVANCE':
-            default:
-                result.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-                break;
-        }
-
-        return result;
-    }, [products, selectedCategory, selectedBrand, sortOption, searchQuery]);
-
-    // Add to Cart Logic
-    const addToCart = (product: any, e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent navigating to product page
-        const cart = JSON.parse(localStorage.getItem('luxury_cart') || '[]');
-        const exists = cart.find((item: any) => item._id === product._id);
-        const newCart = exists 
-            ? cart.map((i: any) => i._id === product._id ? {...i, qty: i.qty+1} : i) 
-            : [...cart, {...product, qty: 1}];
-        
-        localStorage.setItem('luxury_cart', JSON.stringify(newCart));
-        showToast("Added to your cart.", "success");
-        
-        // Optional: Dispatch event to update navbar cart count if using event listeners
-        if (typeof window !== 'undefined') {
-            window.dispatchEvent(new Event('cartUpdated')); 
-        }
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchProducts();
+    setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
+  }, []);
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center pt-24">
-                <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
-            </div>
-        );
+  // Extract Unique Filters Dynamically
+  const availableBrands = useMemo(() => Array.from(new Set(products.map(p => p.brand).filter(Boolean))), [products]);
+  const availableCategories = useMemo(() => Array.from(new Set(products.map(p => p.category).filter(Boolean))), [products]);
+
+  // Handle Checkbox Toggles
+  const toggleFilter = (setState: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
+      setState(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
+  };
+
+  // Filter & Sort Logic
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = [...products];
+
+    if (searchQuery) {
+        const lowerQuery = searchQuery.toLowerCase();
+        result = result.filter(p => p.name?.toLowerCase().includes(lowerQuery) || p.brand?.toLowerCase().includes(lowerQuery));
+    }
+    if (selectedBrands.length > 0) {
+        result = result.filter(p => selectedBrands.includes(p.brand));
+    }
+    if (selectedCategories.length > 0) {
+        result = result.filter(p => selectedCategories.includes(p.category));
     }
 
-    return (
-        <div className="min-h-screen bg-[#FAFAFA] font-sans text-[#050505] pb-24">
-            
-            {/* 🌟 CATALOGUE HEADER 🌟 */}
-            <div className="bg-black text-white pt-32 pb-16 px-6 md:px-12 text-center relative overflow-hidden">
-                <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
-                <div className="relative z-10 max-w-3xl mx-auto">
-                    <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[3px] text-gray-400 hover:text-white mb-6 transition-colors">
-                        <ArrowLeft size={14}/> Back to Hub
-                    </Link>
-                    <h1 className="text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter">The Catalogue.</h1>
-                    <p className="text-sm text-gray-400 font-mono uppercase tracking-widest">Explore our complete collection of masterpieces.</p>
-                </div>
+    if (sortBy === "PRICE_LOW") result.sort((a, b) => (Number(a.offerPrice || a.price) - Number(b.offerPrice || b.price)));
+    else if (sortBy === "PRICE_HIGH") result.sort((a, b) => (Number(b.offerPrice || b.price) - Number(a.offerPrice || a.price)));
+    else result.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
+    return result;
+  }, [products, searchQuery, selectedBrands, selectedCategories, sortBy]);
+
+  // Add to Cart Logic
+  const addToCart = async (product: any, e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (status === 'unauthenticated' || !session) {
+        showLuxuryToast("Please Login to add items.", "error");
+        setTimeout(() => router.push('/login'), 2000); 
+        return;
+    }
+    const exists = cart.find(item => item._id === product._id);
+    const newCart = exists ? cart.map(i => i._id === product._id ? {...i, qty: i.qty+1} : i) : [...cart, {...product, qty: 1}];
+    setCart(newCart);
+    localStorage.setItem('luxury_cart', JSON.stringify(newCart));
+    showLuxuryToast(`${product.name} added to your collection.`, "success");
+
+    try {
+        const cartTotal = newCart.reduce((total, item) => total + (Number(item.offerPrice || item.price) * item.qty), 0);
+        await fetch(`/api/cart/sync?t=${Date.now()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: newCart, totalAmount: cartTotal, user: { email: session.user?.email } })
+        });
+    } catch (err) {}
+  };
+
+  // 🌟 THE SIDEBAR FILTER COMPONENT (FIXED CLICK LOGIC) 🌟
+  const FilterSidebar = () => (
+      <div className="w-full">
+          <div className="flex justify-between items-center mb-8 lg:hidden">
+              <h3 className="font-serif font-bold text-2xl text-black">Filters</h3>
+              <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 bg-gray-100 rounded-full"><X size={20}/></button>
+          </div>
+          
+          {/* Brands Filter */}
+          <div className="mb-10">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-200 pb-2">Brands</h4>
+              <div className="space-y-3">
+                  {availableBrands.map((brand: any) => (
+                      <div 
+                          key={brand} 
+                          onClick={() => toggleFilter(setSelectedBrands, brand)} // 🚨 FIX: Click logic added
+                          className="flex items-center gap-3 cursor-pointer group"
+                      >
+                          <div className={`w-4 h-4 rounded-sm flex items-center justify-center border transition-all ${selectedBrands.includes(brand) ? 'bg-black border-black' : 'border-gray-300 group-hover:border-black'}`}>
+                              {selectedBrands.includes(brand) && <Check size={12} className="text-white" />}
+                          </div>
+                          <span className={`text-sm transition-colors ${selectedBrands.includes(brand) ? 'text-black font-bold' : 'text-gray-600 group-hover:text-black'}`}>{brand}</span>
+                      </div>
+                  ))}
+              </div>
+          </div>
+
+          {/* Categories Filter */}
+          <div className="mb-10">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-200 pb-2">Categories</h4>
+              <div className="space-y-3">
+                  {availableCategories.map((cat: any) => (
+                      <div 
+                          key={cat} 
+                          onClick={() => toggleFilter(setSelectedCategories, cat)} // 🚨 FIX: Click logic added
+                          className="flex items-center gap-3 cursor-pointer group"
+                      >
+                          <div className={`w-4 h-4 rounded-sm flex items-center justify-center border transition-all ${selectedCategories.includes(cat) ? 'bg-black border-black' : 'border-gray-300 group-hover:border-black'}`}>
+                              {selectedCategories.includes(cat) && <Check size={12} className="text-white" />}
+                          </div>
+                          <span className={`text-sm transition-colors ${selectedCategories.includes(cat) ? 'text-black font-bold' : 'text-gray-600 group-hover:text-black'}`}>{cat}</span>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white">
+      <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 py-4 px-6 md:px-12 flex items-center justify-between shadow-sm">
+         <div className="flex items-center gap-4">
+             <Link href="/" className="p-2 hover:bg-gray-100 rounded-full transition-all text-gray-500 hover:text-black">
+                 <ArrowLeft size={20} />
+             </Link>
+             <h1 className="text-lg md:text-2xl font-serif font-black tracking-[4px] uppercase text-black">Essential</h1>
+         </div>
+         
+         {/* Search Bar (Desktop) */}
+         <div className="hidden md:flex items-center relative w-1/3 max-w-md">
+             <Search size={16} className="absolute left-4 text-gray-400" />
+             <input 
+                type="text" 
+                placeholder="Search premium watches..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-gray-100/50 border border-gray-200 text-xs py-2.5 pl-10 pr-4 rounded-full outline-none focus:border-black focus:bg-white transition-all"
+             />
+         </div>
+
+         <div className="flex items-center gap-6">
+            <div className="relative cursor-pointer group" onClick={() => router.push('/checkout')}>
+              <ShoppingBag size={22} className="text-black group-hover:scale-110 transition-transform" />
+              {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-black text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md">{cart.length}</span>}
             </div>
+         </div>
+      </header>
 
-            {/* 🌟 MAIN SHOP LAYOUT 🌟 */}
-            <div className="max-w-[1800px] mx-auto px-4 md:px-10 mt-10 flex flex-col lg:flex-row gap-8 lg:gap-12">
-                
-                {/* --- MOBILE FILTER BUTTON --- */}
-                <div className="lg:hidden flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-200 shadow-sm sticky top-24 z-40">
-                    <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 font-bold text-sm uppercase tracking-widest">
-                        <Filter size={18}/> Filters & Sort
-                    </button>
-                    <span className="text-xs font-mono text-gray-500">{filteredProducts.length} Results</span>
-                </div>
+      {/* MOBILE SEARCH & FILTER TOGGLE */}
+      <div className="md:hidden px-4 py-4 bg-white border-b border-gray-200 flex gap-2 sticky top-[65px] z-40">
+          <div className="relative flex-1">
+             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+             <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-gray-100 border border-gray-200 text-xs py-2.5 pl-9 pr-3 rounded-lg outline-none" />
+          </div>
+          <button onClick={() => setIsMobileFilterOpen(true)} className="px-4 bg-black text-white rounded-lg flex items-center gap-2 text-xs font-bold uppercase">
+              <SlidersHorizontal size={14}/> Filters
+          </button>
+      </div>
 
-                {/* --- LEFT SIDEBAR (FILTERS) --- */}
-                <aside className={`fixed inset-0 z-[200] lg:relative lg:z-0 lg:w-72 shrink-0 bg-white lg:bg-transparent flex flex-col transition-transform duration-300 ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-                    <div className="flex flex-col h-full lg:h-auto lg:sticky lg:top-32 bg-white lg:bg-transparent lg:p-0 p-6 overflow-y-auto custom-scrollbar">
-                        
-                        <div className="flex justify-between items-center lg:hidden mb-8 border-b pb-4">
-                            <h3 className="text-xl font-serif font-bold">Filters</h3>
-                            <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 bg-gray-100 rounded-full"><X size={18}/></button>
-                        </div>
+      <div className="max-w-[1800px] mx-auto px-4 md:px-8 py-8 flex items-start gap-8 relative">
+          
+          {/* 🚨 LEFT SIDEBAR (AMAZON STYLE) 🚨 */}
+          <aside className="hidden lg:block w-[250px] flex-shrink-0 sticky top-[100px] max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pr-4">
+              <FilterSidebar />
+          </aside>
 
-                        {/* Search Box */}
-                        <div className="mb-8">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Search</h4>
-                            <div className="flex items-center bg-white border border-gray-200 rounded-xl px-4 py-3 focus-within:border-black transition-colors shadow-sm">
-                                <Search size={16} className="text-gray-400 mr-2"/>
-                                <input 
-                                    type="text" 
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Find a watch..." 
-                                    className="w-full text-sm outline-none bg-transparent"
-                                />
-                            </div>
-                        </div>
+          {/* MOBILE FILTER MODAL */}
+          <AnimatePresence>
+              {isMobileFilterOpen && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-[4000] lg:hidden flex">
+                      <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "tween", duration: 0.3 }} className="w-[85%] max-w-[320px] bg-white h-full p-6 overflow-y-auto shadow-2xl">
+                          <FilterSidebar />
+                      </motion.div>
+                      <div className="flex-1" onClick={() => setIsMobileFilterOpen(false)}></div>
+                  </motion.div>
+              )}
+          </AnimatePresence>
 
-                        {/* Categories */}
-                        <div className="mb-8">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-200 pb-2">Categories</h4>
-                            <div className="space-y-3">
-                                {categories.map((cat) => (
-                                    <label key={cat} className="flex items-center gap-3 cursor-pointer group">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedCategory === cat ? 'bg-black border-black text-white' : 'border-gray-300 group-hover:border-black'}`}>
-                                            {selectedCategory === cat && <CheckCircle size={10} strokeWidth={4}/>}
-                                        </div>
-                                        <span className={`text-sm ${selectedCategory === cat ? 'font-bold text-black' : 'text-gray-600 group-hover:text-black'}`}>{cat}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+          {/* RIGHT MAIN CONTENT */}
+          <div className="flex-1 w-full min-w-0">
+              
+              {/* Top Action Bar */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-gray-200 gap-4">
+                  <h2 className="text-xl md:text-3xl font-serif font-bold text-black">
+                      {searchQuery ? `Results for "${searchQuery}"` : "All Timepieces"}
+                      <span className="block md:inline md:ml-4 text-xs font-sans text-gray-500 font-normal uppercase tracking-widest mt-1 md:mt-0">
+                          {filteredAndSortedProducts.length} items found
+                      </span>
+                  </h2>
 
-                        {/* Brands */}
-                        <div className="mb-8">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 border-b border-gray-200 pb-2">Brands</h4>
-                            <div className="space-y-3">
-                                {brands.map((brand) => (
-                                    <label key={brand} className="flex items-center gap-3 cursor-pointer group">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedBrand === brand ? 'bg-black border-black text-white' : 'border-gray-300 group-hover:border-black'}`}>
-                                            {selectedBrand === brand && <CheckCircle size={10} strokeWidth={4}/>}
-                                        </div>
-                                        <span className={`text-sm ${selectedBrand === brand ? 'font-bold text-black' : 'text-gray-600 group-hover:text-black'}`}>{brand}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+                  <div className="relative group min-w-[180px] w-full md:w-auto">
+                      <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full appearance-none bg-white border border-gray-300 text-xs font-bold uppercase tracking-wider py-2.5 pl-4 pr-10 rounded-lg outline-none focus:border-black cursor-pointer shadow-sm">
+                          <option value="NEWEST">Newest Arrivals</option>
+                          <option value="PRICE_LOW">Price: Low to High</option>
+                          <option value="PRICE_HIGH">Price: High to Low</option>
+                      </select>
+                      <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                  </div>
+              </div>
 
-                        {/* Reset Button */}
-                        <button 
-                            onClick={() => { setSelectedCategory('ALL'); setSelectedBrand('ALL'); setSearchQuery(''); setSortOption('RELEVANCE'); setIsMobileFilterOpen(false); }}
-                            className="mt-auto lg:mt-0 py-4 w-full bg-gray-100 text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-gray-200 transition-colors"
-                        >
-                            Reset All Filters
-                        </button>
-                    </div>
-                </aside>
+              {/* 🚨 PRODUCTS GRID - 4 COLUMNS (AMAZON STYLE) 🚨 */}
+              {loading ? (
+                 <div className="py-32 flex flex-col items-center justify-center">
+                     <Sparkles size={40} className="text-gray-300 mb-4 animate-pulse" />
+                     <p className="text-sm font-bold uppercase tracking-widest text-gray-400">Loading Vault...</p>
+                 </div>
+              ) : filteredAndSortedProducts.length === 0 ? (
+                  <div className="py-32 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
+                      <Search size={40} className="text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-2xl font-serif font-bold text-black mb-2">No matches found</h3>
+                      <p className="text-gray-500 text-sm">Try adjusting your filters or search query.</p>
+                      <button onClick={() => {setSearchQuery(""); setSelectedBrands([]); setSelectedCategories([]);}} className="mt-6 px-6 py-2 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-gray-800 transition-all">Clear All Filters</button>
+                  </div>
+              ) : (
+                  // Grid: 2 on mobile, 3 on tablet, 4 on desktop
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
+                      <AnimatePresence mode='popLayout'>
+                          {filteredAndSortedProducts.map((watch) => (
+                              <motion.div 
+                                  layout 
+                                  initial={{ opacity: 0, scale: 0.95 }} 
+                                  animate={{ opacity: 1, scale: 1 }} 
+                                  exit={{ opacity: 0, scale: 0.9 }} 
+                                  transition={{ duration: 0.3 }} 
+                                  key={watch._id} 
+                                  className="group bg-white p-4 rounded-[16px] border border-gray-200 hover:border-black hover:shadow-lg transition-all duration-300 flex flex-col h-full relative cursor-pointer" 
+                                  onClick={() => router.push(`/product/${watch.slug || watch._id}`)}
+                              >
+                                  {watch.badge && <span className="absolute top-3 left-3 bg-black text-white text-[7px] md:text-[8px] font-bold px-2 py-1 rounded uppercase z-20 shadow-sm">{watch.badge}</span>}
+                                  
+                                  <div className="flex aspect-square bg-gray-50/80 rounded-xl overflow-hidden mb-4 items-center justify-center p-4 relative">
+                                      <img 
+                                          src={watch.imageUrl || (watch.images && watch.images[0]) || '/placeholder-watch.png'} 
+                                          className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" 
+                                          loading="lazy" 
+                                          alt={watch.name}
+                                      />
+                                  </div>
 
-                {/* --- RIGHT PRODUCT GRID --- */}
-                <div className="flex-1">
-                    
-                    {/* Top Bar (Sorting & Count) */}
-                    <div className="hidden lg:flex justify-between items-center mb-8 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p className="text-sm font-bold text-gray-500">Showing <span className="text-black">{filteredProducts.length}</span> Results</p>
-                        
-                        <div className="flex items-center gap-3">
-                            <SlidersHorizontal size={16} className="text-gray-400"/>
-                            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Sort By:</span>
-                            <select 
-                                value={sortOption} 
-                                onChange={(e) => setSortOption(e.target.value)}
-                                className="bg-gray-50 border border-gray-200 text-sm font-bold p-2 rounded-lg outline-none focus:border-black cursor-pointer"
-                            >
-                                <option value="RELEVANCE">Relevance</option>
-                                <option value="NEWEST">Newest Arrivals</option>
-                                <option value="PRICE_LOW">Price: Low to High</option>
-                                <option value="PRICE_HIGH">Price: High to Low</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* The Grid */}
-                    {filteredProducts.length === 0 ? (
-                        <div className="bg-white rounded-[40px] border border-gray-100 py-32 flex flex-col items-center justify-center text-center shadow-sm">
-                            <Search size={60} className="text-gray-300 mb-6"/>
-                            <h3 className="text-3xl font-serif mb-2">No watches found.</h3>
-                            <p className="text-gray-500 max-w-md mx-auto">Try adjusting your filters or search query to find what you're looking for.</p>
-                            <button onClick={() => { setSelectedCategory('ALL'); setSelectedBrand('ALL'); setSearchQuery(''); }} className="mt-8 px-8 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-[#D4AF37] hover:text-black transition-colors">Clear Filters</button>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                            <AnimatePresence>
-                                {filteredProducts.map((watch, idx) => (
-                                    <motion.div 
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        transition={{ duration: 0.3 }}
-                                        key={watch._id} 
-                                    >
-                                        <Link href={`/product/${watch.slug || watch._id}`} className="group bg-white p-6 rounded-[30px] border border-gray-100 hover:shadow-2xl hover:-translate-y-1 hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col h-full relative cursor-pointer">
-                                            
-                                            {/* Badges */}
-                                            <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
-                                                {watch.badge && <span className="bg-[#D4AF37] text-black text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest shadow-md">{watch.badge}</span>}
-                                                {watch.stock < 3 && watch.stock > 0 && <span className="bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest animate-pulse">Few Left</span>}
-                                                {watch.stock <= 0 && <span className="bg-gray-800 text-white text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest">Out of Stock</span>}
-                                            </div>
-
-                                            {/* Image */}
-                                            <div className="flex aspect-square bg-gray-50 rounded-[20px] overflow-hidden mb-6 items-center justify-center p-6 relative">
-                                                <img src={watch.imageUrl || (watch.images && watch.images[0])} alt={watch.name} className="w-full h-full object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-500" />
-                                            </div>
-
-                                            {/* Info */}
-                                            <div className="flex-1 flex flex-col justify-between">
-                                                <div>
-                                                    <p className="text-[9px] font-black text-[#D4AF37] uppercase tracking-[3px] mb-1">{watch.brand}</p>
-                                                    <h4 className="text-xl font-serif text-[#050505] leading-tight mb-2 tracking-tighter group-hover:text-[#D4AF37] transition-colors line-clamp-2">{watch.name}</h4>
-                                                    
-                                                    {/* Amazon Style Rating (Mock or Real) */}
-                                                    <div className="flex items-center gap-1 mb-4 text-[#D4AF37]">
-                                                        {[...Array(5)].map((_, i) => <Star key={i} size={12} fill={i < 4 ? "currentColor" : "none"}/>)}
-                                                        <span className="text-[10px] font-mono text-gray-400 ml-1">(4.8)</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-100">
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="text-xl text-black font-black tracking-tighter font-serif">₹{Number(watch.offerPrice || watch.price).toLocaleString('en-IN')}</p>
-                                                        </div>
-                                                        {(watch.offerPrice && watch.price > watch.offerPrice) && (
-                                                            <p className="text-gray-400 line-through text-[10px] font-bold mt-0.5">₹{Number(watch.price).toLocaleString('en-IN')}</p>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    {watch.stock > 0 ? (
-                                                        <button 
-                                                            onClick={(e) => addToCart(watch, e)} 
-                                                            className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center hover:bg-[#D4AF37] hover:text-black transition-colors shadow-md group-hover:scale-110"
-                                                        >
-                                                            <ShoppingBag size={16}/>
-                                                        </button>
-                                                    ) : (
-                                                        <button disabled className="w-10 h-10 bg-gray-200 text-gray-400 rounded-xl flex items-center justify-center cursor-not-allowed">
-                                                            <X size={16}/>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-                    )}
-                </div>
-            </div>
-            
-            {/* Mobile Filter Overlay Background */}
-            <AnimatePresence>
-                {isMobileFilterOpen && (
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        onClick={() => setIsMobileFilterOpen(false)}
-                        className="fixed inset-0 bg-black/60 z-[190] lg:hidden backdrop-blur-sm"
-                    />
-                )}
-            </AnimatePresence>
-
-        </div>
-    );
+                                  <div className="flex-1 flex flex-col justify-between">
+                                      <div>
+                                          <p className="text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-[2px] mb-1">{watch.brand}</p>
+                                          <h4 className="text-xs md:text-sm font-serif text-black leading-snug mb-3 font-bold line-clamp-2">{watch.name}</h4>
+                                      </div>
+                                      
+                                      <div className="flex justify-between items-end mt-auto pt-3 border-t border-gray-100">
+                                          <div>
+                                              {watch.offerPrice && watch.offerPrice < watch.price && (
+                                                  <p className="text-[8px] text-gray-400 line-through mb-0.5">₹{Number(watch.price).toLocaleString()}</p>
+                                              )}
+                                              <p className="text-sm md:text-lg text-black font-bold tracking-tight">
+                                                  ₹{Number(watch.offerPrice || watch.price).toLocaleString()}
+                                              </p>
+                                          </div>
+                                          <button 
+                                              onClick={(e) => addToCart(watch, e)} 
+                                              className="w-7 h-7 md:w-8 md:h-8 bg-gray-100 text-black rounded-full hover:bg-black hover:text-white transition-all flex items-center justify-center active:scale-90"
+                                          >
+                                              <Plus size={14}/>
+                                          </button>
+                                      </div>
+                                  </div>
+                              </motion.div>
+                          ))}
+                      </AnimatePresence>
+                  </div>
+              )}
+          </div>
+      </div>
+    </div>
+  );
 }

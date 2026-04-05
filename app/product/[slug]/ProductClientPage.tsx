@@ -229,8 +229,9 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                                 <motion.img 
                                     key={activeMedia.url} 
                                     initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0}} transition={{duration:0.4}} 
-                                    src={optimizeImage(activeMedia.url)} 
-                                    alt={product.seo?.imageAltTexts?.[activeMedia.url] || `${product.name} Main View`}
+src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png'} 
+// Ya fir agar optimizeImage string return nahi karta null/empty par, toh seedha ye laga:
+// src={activeMedia?.url || '/placeholder-watch.png'}                                    alt={product.seo?.imageAltTexts?.[activeMedia.url] || `${product.name} Main View`}
                                     className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-700"
                                 />
                             )}
