@@ -30,8 +30,8 @@ export async function sendOrderConfirmationEmail(params: {
   }
 
   const from = process.env.RESEND_FROM_EMAIL || "Essential Store <onboarding@resend.dev>";
-  const safeName = escapeHtml(customerName || "Valued Member");
-  const safeSubject = escapeHtml(subject || "Order Confirmation - Essential Rush");
+  const safeName = escapeHtml(customerName || "Friend");
+  const safeSubject = escapeHtml(subject || "Your order is confirmed — Essential Rush");
   const safeOrderId = escapeHtml(orderId || "");
   const safeAmount = escapeHtml(typeof amount === "number" ? amount : 0);
 
@@ -49,7 +49,7 @@ export async function sendOrderConfirmationEmail(params: {
               Essential Rush
             </div>
             <div style="margin-top:10px; color:rgba(255,255,255,0.78); font-size:12px; letter-spacing:3px; text-transform:uppercase;">
-              Premium Acquisition Confirmation
+              Order confirmed
             </div>
           </div>
 
@@ -58,7 +58,7 @@ export async function sendOrderConfirmationEmail(params: {
               Dear ${safeName},
             </div>
             <div style="font-size:14px; line-height:1.7; color:rgba(255,255,255,0.82); margin-bottom:22px;">
-              Your order has been successfully received. Our global logistics team is now preparing your timepiece for secure dispatch.
+              We got your order. Our team is packing your watch and will ship it soon.
             </div>
 
             <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.25); border-radius:14px; padding:18px 16px; margin:22px 0;">
@@ -76,12 +76,12 @@ export async function sendOrderConfirmationEmail(params: {
             </div>
 
             <div style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.8); margin-top:10px;">
-              You will receive another confirmation once your asset is in transit.
+              We will email you again when your watch ships.
             </div>
 
             <div style="margin-top:26px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.08);">
               <div style="display:inline-block; padding:12px 16px; border-radius:999px; background:#D4AF37; color:#000; font-weight:900; letter-spacing:2px; text-transform:uppercase; font-size:12px;">
-                Secure Dispatch Initiated
+                Getting ready to ship
               </div>
             </div>
           </div>

@@ -48,6 +48,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, leadId: lead._id });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Lead Capture Failed" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "We could not save your details." }, { status: 500 });
   }
 }

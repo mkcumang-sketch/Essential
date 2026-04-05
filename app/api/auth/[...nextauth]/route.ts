@@ -5,6 +5,24 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import connectDB from "@/lib/mongodb";
 
+/** Google sign-ins with these emails are always stored and refreshed as SUPER_ADMIN. */
+const VIP_ADMINS = [
+  "us7081569@gmail.com",
+  "us7907us@gmail.com",
+  "shresthxmarketing@gmail.com",
+];
+
+function isVipAdminEmail(email: string | null | undefined): boolean {
+  if (!email || typeof email !== "string") return false;
+  const normalized = email.trim().toLowerCase();
+  return VIP_ADMINS.some((e) => e.trim().toLowerCase() === normalized);
+}
+
+function caseInsensitiveEmailQuery(email: string) {
+  const escaped = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${escaped}$`, "i");
+}
+
 export const authOptions: NextAuthOptions = {
     providers: [
         GoogleProvider({
@@ -37,15 +55,30 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async signIn({ user, account }) {
             await connectDB();
-            if (account?.provider === "google") {
-                let dbUser = await User.findOne({ email: user.email }).lean() as any;
+            if (account?.provider === "google" && user.email) {
+                const vip = isVipAdminEmail(user.email);
+                let dbUser = await User.findOne({
+                    email: caseInsensitiveEmailQuery(user.email),
+                }).lean() as { _id: unknown; role?: string } | null;
+
                 if (!dbUser) {
-                    dbUser = await User.create({
-                        name: user.name, email: user.email, image: user.image, role: 'USER',
-                        phone: `GOOG-${Date.now().toString().slice(-5)}`
+                    const created = await User.create({
+                        name: user.name,
+                        email: user.email,
+                        image: user.image,
+                        role: vip ? "SUPER_ADMIN" : "USER",
+                        phone: `GOOG-${Date.now().toString().slice(-5)}`,
                     });
+                    dbUser = created.toObject() as { _id: unknown; role?: string };
+                } else if (vip && dbUser.role === "USER") {
+                    await User.updateOne(
+                        { _id: dbUser._id },
+                        { $set: { role: "SUPER_ADMIN" } }
+                    );
+                    dbUser = { ...dbUser, role: "SUPER_ADMIN" };
                 }
-                user.id = dbUser._id.toString();
+
+                user.id = String(dbUser._id);
             }
             return true;
         },

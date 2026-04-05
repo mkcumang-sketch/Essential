@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         const { email, phone } = await req.json();
 
         if (!email || !phone) {
-            return NextResponse.json({ success: false, error: "Email and Phone are required" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Email and phone are required." }, { status: 400 });
         }
 
         const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
@@ -39,13 +39,13 @@ export async function POST(req: Request) {
             { new: true, upsert: true } 
         );
 
-        return NextResponse.json({ success: true, message: "Phone verified securely." });
+        return NextResponse.json({ success: true, message: "Phone number saved." });
     } catch (error: any) {
         // Handle MongoDB Duplicate Key Error (Code 11000) just in case
         if (error.code === 11000) {
              return NextResponse.json({ success: false, error: "This number is already registered." }, { status: 400 });
         }
         console.error("Phone Verification Error:", error);
-        return NextResponse.json({ success: false, error: "Verification failed." }, { status: 500 });
+        return NextResponse.json({ success: false, error: "We could not verify your phone." }, { status: 500 });
     }
 }

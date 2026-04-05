@@ -35,7 +35,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
         return NextResponse.json({ success: true, data: celeb });
     } catch (error) {
-        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong." }, { status: 500 });
     }
 }
 
@@ -52,8 +52,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
             await cloudinary.uploader.destroy(celeb.cloudinaryPublicId);
         }
 
-        return NextResponse.json({ success: true, message: "Celebrity and asset removed." });
+        return NextResponse.json({ success: true, message: "Removed." });
     } catch (error) {
-        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong." }, { status: 500 });
     }
 }

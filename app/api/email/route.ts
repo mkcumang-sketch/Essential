@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
-      return NextResponse.json({ success: false, error: "Missing RESEND_API_KEY" }, { status: 500 });
+      return NextResponse.json({ success: false, error: "Email is not set up on the server." }, { status: 500 });
     }
 
     const resend = new Resend(resendApiKey);

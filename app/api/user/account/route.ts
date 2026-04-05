@@ -26,7 +26,7 @@ export async function GET() {
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized Vault Access" },
+        { success: false, error: "Please sign in to view your account." },
         { status: 401 }
       );
     }
@@ -110,7 +110,7 @@ export async function GET() {
   } catch (error) {
     console.error("Vault Aggregation Error:", error);
     return NextResponse.json(
-      { success: false, error: "Internal Vault Error" },
+      { success: false, error: "We could not load your account. Try again." },
       { status: 500 }
     );
   }

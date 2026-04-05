@@ -39,7 +39,7 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         if (!session?.user?.id) {
             return NextResponse.json({ 
                 success: false, 
-                error: "Authentication required" 
+                error: "Please sign in first." 
             }, { status: 401 });
         }
 
@@ -97,7 +97,7 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         if (!result) {
             return NextResponse.json({ 
                 success: false, 
-                error: "Failed to apply referral code" 
+                error: "We could not apply that code." 
             }, { status: 400 });
         }
 
@@ -133,7 +133,7 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         // 🏆 SUCCESS RESPONSE WITH REWARD DETAILS
         return NextResponse.json({
             success: true,
-            message: "Referral applied successfully!",
+            message: "Referral code applied!",
             data: {
                 discount: 500,
                 referrerBonus: 100,
@@ -149,13 +149,13 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         if (error.code === 11000) {
             return NextResponse.json({ 
                 success: false, 
-                error: "Referral code conflict" 
+                error: "That code is already in use." 
             }, { status: 409 });
         }
 
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to apply referral code" 
+            error: "We could not apply that code." 
         }, { status: 500 });
     }
 }

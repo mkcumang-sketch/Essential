@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         // 🚨 FIREWALL: Verify admin session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id || (session.user as any).role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in as admin." }, { status: 401 });
         }
 
         // 🚨 FIREWALL: Fetch users with security
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
         console.error("Admin Get Users Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to fetch users" 
+            error: "We could not load users." 
         }, { status: 500 });
     }
 }
@@ -66,22 +66,22 @@ export async function PUT(req: Request) {
         // 🚨 FIREWALL: Verify admin session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id || (session.user as any).role !== 'SUPER_ADMIN') {
-            return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in as admin." }, { status: 401 });
         }
 
         const { userId, totalSpent, loyaltyTier } = await req.json();
 
         // 🛡️ INPUT VALIDATION
         if (!userId || typeof userId !== 'string') {
-            return NextResponse.json({ success: false, error: "Valid user ID is required" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "User ID missing." }, { status: 400 });
         }
 
         if (totalSpent !== undefined && (typeof totalSpent !== 'number' || totalSpent < 0)) {
-            return NextResponse.json({ success: false, error: "Total spent must be a positive number" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Total spent must be a positive number." }, { status: 400 });
         }
 
         if (loyaltyTier && !['Silver Vault', 'Gold Vault'].includes(loyaltyTier)) {
-            return NextResponse.json({ success: false, error: "Invalid loyalty tier" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "That member level is not valid." }, { status: 400 });
         }
 
         // 🚨 FIREWALL: Check if user exists
@@ -102,7 +102,7 @@ export async function PUT(req: Request) {
         ).select('-password -__v');
 
         if (!updatedUser) {
-            return NextResponse.json({ success: false, error: "Failed to update user" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "We could not update this user." }, { status: 500 });
         }
 
         // 🚨 FIREWALL: Add notification for user
@@ -110,7 +110,7 @@ export async function PUT(req: Request) {
             $push: {
                 notifications: {
                     title: "👑 Account Updated",
-                    desc: `Your loyalty status has been updated by an administrator.`,
+                    desc: `Your member level was updated by our team.`,
                     unread: true,
                     time: new Date()
                 }
@@ -119,7 +119,7 @@ export async function PUT(req: Request) {
 
         return NextResponse.json({
             success: true,
-            message: "User updated successfully",
+            message: "User updated.",
             data: {
                 user: updatedUser
             }
@@ -129,7 +129,7 @@ export async function PUT(req: Request) {
         console.error("Admin Update User Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to update user" 
+            error: "We could not update this user." 
         }, { status: 500 });
     }
 }

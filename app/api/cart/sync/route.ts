@@ -94,7 +94,7 @@ export async function POST(req: Request) {
     // Guest: marketing lead only — no session user id; match by contact from body
     if (!user || (!user.email && !user.phone)) {
       return NextResponse.json(
-        { success: false, error: "User info missing" },
+        { success: false, error: "Sign in to sync your cart." },
         { status: 400 }
       );
     }

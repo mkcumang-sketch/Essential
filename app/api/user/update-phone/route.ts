@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         // 1. Check if user is legally logged in
         const session = await getServerSession(authOptions);
         if (!session || !session.user) {
-            return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+            return NextResponse.json({ error: "Please sign in." }, { status: 401 });
         }
 
         const { phone } = await req.json();
@@ -31,10 +31,10 @@ export async function POST(req: Request) {
         // 4. Update the current user's phone number
         await User.findByIdAndUpdate((session.user as any).id, { phone });
 
-        return NextResponse.json({ success: true, message: "Vault secured!" });
+        return NextResponse.json({ success: true, message: "Phone number saved." });
 
     } catch (error) {
         console.error("Update Phone Error:", error);
-        return NextResponse.json({ error: "Server Error" }, { status: 500 });
+        return NextResponse.json({ error: "Something went wrong. Try again." }, { status: 500 });
     }
 }

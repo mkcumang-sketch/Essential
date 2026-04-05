@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         leadId: lead._id,
-        message: "Lead captured successfully (OTP verification flow pending).",
+        message: "Thanks! We saved your details.",
       });
     }
 
@@ -71,11 +71,11 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       leadId: lead._id,
-      message: "Lead captured successfully (OTP verification flow pending).",
+      message: "Thanks! We saved your details.",
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Lead Capture Error:", message);
-    return NextResponse.json({ error: "Lead capture failed" }, { status: 500 });
+    return NextResponse.json({ error: "We could not save your details. Try again." }, { status: 500 });
   }
 }

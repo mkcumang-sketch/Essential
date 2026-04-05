@@ -45,10 +45,10 @@ export async function POST(req: Request) {
             loyaltyTier: 'Silver Vault'
         });
 
-        return NextResponse.json({ success: true, message: "Account created successfully!" }, { status: 201 });
+        return NextResponse.json({ success: true, message: "Your account is ready!" }, { status: 201 });
 
     } catch (error: any) {
         console.error("Registration Error:", error);
-        return NextResponse.json({ success: false, error: "Database error while creating account." }, { status: 500 });
+        return NextResponse.json({ success: false, error: "We could not create your account. Try again." }, { status: 500 });
     }
 }

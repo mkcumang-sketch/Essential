@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
         if (!config) {
             console.log("Seeding one-time premium CMS data...");
             await CmsConfig.create(LUXURY_DEFAULT_DATA);
-            return NextResponse.json({ success: true, message: "Database seeded successfully with dynamic seeder!" });
+            return NextResponse.json({ success: true, message: "Sample data added." });
         } else {
             return NextResponse.json({ success: false, message: "Database already has data. Seed skipped." });
         }

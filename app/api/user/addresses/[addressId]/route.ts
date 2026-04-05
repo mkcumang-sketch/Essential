@@ -15,7 +15,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         const { addressId } = await params;
@@ -49,7 +49,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
         ).select('-password -__v');
 
         if (!updatedUser) {
-            return NextResponse.json({ success: false, error: "Failed to delete address" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "We could not delete this address." }, { status: 500 });
         }
 
         // 🚨 FIREWALL: If deleted address was default, set first remaining address as default
@@ -65,7 +65,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
 
         return NextResponse.json({
             success: true,
-            message: "Address deleted successfully",
+            message: "Address removed.",
             data: {
                 addresses: remainingAddresses
             }
@@ -75,7 +75,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
         console.error("Delete Address Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to delete address" 
+            error: "We could not delete this address." 
         }, { status: 500 });
     }
 }
@@ -88,7 +88,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ addressI
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         const { addressId } = await params;
@@ -100,7 +100,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ addressI
         }
 
         if (!address || typeof address !== 'string' || address.trim().length < 10) {
-            return NextResponse.json({ success: false, error: "Valid address is required" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Please enter a full address." }, { status: 400 });
         }
 
         // 🚨 FIREWALL: Find and validate user
@@ -147,12 +147,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ addressI
         ).select('-password -__v');
 
         if (!updatedUser) {
-            return NextResponse.json({ success: false, error: "Failed to update address" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "We could not update this address." }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            message: "Address updated successfully",
+            message: "Address updated.",
             data: {
                 addresses: updatedUser.addresses || []
             }
@@ -162,7 +162,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ addressI
         console.error("Update Address Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to update address" 
+            error: "We could not update this address." 
         }, { status: 500 });
     }
 }

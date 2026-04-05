@@ -12,7 +12,7 @@ const Product = mongoose.models.Product || mongoose.model('Product', new mongoos
 export async function PATCH(req: Request, { params }: { params: any }) {
     try {
         if (!process.env.MONGODB_URI) {
-            return NextResponse.json({ success: false, error: "MONGODB_URI missing in Vercel" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "Database is not connected." }, { status: 500 });
         }
 
         await connectDB();
@@ -44,7 +44,7 @@ export async function PATCH(req: Request, { params }: { params: any }) {
         }
 
         if (!updatedProduct) {
-            return NextResponse.json({ success: false, error: `Product ID [${slug}] not found in DB` }, { status: 404 });
+            return NextResponse.json({ success: false, error: "We could not find that watch." }, { status: 404 });
         }
 
         return NextResponse.json({ success: true, product: updatedProduct });

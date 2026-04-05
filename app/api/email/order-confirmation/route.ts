@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     if (!secretOk) {
       // If you don't use internal-secret calls, set ORDER_EMAIL_SECRET and use it in your backend.
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "You do not have access to do that." }, { status: 403 });
     }
 
     const data = await sendOrderConfirmationEmail({
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Email send failed" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "We could not send the email." }, { status: 500 });
   }
 }
 

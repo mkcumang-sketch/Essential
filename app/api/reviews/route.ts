@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
         if (wantsAdminView) {
             if (!(await isSuperAdminRequest(req))) {
                 console.log("🚨 Unauthorized Admin Review Access Blocked!");
-                return NextResponse.json({ success: false, error: 'Forbidden Access' }, { status: 403 });
+                return NextResponse.json({ success: false, error: 'You do not have access to do that.' }, { status: 403 });
             }
         }
 
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: true, data: reviews });
     } catch (error) { 
         console.error("GET Reviews Error:", error);
-        return NextResponse.json({ success: false, error: "Failed to fetch reviews" }, { status: 500 }); 
+        return NextResponse.json({ success: false, error: "We could not load reviews. Try again." }, { status: 500 }); 
     }
 }
 
@@ -70,14 +70,14 @@ export async function POST(req: NextRequest) {
 
         if (body.honeyPot && body.honeyPot.length > 0) {
             console.log("🛡️ [SECURITY] Bot submission blocked via Honeypot.");
-            return NextResponse.json({ success: false, message: "Security Check Failed" }, { status: 400 });
+            return NextResponse.json({ success: false, message: "Security check failed. Refresh the page and try again." }, { status: 400 });
         }
 
         const session = await getServerSession(authOptions);
         const userId = session?.user?.id;
         if (!userId) {
             return NextResponse.json(
-                { success: false, message: "Sign in required to submit a review" },
+                { success: false, message: "Sign in to leave a review." },
                 { status: 401 }
             );
         }
@@ -108,39 +108,39 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
     try {
         if (!(await isSuperAdminRequest(req))) {
-            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'You do not have access to do that.' }, { status: 403 });
         }
         await connectDB();
         const { reviewId, visibility } = await req.json();
         
         if (!reviewId || !visibility) {
-            return NextResponse.json({ success: false, error: "Missing parameters" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Something was missing. Try again." }, { status: 400 });
         }
         
         const updatedReview = await Review.findByIdAndUpdate(reviewId, { visibility }, { new: true });
         return NextResponse.json({ success: true, data: updatedReview });
     } catch (error) { 
         console.error("PATCH Review Error:", error);
-        return NextResponse.json({ success: false, error: "Failed to update review" }, { status: 500 }); 
+        return NextResponse.json({ success: false, error: "We could not update the review." }, { status: 500 }); 
     }
 }
 
 export async function DELETE(req: NextRequest) {
     try {
         if (!(await isSuperAdminRequest(req))) {
-            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'You do not have access to do that.' }, { status: 403 });
         }
         await connectDB();
         
         const body = await req.json();
         const { id } = body;
         
-        if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
+        if (!id) return NextResponse.json({ success: false, error: "Review ID missing." }, { status: 400 });
 
         await Review.findByIdAndDelete(id);
-        return NextResponse.json({ success: true, message: "Review permanently deleted from Vault" });
+        return NextResponse.json({ success: true, message: "Review removed." });
     } catch (error) {
         console.error("DELETE Review Error:", error);
-        return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Something went wrong. Try again." }, { status: 500 });
     }
 }

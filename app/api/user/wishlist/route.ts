@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         // 🚨 FIREWALL: Fetch user with populated wishlist
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
         console.error("Get Wishlist Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to fetch wishlist" 
+            error: "We could not load your wishlist." 
         }, { status: 500 });
     }
 }
@@ -73,14 +73,14 @@ export async function POST(req: Request) {
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         const { productId } = await req.json();
 
         // 🛡️ INPUT VALIDATION
         if (!productId || typeof productId !== 'string') {
-            return NextResponse.json({ success: false, error: "Valid product ID is required" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Pick a product first." }, { status: 400 });
         }
 
         // 🚨 FIREWALL: Check if product exists (optional but recommended)
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
                 $push: {
                     notifications: {
                         title: "💝 Added to Wishlist",
-                        desc: "A new item has been added to your wishlist.",
+                        desc: "A watch was added to your wishlist.",
                         unread: true,
                         time: new Date()
                     }
@@ -108,12 +108,12 @@ export async function POST(req: Request) {
         ).select('-password -__v');
 
         if (!updatedUser) {
-            return NextResponse.json({ success: false, error: "Failed to add to wishlist" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "We could not add this to your wishlist." }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            message: "Product added to wishlist",
+            message: "Saved to your wishlist.",
             data: {
                 wishlist: updatedUser.wishlist || []
             }
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         console.error("Add to Wishlist Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to add to wishlist" 
+            error: "We could not add this to your wishlist." 
         }, { status: 500 });
     }
 }
@@ -136,14 +136,14 @@ export async function DELETE(req: Request) {
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         const { productId } = await req.json();
 
         // 🛡️ INPUT VALIDATION
         if (!productId || typeof productId !== 'string') {
-            return NextResponse.json({ success: false, error: "Valid product ID is required" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Pick a product first." }, { status: 400 });
         }
 
         // 🚨 FIREWALL: Remove from wishlist
@@ -154,12 +154,12 @@ export async function DELETE(req: Request) {
         ).select('-password -__v');
 
         if (!updatedUser) {
-            return NextResponse.json({ success: false, error: "Failed to remove from wishlist" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "We could not remove this from your wishlist." }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            message: "Product removed from wishlist",
+            message: "Removed from your wishlist.",
             data: {
                 wishlist: updatedUser.wishlist || []
             }
@@ -169,7 +169,7 @@ export async function DELETE(req: Request) {
         console.error("Remove from Wishlist Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to remove from wishlist" 
+            error: "We could not remove this from your wishlist." 
         }, { status: 500 });
     }
 }

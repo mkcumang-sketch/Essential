@@ -33,7 +33,7 @@ async function isSuperAdminRequest(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     if (!(await isSuperAdminRequest(req))) {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "You do not have access to do that." }, { status: 403 });
     }
 
     const { leadId } = await req.json();
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, url });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: "VIP WhatsApp dispatch failed" },
+      { success: false, error: "WhatsApp message did not send." },
       { status: 500 }
     );
   }

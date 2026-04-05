@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   try {
     if (!(await isSuperAdminRequest(req))) {
       return NextResponse.json(
-        { success: false, error: "Forbidden" },
+        { success: false, error: "You do not have access to do that." },
         { status: 403 }
       );
     }
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: "Failed to fetch abandoned carts" },
+      { success: false, error: "We could not load abandoned carts." },
       { status: 500 }
     );
   }

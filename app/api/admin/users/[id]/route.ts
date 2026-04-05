@@ -36,7 +36,7 @@ export async function DELETE(
         const { id } = await params; // 🚨 MUST AWAIT
 
         await User.findByIdAndDelete(id);
-        return NextResponse.json({ success: true, message: "User purged from vault" });
+        return NextResponse.json({ success: true, message: "User deleted." });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }

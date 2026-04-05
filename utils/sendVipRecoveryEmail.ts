@@ -20,10 +20,10 @@ export async function sendVipRecoveryEmail(params: {
   if (!resendApiKey) throw new Error("RESEND_API_KEY is missing");
 
   const from = process.env.RESEND_FROM_EMAIL || "Essential Store <onboarding@resend.dev>";
-  const safeName = escapeHtml(customerName || "Client");
+  const safeName = escapeHtml(customerName || "Friend");
   const safeLink = escapeHtml(link);
 
-  const subject = `Essential Rush | Your VIP Acquisition Link`;
+  const subject = `Essential Rush | Finish your order`;
 
   const resend = new Resend(resendApiKey);
 
@@ -39,7 +39,7 @@ export async function sendVipRecoveryEmail(params: {
               Essential Rush
             </div>
             <div style="margin-top:10px; color:rgba(255,255,255,0.78); font-size:12px; letter-spacing:3px; text-transform:uppercase;">
-              Private Vault Recovery
+              Your saved cart
             </div>
           </div>
 
@@ -49,18 +49,18 @@ export async function sendVipRecoveryEmail(params: {
             </div>
 
             <div style="font-size:14px; line-height:1.7; color:rgba(255,255,255,0.82); margin-bottom:22px;">
-              Your curated selection has been safely secured in our private vault. Tap here to complete your exclusive acquisition:
+              You left items in your cart. Tap the link to go back and finish checkout:
               <a href="${safeLink}" style="color:#D4AF37; font-weight:800; text-decoration:none;">${safeLink}</a>
             </div>
 
             <div style="margin:26px 0 10px 0;">
               <a href="${safeLink}" style="display:inline-block; background:#D4AF37; color:#000; text-decoration:none; padding:14px 18px; border-radius:999px; font-weight:900; text-transform:uppercase; letter-spacing:2px; font-size:12px;">
-                Complete Your Acquisition
+                Complete your order
               </a>
             </div>
 
             <div style="margin-top:18px; font-size:12px; color:rgba(255,255,255,0.65); line-height:1.6; font-style:italic;">
-              If you have any questions, our concierge team is ready to assist you.
+              Questions? Reply to this email or message us on WhatsApp—we are happy to help.
             </div>
           </div>
 

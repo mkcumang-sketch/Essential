@@ -15,7 +15,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized access! Please login." },
+        { success: false, error: "Please sign in to see your orders." },
         { status: 401 }
       );
     }
@@ -33,7 +33,7 @@ export async function GET() {
       const userId = sessionUser.id;
       if (!userId) {
         return NextResponse.json(
-          { success: false, error: "Unauthorized" },
+          { success: false, error: "Please sign in." },
           { status: 401 }
         );
       }
@@ -43,7 +43,7 @@ export async function GET() {
     return NextResponse.json({ success: true, data: orders, orders });
   } catch (error) {
     console.error("Orders Fetch Error:", error);
-    return NextResponse.json({ success: false, error: "Failed to fetch orders" });
+    return NextResponse.json({ success: false, error: "We could not load orders." });
   }
 }
 
@@ -53,7 +53,7 @@ export async function PUT(req: Request) {
     await connectDB();
     const session = await getServerSession(authOptions);
     if ((session?.user as { role?: string })?.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "You do not have access to do that." }, { status: 403 });
     }
 
     const body = await req.json();
@@ -62,7 +62,7 @@ export async function PUT(req: Request) {
 
     if (!orderId || !newStatus) {
       return NextResponse.json(
-        { success: false, error: "Missing ID or Status" },
+        { success: false, error: "Order ID or status missing." },
         { status: 400 }
       );
     }
@@ -72,10 +72,10 @@ export async function PUT(req: Request) {
       mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
     await Order.findByIdAndUpdate(orderId, { status: newStatus });
 
-    return NextResponse.json({ success: true, message: "Status updated successfully!" });
+    return NextResponse.json({ success: true, message: "Order status updated." });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: "Failed to update status" },
+      { success: false, error: "We could not update the order status." },
       { status: 500 }
     );
   }
@@ -94,7 +94,7 @@ export async function DELETE(req: Request) {
     await connectDB();
     const session = await getServerSession(authOptions);
     if ((session?.user as { role?: string })?.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "You do not have access to do that." }, { status: 403 });
     }
 
     const url = new URL(req.url);
@@ -106,7 +106,7 @@ export async function DELETE(req: Request) {
     }
 
     if (!orderId) {
-      return NextResponse.json({ success: false, error: "Missing ID" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Order ID missing." }, { status: 400 });
     }
 
     const Order =
@@ -114,8 +114,8 @@ export async function DELETE(req: Request) {
       mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
     await Order.findByIdAndDelete(orderId);
 
-    return NextResponse.json({ success: true, message: "Order completely deleted" });
+    return NextResponse.json({ success: true, message: "Order deleted." });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed to delete" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "We could not delete the order." }, { status: 500 });
   }
 }

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     if (!body.name || !body.phone) {
       return NextResponse.json({ 
         success: false, 
-        error: "Identification protocols incomplete: Name and Phone required." 
+        error: "Please enter your name and phone number." 
       }, { status: 400 });
     }
 
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: "Identity Bonded Successfully", 
+      message: "Thanks! We got your details.", 
       data: newLead 
     }, { status: 201 });
 
@@ -69,7 +69,7 @@ export async function PATCH(req: Request) {
     const { id, status } = await req.json();
 
     if (!id || !status) {
-      return NextResponse.json({ success: false, error: "Node ID and Status required" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Lead ID and status are required." }, { status: 400 });
     }
 
     const updatedLead = await Lead.findByIdAndUpdate(
@@ -99,7 +99,7 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ success: false, error: "Identification missing" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Lead ID missing." }, { status: 400 });
     }
 
     const deleted = await Lead.findByIdAndDelete(id);
@@ -112,7 +112,7 @@ export async function DELETE(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, message: "Registry entry removed" });
+    return NextResponse.json({ success: true, message: "Lead removed." });
 
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
         const session = await getServerSession(authOptions);
         const userId = (session?.user as any)?.id;
 
-        if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        if (!userId) return NextResponse.json({ success: false, error: "Please sign in to place an order." }, { status: 401 });
 
         const data = await req.json();
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));

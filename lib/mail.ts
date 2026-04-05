@@ -9,12 +9,12 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string, refe
         const { data, error } = await resend.emails.send({
             from: 'noreply@essentialrush.com',
             to: userEmail,
-            subject: '🎊 Welcome to Essential Rush - Your Vault Access is Ready!',
+            subject: 'Welcome to Essential Rush!',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #FAFAFA;">
                     <div style="text-align: center; margin-bottom: 30px;">
                         <h1 style="color: #D4AF37; font-size: 32px; margin-bottom: 10px;">🎊 Welcome to Essential Rush</h1>
-                        <h2 style="color: #333; font-size: 24px; font-weight: bold;">Your Vault Access is Ready!</h2>
+                        <h2 style="color: #333; font-size: 24px; font-weight: bold;">Your account is ready</h2>
                     </div>
                     
                     <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -23,7 +23,7 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string, refe
                         </p>
                         
                         <p style="color: #333; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
-                            Thank you for joining Essential Rush! Your premium vault account has been successfully created.
+                            Thanks for signing up. You can now shop, save a wishlist, and track orders in one place.
                         </p>
                         
                         ${referralCode ? `
@@ -32,7 +32,7 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string, refe
                                 <strong>🎁 Your Referral Code:</strong> ${referralCode}
                             </p>
                             <p style="color: #666; font-size: 12px; margin-top: 10px;">
-                                Share this code with friends to earn rewards when they sign up!
+                                Share it with friends. You both can earn rewards when they join.
                             </p>
                         </div>
                         ` : ''}
@@ -40,14 +40,14 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string, refe
                         <div style="text-align: center; margin-top: 30px;">
                             <a href="https://essentialrush.com/shop" 
                                style="background: #D4AF37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
-                                🛍 Start Shopping
+                                🛍 Start shopping
                             </a>
                         </div>
                     </div>
                     
                     <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
                         <p style="color: #999; font-size: 12px;">
-                            This is an automated message from Essential Rush. Please do not reply to this email.
+                            This email was sent by Essential Rush. Please do not reply to this address.
                         </p>
                     </div>
                 </div>
@@ -62,7 +62,7 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string, refe
         return { success: true, data };
     } catch (error) {
         console.error('Welcome email error:', error);
-        return { success: false, error: 'Failed to send welcome email' };
+        return { success: false, error: 'We could not send the welcome email.' };
     }
 };
 
@@ -72,43 +72,43 @@ export const sendReferralRewardEmail = async (referrerEmail: string, referrerNam
         const { data, error } = await resend.emails.send({
             from: 'noreply@essentialrush.com',
             to: referrerEmail,
-            subject: `🎉 Referral Success! You Earned ${rewardAmount} Points!`,
+            subject: `You earned ${rewardAmount} referral points!`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #FAFAFA;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #D4AF37; font-size: 32px; margin-bottom: 10px;">🎉 Referral Success!</h1>
-                        <h2 style="color: #333; font-size: 24px; font-weight: bold;">You've Earned ${rewardAmount} Points!</h2>
+                        <h1 style="color: #D4AF37; font-size: 32px; margin-bottom: 10px;">🎉 Referral reward</h1>
+                        <h2 style="color: #333; font-size: 24px; font-weight: bold;">You earned ${rewardAmount} points!</h2>
                     </div>
                     
                     <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                         <p style="color: #333; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
-                            Congratulations <strong>${referrerName}</strong>!
+                            Hi <strong>${referrerName}</strong>,
                         </p>
                         
                         <p style="color: #333; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
-                            Your friend <strong>${refereeName}</strong> has successfully signed up using your referral code.
+                            Your friend <strong>${refereeName}</strong> signed up with your referral code.
                         </p>
                         
                         <div style="background: #E8F5E8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #D4AF37;">
                             <p style="color: #333; font-size: 14px; margin: 0;">
-                                <strong>🏆 Reward Earned:</strong> ${rewardAmount} points
+                                <strong>🏆 Your reward:</strong> ${rewardAmount} points
                             </p>
                             <p style="color: #666; font-size: 12px; margin-top: 10px;">
-                                Points have been added to your wallet. Use them for discounts on your next purchase!
+                                We added them to your wallet. Use them as a discount on your next order.
                             </p>
                         </div>
                         
                         <div style="text-align: center; margin-top: 30px;">
                             <a href="https://essentialrush.com/account" 
                                style="background: #D4AF37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
-                                🏆 View Your Rewards
+                                🏆 Open your account
                             </a>
                         </div>
                     </div>
                     
                     <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
                         <p style="color: #999; font-size: 12px;">
-                            This is an automated message from Essential Rush. Please do not reply to this email.
+                            This email was sent by Essential Rush. Please do not reply to this address.
                         </p>
                     </div>
                 </div>
@@ -123,14 +123,14 @@ export const sendReferralRewardEmail = async (referrerEmail: string, referrerNam
         return { success: true, data };
     } catch (error) {
         console.error('Referral reward email error:', error);
-        return { success: false, error: 'Failed to send referral reward email' };
+        return { success: false, error: 'We could not send the referral email.' };
     }
 };
 
 // 🛡️ EMAIL VALIDATION HELPER
 export const validateEmailConfig = () => {
     if (!process.env.RESEND_API_KEY) {
-        throw new Error('RESEND_API_KEY is required for email functionality');
+        throw new Error('Email is not set up yet (missing RESEND_API_KEY).');
     }
     return true;
 };

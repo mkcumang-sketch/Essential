@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         // 🚨 FIREWALL: Fetch user with security
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
         console.error("Get Addresses Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to fetch addresses" 
+            error: "We could not load your addresses." 
         }, { status: 500 });
     }
 }
@@ -66,14 +66,14 @@ export async function POST(req: Request) {
         // 🚨 FIREWALL: Verify user session
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Please sign in." }, { status: 401 });
         }
 
         const { type, address, isDefault } = await req.json();
 
         // 🛡️ INPUT VALIDATION
         if (!address || typeof address !== 'string' || address.trim().length < 10) {
-            return NextResponse.json({ success: false, error: "Valid address is required" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Please enter a full address." }, { status: 400 });
         }
 
         const addressType = type || 'Home';
@@ -103,12 +103,12 @@ export async function POST(req: Request) {
         ).select('-password -__v');
 
         if (!updatedUser) {
-            return NextResponse.json({ success: false, error: "Failed to add address" }, { status: 500 });
+            return NextResponse.json({ success: false, error: "We could not save your address." }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            message: "Address added successfully",
+            message: "Address saved.",
             data: {
                 addresses: updatedUser.addresses || []
             }
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
         console.error("Add Address Error:", error);
         return NextResponse.json({ 
             success: false, 
-            error: "Failed to add address" 
+            error: "We could not save your address." 
         }, { status: 500 });
     }
 }
