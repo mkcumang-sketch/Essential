@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    Shield, Crown, Users, TrendingUp, 
+    Shield, Crown, Users, TrendingUp, Package,
     Search, Edit2, Save, X, AlertCircle,
     ChevronDown, Check, Eye, EyeOff
 } from "lucide-react";

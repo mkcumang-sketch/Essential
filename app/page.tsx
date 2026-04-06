@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 // PhantomGuard imported but temporarily bypassed to prevent localhost JS crash
-import { PhantomGuard } from '@/components/PhantomGuard';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
 
