@@ -61,7 +61,10 @@ export default function PremiumAccountDashboard() {
       .then((json) => {
         setDashData(json?.data ?? null);
       })
-      .catch(() => setDashData(null))
+      .catch((err) => {
+        console.error("Dashboard fetch error:", err);
+        setDashData(null);
+      })
       .finally(() => setDashLoading(false));
   }, [status]);
 
@@ -139,14 +142,20 @@ export default function PremiumAccountDashboard() {
 
   const walletPoints = Number(dashData?.walletPoints) || Number(su?.walletPoints) || 0;
   const totalEarned = Number(dashData?.totalEarned) || 0;
-  const myReferralCode = (dashData?.myReferralCode as string) || "GENERATING…";
+  
+  // 🚨 SMART REFERRAL LOGIC
+  const firstName = name.split(" ")[0] || "VIP";
+  // Safe handling incase name is empty or unexpected characters exist
+  const fallbackRef = `REF-${firstName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()}10`;
+  const myReferralCode = dashLoading ? "GENERATING…" : ((dashData?.myReferralCode as string) || fallbackRef);
+
   const loyaltyFromSession = su?.loyaltyTier || "";
   const loyaltyTier = (dashData?.loyaltyTier as string) || loyaltyFromSession || "Silver Vault";
 
   const spent = Number(dashData?.totalSpent) || 0;
-  const goal = 100000;
+  const goal = 100000; // Define total spend goal for Gold
   const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
-  const tier = dashData?.tier === "Gold" ? "Gold" : "Silver";
+  const tier = (dashData?.tier as string) || (spent >= goal ? "Gold" : "Silver");
   const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
 
   const orders = Array.isArray(dashData?.orders)
@@ -156,7 +165,6 @@ export default function PremiumAccountDashboard() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 selection:bg-black selection:text-white">
       
-      {/* LUXURY TOAST FOR ACCOUNT PAGE */}
       <AnimatePresence>
         {toastMsg ? (
           <motion.div
@@ -199,7 +207,7 @@ export default function PremiumAccountDashboard() {
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pt-10 md:pt-14 space-y-10">
         
-        {/* WELCOME BANNER */}
+        {/* WELCOME SECTION */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 overflow-hidden shadow-lg relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gray-50 rounded-full blur-3xl opacity-60 -z-10 pointer-events-none"></div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 relative z-10">
@@ -219,7 +227,6 @@ export default function PremiumAccountDashboard() {
               </div>
             </div>
 
-            {/* LOYALTY PROGRESS */}
             <div className="w-full lg:max-w-sm bg-gray-50 p-6 rounded-3xl border border-gray-100">
               <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-500 mb-4">
                 Loyalty progress
@@ -256,10 +263,8 @@ export default function PremiumAccountDashboard() {
           </div>
         </section>
 
-        {/* WALLET & REFERRAL GRID */}
         <div className="grid md:grid-cols-2 gap-6">
           
-          {/* WALLET BOX */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -285,7 +290,6 @@ export default function PremiumAccountDashboard() {
             </div>
           </motion.div>
 
-          {/* REFERRAL BOX */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -298,7 +302,7 @@ export default function PremiumAccountDashboard() {
               </p>
               <div className="flex items-center gap-3 mt-4 flex-wrap">
                 <h3 className="text-2xl md:text-3xl font-mono font-bold tracking-[0.1em] text-white uppercase bg-white/10 px-4 py-2 rounded-xl">
-                  {dashLoading ? "······" : myReferralCode}
+                  {myReferralCode}
                 </h3>
                 <button
                   type="button"
@@ -320,7 +324,7 @@ export default function PremiumAccountDashboard() {
           </motion.div>
         </div>
 
-        {/* ORDER HISTORY */}
+        {/* ORDER HISTORY SECTION */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10 pb-6 border-b border-gray-100">
             <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black">
@@ -345,7 +349,7 @@ export default function PremiumAccountDashboard() {
             <div className="space-y-8">
               {orders.map((order) => {
                 const rawId = order._id;
-                const orderId = (order.orderId as string) || (rawId != null ? String(rawId).slice(-8) : "") || "—";
+                const orderId = (order.orderId as string) || (rawId != null ? String(rawId).slice(-8).toUpperCase() : "") || "—";
                 const statusText = String(order?.status || "PROCESSING");
                 const total = Number(order?.totalAmount ?? 0);
                 const items = Array.isArray(order?.items) ? (order.items as Record<string, unknown>[]) : [];
@@ -386,7 +390,7 @@ export default function PremiumAccountDashboard() {
                             <div
                               key={String(item._id || item.id || `${orderId}-${idx}`)}
                               className="rounded-2xl p-5 border border-gray-200 bg-white hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => router.push(`/product/${item.id || item._id}`)} // 🚨 FIX: Added click on orders
+                              onClick={() => router.push(`/product/${item.id || item._id}`)}
                             >
                               <div className="w-full aspect-[4/3] rounded-xl overflow-hidden border border-gray-100 bg-gray-50 p-4">
                                 {img ? (
@@ -424,7 +428,7 @@ export default function PremiumAccountDashboard() {
             <div className="rounded-[2rem] border-2 border-dashed border-gray-200 p-16 text-center bg-gray-50">
               <Package size={48} className="mx-auto text-gray-300 mb-6" />
               <h3 className="text-3xl font-serif font-bold text-black">
-                Your vault is ready
+                Your vault is empty
               </h3>
               <p className="mt-4 text-base text-gray-500 font-serif italic max-w-md mx-auto">
                 After you buy something, your orders and progress show up here.
@@ -439,7 +443,6 @@ export default function PremiumAccountDashboard() {
           )}
         </section>
 
-        {/* CURATED GIFTING SUITE */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm">
           <h2 className="text-2xl md:text-3xl font-serif font-bold text-black border-b border-gray-100 pb-4">
             Curated Gifting Suite
@@ -450,13 +453,12 @@ export default function PremiumAccountDashboard() {
           <div className="mt-8">
             <CuratedGiftingSuite
               watches={giftingWatches}
-              isLight={true} // 🚨 Set to true for Bright Theme
+              isLight={true}
               onToast={showToast}
             />
           </div>
         </section>
 
-        {/* VIRTUAL VAULT */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm">
           <h2 className="text-2xl md:text-3xl font-serif font-bold text-black border-b border-gray-100 pb-4">
             Virtual Vault
@@ -465,7 +467,7 @@ export default function PremiumAccountDashboard() {
             Watches you save show up here.
           </p>
           <div className="mt-8">
-            <VirtualVault isLight={true} /> {/* 🚨 Set to true for Bright Theme */}
+            <VirtualVault isLight={true} />
           </div>
         </section>
 

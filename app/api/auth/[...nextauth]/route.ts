@@ -40,6 +40,7 @@ export const authOptions: NextAuthOptions = {
                 const isValid = await bcrypt.compare(credentials!.password, user.password);
                 if (!isValid) throw new Error("Wrong password");
 
+                // ✅ PERFECT: Database ID is mapped to `id`
                 return { 
                     id: user._id.toString(), 
                     name: user.name, 
@@ -78,12 +79,15 @@ export const authOptions: NextAuthOptions = {
                     dbUser = { ...dbUser, role: "SUPER_ADMIN" };
                 }
 
+                // ✅ PERFECT: Map Google user to DB ID
                 user.id = String(dbUser._id);
             }
             return true;
         },
         async jwt({ token, user, trigger }) {
             await connectDB();
+            
+            // ✅ PERFECT: Extracting ID from either user object or existing token
             const uid = (user?.id as string | undefined) ?? (token.id as string | undefined);
             if (!uid) return token;
 
@@ -116,6 +120,7 @@ export const authOptions: NextAuthOptions = {
         },
         async session({ session, token }) {
             if (session.user) {
+                // ✅ PERFECT: Injecting ID into the frontend session
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
                 session.user.walletPoints = token.walletPoints as number;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShieldCheck, ArrowLeft, CheckCircle, Tag, X, Trash2 } from 'lucide-react';
+import { ShieldCheck, CheckCircle, Tag, X, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -111,11 +111,10 @@ export default function CheckoutPage() {
         setIsVerifying(true);
         
         try {
-            // 🚨 FIX 1: Hardcoded support for ESSENTIAL10 so it doesn't fail
             if (code === 'ESSENTIAL10') {
                 setPromoDetails({ code, type: 'global', discountValue: 10 });
                 showLuxuryToast(`Code Applied: 10% Off!`, 'success');
-                setVaultKeyInput(''); // Clear input
+                setVaultKeyInput('');
                 return;
             }
 
@@ -150,9 +149,8 @@ export default function CheckoutPage() {
         }
     };
 
-    // 🚨 FIX 2: Direct processing, removed forced VIP Popup
     const processFinalOrder = async (e: React.FormEvent) => {
-        e.preventDefault(); // Prevent page reload
+        e.preventDefault(); 
         if (cart.length === 0) return showLuxuryToast("Your cart is empty!", "error");
         
         setIsSubmitting(true);
@@ -167,7 +165,7 @@ export default function CheckoutPage() {
                     financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
                     appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
                     appliedVaultKey: promoDetails?.type === 'product' ? promoDetails.code : null,
-                    customer: shippingData, // Send all form data directly
+                    customer: shippingData, 
                     paymentMethod: 'COD'
                 })
             });
@@ -193,66 +191,82 @@ export default function CheckoutPage() {
                 <motion.div initial={{scale:0}} animate={{scale:1}}><CheckCircle size={100} className="text-[#D4AF37] mb-6 shadow-[0_0_50px_rgba(212,175,55,0.3)] rounded-full" /></motion.div>
                 <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 tracking-tighter uppercase">Order placed</h1>
                 <p className="text-gray-400 mb-10 max-w-md font-serif italic text-lg">Thank you. We are getting your watch ready to ship.</p>
-                <Link href="/shop" className="px-12 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-2xl">Keep shopping</Link>
+                <Link href="/account" className="px-12 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-2xl">View Order History</Link>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] text-black pt-24 pb-20 font-sans relative">
+        <div className="min-h-screen bg-[#FAFAFA] text-black pb-20 font-sans relative selection:bg-black selection:text-white">
             <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
             
+            {/* 🚨 ADDED HEADER FOR BETTER UX 🚨 */}
+            <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-200 py-4 px-6 md:px-12 flex items-center justify-between shadow-sm mb-12">
+                <Link href="/cart" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors">
+                    <ArrowLeft size={16}/> Back to Cart
+                </Link>
+                <h1 className="text-lg md:text-2xl font-serif font-black tracking-[4px] uppercase text-black absolute left-1/2 -translate-x-1/2">Essential</h1>
+                <div className="flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest hidden md:flex">
+                    <ShieldCheck size={14}/> 256-Bit Secure
+                </div>
+            </header>
+
             <div className="max-w-[1300px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16">
                 
                 {/* --- Left Side: Shipping --- */}
                 <div className="lg:col-span-7 space-y-10">
-                    <form onSubmit={processFinalOrder} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
-                            <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Phone Number" value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone:e.target.value})}/>
-                        </div>
-                        <input required type="email" className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
-                        <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
-                        
-                        <div className="grid grid-cols-3 gap-4">
-                            <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black" placeholder="PIN" value={shippingData.pincode} onChange={e=>setShippingData({...shippingData, pincode:e.target.value})}/>
-                            <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black col-span-2" placeholder="City" value={shippingData.city} onChange={e=>setShippingData({...shippingData, city:e.target.value})}/>
-                        </div>
-
-                        <div className="pt-10">
-                            <h3 className="text-xs font-black uppercase tracking-widest mb-6">How you pay</h3>
-                            <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-xl">
-                                <div className="flex items-center gap-4"><div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div><span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span></div>
-                                <CheckCircle size={24} className="text-black"/>
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold text-black mb-2">Delivery Details</h2>
+                        <p className="text-sm text-gray-500 font-serif italic mb-8">Where should we send your premium timepiece?</p>
+                        <form onSubmit={processFinalOrder} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
+                                <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Phone Number" value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone:e.target.value})}/>
                             </div>
-                        </div>
+                            <input required type="email" className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
+                            <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                                <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="PIN" value={shippingData.pincode} onChange={e=>setShippingData({...shippingData, pincode:e.target.value})}/>
+                                <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm col-span-2" placeholder="City" value={shippingData.city} onChange={e=>setShippingData({...shippingData, city:e.target.value})}/>
+                            </div>
 
-                        <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-6 bg-black text-white font-black uppercase tracking-[5px] text-[11px] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all shadow-2xl disabled:opacity-50">
-                            {isSubmitting ? 'Processing...' : 'Place order'}
-                        </button>
-                    </form>
+                            <div className="pt-10">
+                                <h3 className="text-xs font-black uppercase tracking-widest mb-6 text-gray-400">Payment Method</h3>
+                                <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-md">
+                                    <div className="flex items-center gap-4"><div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div><span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span></div>
+                                    <CheckCircle size={24} className="text-black"/>
+                                </div>
+                            </div>
+
+                            <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-6 bg-black text-white font-black uppercase tracking-[5px] text-[11px] rounded-2xl hover:bg-gray-800 transition-all shadow-xl disabled:opacity-50 mt-6 flex items-center justify-center gap-3">
+                                {isSubmitting ? 'Processing...' : 'Place order securely'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 
                 {/* --- Right Side: Summary --- */}
                 <div className="lg:col-span-5">
-                    <div className="bg-white border border-gray-100 p-8 md:p-10 rounded-[40px] sticky top-24 shadow-2xl">
-                        <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4">Order summary</h3>
+                    <div className="bg-white border border-gray-200 p-8 md:p-10 rounded-[40px] sticky top-24 shadow-xl">
+                        <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4 flex items-center gap-3"><ShoppingBag size={24} className="text-gray-400"/> Order summary</h3>
                         
                         <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
                             {cart.length === 0 ? (
                                 <p className="text-sm text-gray-500 italic text-center py-4">Your cart is empty.</p>
                             ) : (
                                 cart.map((item, i) => (
-                                    <div key={i} className="flex gap-4 relative group">
+                                    <div key={`${item._id}-${i}`} className="flex gap-4 relative group items-center">
                                         <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center shrink-0">
-                                            <img src={item.imageUrl} className="max-h-full mix-blend-multiply" />
+                                            {/* 🚨 FALLBACK IMAGE ADDED HERE */}
+                                            <img src={item.imageUrl || item.image || '/placeholder-watch.png'} className="max-h-full object-contain mix-blend-multiply" alt={item.name} />
                                         </div>
                                         <div className="flex-1 pr-8">
-                                            <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1 pr-2">{item.name}</h4>
+                                            <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1 pr-2 text-black">{item.name}</h4>
                                             <p className="text-[10px] text-gray-400 font-mono mt-1">QTY: {item.qty}</p>
-                                            <p className="font-bold text-sm mt-1">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
+                                            <p className="font-bold text-sm mt-1 text-black">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
                                             {promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase() && (
-                                                <span className="inline-block bg-green-100 text-green-700 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
+                                                <span className="inline-block bg-green-50 text-green-700 border border-green-200 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
                                             )}
                                         </div>
                                         
@@ -270,30 +284,30 @@ export default function CheckoutPage() {
                         </div>
                         
                         {/* --- PROMO & REFERRAL BOX --- */}
-                        <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200">
+                        <div className="mb-10 p-6 bg-gray-50 rounded-[30px] border border-gray-200 shadow-inner">
                             <label className="text-[10px] font-black uppercase tracking-[3px] text-gray-500 mb-3 flex items-center gap-2"><Tag size={12}/> Friend referral or VIP code</label>
                             <div className="flex gap-2">
-                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-[#D4AF37]" placeholder="EX: ESSENTIAL10" />
-                                <button onClick={handleApplyPromoCode} type="button" disabled={isVerifying || cart.length === 0} className="px-6 bg-black text-[#D4AF37] font-black text-[10px] uppercase rounded-xl hover:bg-[#D4AF37] hover:text-black transition-all disabled:opacity-50">
+                                <input value={vaultKeyInput} onChange={(e) => setVaultKeyInput(e.target.value)} className="flex-1 bg-white border border-gray-200 p-4 rounded-xl text-xs font-black uppercase outline-none focus:border-black shadow-sm" placeholder="EX: ESSENTIAL10" />
+                                <button onClick={handleApplyPromoCode} type="button" disabled={isVerifying || cart.length === 0} className="px-6 bg-black text-white font-black text-[10px] uppercase rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50 shadow-sm">
                                     {isVerifying ? '...' : 'Apply'}
                                 </button>
                             </div>
                         </div>
 
                         <div className="space-y-4 border-t border-gray-100 pt-8">
-                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span className="text-black">₹{subtotal.toLocaleString()}</span></div>
                             
                             {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest">
                                 <span>{promoDetails?.type === 'referral' ? 'Friend referral' : 'Discount'} ({promoDetails?.discountValue || 10}%)</span>
                                 <span>-₹{totalDiscount.toLocaleString()}</span>
                             </div>}
                             
-                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Transit & Insurance</span><span>{totalTransit === 0 ? "Complimentary" : `₹${totalTransit.toLocaleString()}`}</span></div>
-                            {totalTaxes > 0 && <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Taxes & Duties</span><span>₹{totalTaxes.toLocaleString()}</span></div>}
+                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Transit & Insurance</span><span className="text-black">{totalTransit === 0 ? "Complimentary" : `₹${totalTransit.toLocaleString()}`}</span></div>
+                            {totalTaxes > 0 && <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Taxes & Duties</span><span className="text-black">₹{totalTaxes.toLocaleString()}</span></div>}
                             
                             <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-100">
-                                <span className="font-black text-xs uppercase tracking-[4px]">Grand Total</span>
-                                <span className="text-4xl font-serif font-black tracking-tighter">₹{grandTotal.toLocaleString()}</span>
+                                <span className="font-black text-xs uppercase tracking-[4px] text-gray-500">Grand Total</span>
+                                <span className="text-4xl font-serif font-bold tracking-tighter text-black">₹{grandTotal.toLocaleString()}</span>
                             </div>
                         </div>
                     </div>

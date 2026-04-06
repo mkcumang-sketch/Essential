@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongodb'; // 🚨 Added for future DB checks
+// import User from '@/models/User'; // Future mein jab asli user match karna ho
 
 export async function POST(req: Request) {
     try {
+        // Database connect kar lo aage ke real validations ke liye
+        await connectDB(); 
+
         const body = await req.json();
         const code = body.code?.toUpperCase().trim();
 
@@ -26,8 +31,13 @@ export async function POST(req: Request) {
         }
 
         // 🌟 2. SMART MLM REFERRAL SYSTEM
-        // Agar code mein 'REF', 'VIP', ya 'PRO' aata hai (Jaise: REF-UMANG, VIP-AKANSHA)
+        // Agar code mein 'REF', 'VIP', ya 'PRO' aata hai
         if (code.startsWith('REF') || code.startsWith('VIP') || code.startsWith('PRO')) {
+            
+            // 🚀 GOD MODE FUTURE UPDATE: Yahan tu actual DB se match kar sakta hai
+            // const referrerUser = await User.findOne({ myReferralCode: code });
+            // if (!referrerUser) return NextResponse.json({ success: false, error: "Invalid Referral Code" }, { status: 400 });
+
             return NextResponse.json({ 
                 success: true, 
                 type: 'referral', 
@@ -35,10 +45,6 @@ export async function POST(req: Request) {
                 isReferral: true 
             });
         }
-
-        // 🌟 3. (FUTURE) Yahan tu Database se check karne ka logic daal sakta hai
-        // const dbCode = await PromoDB.findOne({ code: code })
-        // if(dbCode) return NextResponse.json({ success: true, discountValue: dbCode.discount })
 
         // Agar code upar kahin match nahi hua, toh reject kar do
         return NextResponse.json({ success: false, error: "Invalid promo code" }, { status: 400 });
