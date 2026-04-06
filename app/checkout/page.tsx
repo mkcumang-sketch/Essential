@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShieldCheck, CheckCircle, Tag, X, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ShieldCheck, CheckCircle, Tag, X, Trash2, ArrowLeft, ShoppingBag, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
     
     const [cart, setCart] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [orderPlaced, setOrderPlaced] = useState(false);
+    const [placedOrderId, setPlacedOrderId] = useState<string | null>(null); // 🚨 Added for Tracking ID
 
     // 🎟️ PROMO STATES
     const [vaultKeyInput, setVaultKeyInput] = useState('');
@@ -93,7 +93,6 @@ export default function CheckoutPage() {
             }
         });
 
-        // Hardcoded ESSENTIAL10 discount for frontend demo
         if (promoDetails?.code === 'ESSENTIAL10') {
              const globalDisc = (sub * 10) / 100;
              disc += globalDisc;
@@ -170,13 +169,14 @@ export default function CheckoutPage() {
                 })
             });
 
-            if (res.ok) {
+            const data = await res.json();
+
+            if (res.ok && data.success) {
                 localStorage.removeItem('luxury_cart');
                 localStorage.removeItem('guest_lead_captured');
-                setOrderPlaced(true); 
+                setPlacedOrderId(data.orderId || `ORD-${Date.now().toString().slice(-6)}`); // 🚨 SAVE TRACKING ID
             } else {
-                const errorData = await res.json();
-                showLuxuryToast(errorData.error || "Order did not go through. Check details.", "error");
+                showLuxuryToast(data.error || "Order did not go through. Check details.", "error");
             }
         } catch (error) {
             showLuxuryToast("Connection interrupted. Try again.", "error");
@@ -185,13 +185,27 @@ export default function CheckoutPage() {
         }
     };
 
-    if (orderPlaced) {
+    // 🚨 UPDATED SUCCESS SCREEN WITH TRACKING ID 🚨
+    if (placedOrderId) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white">
-                <motion.div initial={{scale:0}} animate={{scale:1}}><CheckCircle size={100} className="text-[#D4AF37] mb-6 shadow-[0_0_50px_rgba(212,175,55,0.3)] rounded-full" /></motion.div>
-                <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 tracking-tighter uppercase">Order placed</h1>
-                <p className="text-gray-400 mb-10 max-w-md font-serif italic text-lg">Thank you. We are getting your watch ready to ship.</p>
-                <Link href="/account" className="px-12 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-2xl">View Order History</Link>
+            <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 text-center text-black selection:bg-black selection:text-white">
+                <motion.div initial={{scale:0}} animate={{scale:1}}><CheckCircle size={80} className="text-green-600 mb-6 drop-shadow-md" /></motion.div>
+                <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 tracking-tighter uppercase">Order Confirmed</h1>
+                <p className="text-gray-500 mb-8 max-w-md font-serif italic text-base">Your premium timepiece is being prepared. Please save your Tracking ID below to track your shipment.</p>
+                
+                <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm mb-10 w-full max-w-sm">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Your Tracking ID</p>
+                    <div className="flex items-center justify-center gap-3">
+                        <span className="text-2xl font-mono font-bold text-black">{placedOrderId}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(placedOrderId); showLuxuryToast("Tracking ID Copied!", "success"); }} className="p-2 bg-gray-100 rounded-lg hover:bg-black hover:text-white transition-all text-gray-500"><Copy size={18}/></button>
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <Link href="/shop" className="px-8 py-4 bg-gray-100 text-black font-black uppercase text-[10px] tracking-[2px] rounded-full hover:bg-gray-200 transition-all border border-gray-200">Keep Shopping</Link>
+                    <Link href="/account" className="px-8 py-4 bg-black text-white font-black uppercase text-[10px] tracking-[2px] rounded-full hover:bg-gray-800 transition-all shadow-md">Track Order</Link>
+                </div>
+                <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
             </div>
         );
     }
@@ -200,7 +214,6 @@ export default function CheckoutPage() {
         <div className="min-h-screen bg-[#FAFAFA] text-black pb-20 font-sans relative selection:bg-black selection:text-white">
             <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
             
-            {/* 🚨 ADDED HEADER FOR BETTER UX 🚨 */}
             <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-200 py-4 px-6 md:px-12 flex items-center justify-between shadow-sm mb-12">
                 <Link href="/cart" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black transition-colors">
                     <ArrowLeft size={16}/> Back to Cart
@@ -258,7 +271,6 @@ export default function CheckoutPage() {
                                 cart.map((item, i) => (
                                     <div key={`${item._id}-${i}`} className="flex gap-4 relative group items-center">
                                         <div className="w-20 h-20 bg-gray-50 rounded-2xl p-2 border border-gray-100 flex items-center justify-center shrink-0">
-                                            {/* 🚨 FALLBACK IMAGE ADDED HERE */}
                                             <img src={item.imageUrl || item.image || '/placeholder-watch.png'} className="max-h-full object-contain mix-blend-multiply" alt={item.name} />
                                         </div>
                                         <div className="flex-1 pr-8">

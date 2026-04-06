@@ -16,7 +16,9 @@ import {
   Copy,
   Sparkles,
   ChevronRight,
-  ShoppingBag
+  ShoppingBag,
+  Search, // 🚨 Added for Tracking Search
+  X       // 🚨 Added for Error Icon
 } from "lucide-react";
 
 function DashboardSkeleton() {
@@ -41,6 +43,12 @@ export default function PremiumAccountDashboard() {
   const [dashData, setDashData] = useState<Record<string, unknown> | null>(null);
   const [dashLoading, setDashLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
+
+  // 🚨 NEW: TRACKING STATES 🚨
+  const [trackingId, setTrackingId] = useState("");
+  const [isTracking, setIsTracking] = useState(false);
+  const [trackedOrder, setTrackedOrder] = useState<any>(null);
+  const [trackError, setTrackError] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -122,6 +130,33 @@ export default function PremiumAccountDashboard() {
     }
   };
 
+  // 🚨 NEW: TRACKING FUNCTION 🚨
+  const handleTrackOrder = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!trackingId.trim()) return;
+      setIsTracking(true); 
+      setTrackError(""); 
+      setTrackedOrder(null);
+      
+      try {
+          const res = await fetch('/api/track-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: trackingId.trim() })
+          });
+          const data = await res.json();
+          if (data.success && data.order) {
+              setTrackedOrder(data.order);
+          } else {
+              setTrackError("Order not found. Please check your Tracking ID.");
+          }
+      } catch {
+          setTrackError("Failed to connect. Please try again.");
+      } finally {
+          setIsTracking(false);
+      }
+  };
+
   if (status === "loading") {
     return <DashboardSkeleton />;
   }
@@ -145,7 +180,6 @@ export default function PremiumAccountDashboard() {
   
   // 🚨 SMART REFERRAL LOGIC
   const firstName = name.split(" ")[0] || "VIP";
-  // Safe handling incase name is empty or unexpected characters exist
   const fallbackRef = `REF-${firstName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()}10`;
   const myReferralCode = dashLoading ? "GENERATING…" : ((dashData?.myReferralCode as string) || fallbackRef);
 
@@ -153,14 +187,10 @@ export default function PremiumAccountDashboard() {
   const loyaltyTier = (dashData?.loyaltyTier as string) || loyaltyFromSession || "Silver Vault";
 
   const spent = Number(dashData?.totalSpent) || 0;
-  const goal = 100000; // Define total spend goal for Gold
+  const goal = 100000;
   const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
   const tier = (dashData?.tier as string) || (spent >= goal ? "Gold" : "Silver");
   const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
-
-  const orders = Array.isArray(dashData?.orders)
-    ? (dashData.orders as Record<string, unknown>[])
-    : [];
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 selection:bg-black selection:text-white">
@@ -324,123 +354,79 @@ export default function PremiumAccountDashboard() {
           </motion.div>
         </div>
 
-        {/* ORDER HISTORY SECTION */}
-        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10 pb-6 border-b border-gray-100">
-            <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black">
-              <Package size={24} className="text-gray-400" />
-              Order history
-            </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-400 bg-gray-50 px-4 py-2 rounded-lg">
-              {dashLoading ? "…" : `${orders.length} orders`}
-            </p>
-          </div>
-
-          {dashLoading ? (
-            <div className="space-y-6">
-              {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-40 rounded-3xl bg-gray-50 border border-gray-100 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : orders.length ? (
-            <div className="space-y-8">
-              {orders.map((order) => {
-                const rawId = order._id;
-                const orderId = (order.orderId as string) || (rawId != null ? String(rawId).slice(-8).toUpperCase() : "") || "—";
-                const statusText = String(order?.status || "PROCESSING");
-                const total = Number(order?.totalAmount ?? 0);
-                const items = Array.isArray(order?.items) ? (order.items as Record<string, unknown>[]) : [];
-
-                return (
-                  <div
-                    key={String(order._id || orderId)}
-                    className="rounded-[2rem] border border-gray-200 bg-gray-50 p-6 md:p-8"
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-gray-200">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-500">
-                          Order #{orderId}
-                        </p>
-                        <p className="mt-2 text-2xl font-serif font-bold text-black flex items-center gap-2">
-                          <Clock size={18} className="text-gray-400" />
-                          ₹{Number.isFinite(total) ? total.toLocaleString("en-IN") : "0"}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.25em] w-fit shadow-sm ${
-                          statusText === "CANCELLED"
-                            ? "bg-red-50 text-red-600 border border-red-200"
-                            : "bg-green-50 text-green-700 border border-green-200"
-                        }`}
-                      >
-                        {statusText}
-                      </span>
-                    </div>
-
-                    {items.length ? (
-                      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {items.map((item, idx) => {
-                          const img = (item.imageUrl || item.image) as string | undefined;
-                          const price = Number(item.offerPrice ?? item.price ?? 0);
-                          
-                          return (
-                            <div
-                              key={String(item._id || item.id || `${orderId}-${idx}`)}
-                              className="rounded-2xl p-5 border border-gray-200 bg-white hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => router.push(`/product/${item.id || item._id}`)}
-                            >
-                              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden border border-gray-100 bg-gray-50 p-4">
-                                {img ? (
-                                  <img
-                                    src={img}
-                                    alt={(item.name as string) || "product"}
-                                    className="w-full h-full object-contain mix-blend-multiply"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 font-bold uppercase">
-                                    No image
-                                  </div>
-                                )}
-                              </div>
-                              <p className="mt-4 text-sm font-bold text-black line-clamp-1">
-                                {(item.name as string) || "Timepiece"}
-                              </p>
-                              <p className="mt-2 text-xs font-black text-gray-500 uppercase tracking-wider bg-gray-50 inline-block px-2 py-1 rounded">
-                                Qty: {Number(item.qty) || 1} · ₹{Number.isFinite(price) ? price.toLocaleString("en-IN") : "0"}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="mt-6 text-sm text-gray-500 font-serif italic">
-                        Item details pending for this order.
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-[2rem] border-2 border-dashed border-gray-200 p-16 text-center bg-gray-50">
-              <Package size={48} className="mx-auto text-gray-300 mb-6" />
-              <h3 className="text-3xl font-serif font-bold text-black">
-                Your vault is empty
-              </h3>
-              <p className="mt-4 text-base text-gray-500 font-serif italic max-w-md mx-auto">
-                After you buy something, your orders and progress show up here.
+        {/* 🚨 NEW: TRACK SHIPMENT WIDGET (REPLACED HISTORY) 🚨 */}
+        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-32 h-32 bg-gray-50 rounded-br-full -z-10"></div>
+          <div className="max-w-2xl">
+              <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black mb-2">
+                  <Package size={24} className="text-gray-400" />
+                  Track Shipment
+              </h2>
+              <p className="text-sm text-gray-500 font-serif italic mb-8">
+                  Enter the Order ID you received during checkout to see real-time updates.
               </p>
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-2 mt-8 px-10 py-4 rounded-full bg-black text-white text-xs font-black uppercase tracking-[0.2em] hover:bg-gray-800 hover:shadow-lg transition-all"
-              >
-                Browse shop <ChevronRight size={16} />
-              </Link>
-            </div>
-          )}
+              
+              <form onSubmit={handleTrackOrder} className="flex flex-col sm:flex-row gap-4 mb-8">
+                  <div className="relative flex-1">
+                      <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                          type="text" 
+                          value={trackingId} 
+                          onChange={(e) => setTrackingId(e.target.value)} 
+                          placeholder="e.g. ORD-17385..." 
+                          className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-black font-mono uppercase transition-colors" 
+                          required 
+                      />
+                  </div>
+                  <button 
+                      type="submit" 
+                      disabled={isTracking || !trackingId.trim()} 
+                      className="px-8 py-4 bg-black text-white font-black uppercase text-[10px] tracking-[2px] rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50 shrink-0"
+                  >
+                      {isTracking ? 'Searching...' : 'Track Order'}
+                  </button>
+              </form>
+
+              {/* TRACKING ERROR */}
+              {trackError && (
+                  <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold flex items-center gap-2">
+                      <X size={16}/> {trackError}
+                  </motion.div>
+              )}
+
+              {/* TRACKING RESULT */}
+              {trackedOrder && (
+                  <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="mt-8 border-t border-gray-100 pt-8">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                          <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Status</p>
+                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm inline-block ${trackedOrder.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800 border border-green-200'}`}>
+                                  {trackedOrder.status || "PROCESSING"}
+                              </span>
+                          </div>
+                          <div className="md:text-right">
+                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Total Value</p>
+                              <p className="text-xl font-serif font-bold text-black flex items-center md:justify-end gap-1">₹{Number(trackedOrder.totalAmount || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                      </div>
+
+                      <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-gray-400">Order Items</h3>
+                      <div className="space-y-4">
+                          {(trackedOrder.items || []).map((item: any, idx: number) => (
+                              <div key={idx} className="flex gap-4 items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm cursor-pointer hover:border-black transition-colors" onClick={() => router.push(`/product/${item.id || item._id}`)}>
+                                  <div className="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
+                                      <img src={item.imageUrl || item.image || '/placeholder-watch.png'} className="w-full h-full object-contain mix-blend-multiply" />
+                                  </div>
+                                  <div className="flex-1">
+                                      <p className="text-sm font-bold text-black line-clamp-1">{item.name}</p>
+                                      <p className="text-xs text-gray-500 font-mono mt-1">Qty: {item.qty || 1} · ₹{Number(item.offerPrice || item.price || 0).toLocaleString('en-IN')}</p>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </motion.div>
+              )}
+          </div>
         </section>
 
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm">
