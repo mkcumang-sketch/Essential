@@ -93,7 +93,7 @@ const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string
     );
 };
 
-// 🚨 UPDATED HERO SECTION TO FIX DISAPPEARING TEXT
+// 🚨 HERO SECTION (VIDEO POSTER OPTIMIZATION)
 const Isolated4DHero = ({ config }: { config: any }) => {
   const heroRef = useRef(null);
   const router = useRouter();
@@ -170,6 +170,8 @@ const Isolated4DHero = ({ config }: { config: any }) => {
                    loop 
                    playsInline 
                    preload="auto" 
+                   // ⚡ SPEED TRICK: Added poster so screen is never black while video buffers
+                   poster="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000"
                    className="w-full h-full object-cover opacity-70"
                  />
               )}
@@ -225,9 +227,7 @@ export default function Home() {
   const [corporateInfo, setCorporateInfo] = useState<any>(null);
   const [legalPages, setLegalPages] = useState<any[]>([]);
 
-  // 🌟 NEW TOAST STATE
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ userName: '', comment: '', rating: 5 });
   const [reviewMedia, setReviewMedia] = useState<string[]>([]);
@@ -321,28 +321,23 @@ export default function Home() {
     });
   }, [liveWatches, activeCategory, searchTerm]);
 
-  // 🌟 UPDATED: ADD TO CART WITH LUXURY TOAST 🌟
   const addToCart = async (product: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // 1. Force Login Check with Luxury Handling
     if (status === 'unauthenticated' || !session) {
         showLuxuryToast("Please Login to access the vault.", "error");
         setTimeout(() => router.push('/login'), 2000); 
         return;
     }
 
-    // 2. Normal Cart logic
     const exists = cart.find(item => item._id === product._id);
     const newCart = exists ? cart.map(i => i._id === product._id ? {...i, qty: i.qty+1} : i) : [...cart, {...product, qty: 1}];
     setCart(newCart);
     localStorage.setItem('luxury_cart', JSON.stringify(newCart));
     
-    // ✅ NO MORE BROWSER ALERT - LUXURY TOAST INSTEAD
     showLuxuryToast(`${product.name} added to your collection.`, "success");
 
-    // 3. Background sync to Godmode
     try {
         const cartTotal = newCart.reduce((total, item) => total + (Number(item.offerPrice || item.price) * item.qty), 0);
         await fetch(`/api/cart/sync?t=${Date.now()}`, {
@@ -351,11 +346,7 @@ export default function Home() {
             body: JSON.stringify({
                 items: newCart,
                 totalAmount: cartTotal,
-                user: {
-                    name: session.user?.name,
-                    email: session.user?.email,
-                    phone: (session.user as any)?.phone || ''
-                }
+                user: { name: session.user?.name, email: session.user?.email, phone: (session.user as any)?.phone || '' }
             })
         });
 
@@ -414,9 +405,7 @@ export default function Home() {
   return (
     <div className="bg-[#FAFAFA] text-black font-sans selection:bg-black selection:text-white overflow-x-hidden scroll-smooth">
       
-      {/* 🌟 LUXURY TOAST ATTACHED 🌟 */}
       <LuxuryToast show={toast.show} message={toast.message} type={toast.type} />
-
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-black origin-left z-[1000]" style={{ scaleX }} />
 
       {/* 🌟 FULL SCREEN MENU 🌟 */}
@@ -482,8 +471,6 @@ export default function Home() {
                    <>
                        <h3 className="text-2xl font-serif font-bold text-black mb-6">Write a Review</h3>
                        <div className="space-y-4">
-                           {/* PhantomGuard is bypassed to prevent client side crash */}
-                           {/* <PhantomGuard value={honeyPot} onChange={setHoneyPot} /> */}
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Name</label><input value={reviewForm.userName} onChange={e=>setReviewForm({...reviewForm, userName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black" placeholder="John Doe"/></div>
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Rating</label><div className="flex gap-2">{[1,2,3,4,5].map(star => (<button key={star} onClick={() => setReviewForm({...reviewForm, rating: star})} className={`transition-transform hover:scale-110 ${reviewForm.rating >= star ? 'text-black' : 'text-gray-200'}`}><Star size={28} fill={reviewForm.rating >= star ? "currentColor" : "none"} /></button>))}</div></div>
                            <div><label className="text-xs font-bold text-gray-500 mb-1 block">Review</label><textarea value={reviewForm.comment} onChange={e=>setReviewForm({...reviewForm, comment: e.target.value})} rows={3} className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-black custom-scrollbar" placeholder="What do you think?"/></div>
@@ -574,38 +561,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🌟 NEW ARRIVALS 🌟 */}
-      {latestWatches.length > 0 && (
-          <section className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
-             <div className="absolute inset-0 z-0">
-                <img 
-                   src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
-                   className="w-full h-full object-cover opacity-30 grayscale" 
-                   alt="Essential Rush Heritage Collection Background"
-                />
-                 <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFA] via-[#FAFAFA]/90 to-[#FAFAFA]"></div>
-             </div>
+      {/* 🌟 NEW ARRIVALS (WITH SKELETONS) 🌟 */}
+      <section className="py-20 md:py-32 relative overflow-hidden border-b border-gray-200">
+         <div className="absolute inset-0 z-0">
+            <img 
+               src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000" 
+               className="w-full h-full object-cover opacity-30 grayscale" 
+               alt="Essential Rush Heritage Collection Background"
+            />
+             <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAFA] via-[#FAFAFA]/90 to-[#FAFAFA]"></div>
+         </div>
 
-             <div className="relative z-10 px-6 md:px-16 max-w-[1600px] mx-auto mb-12 flex justify-between items-end">
-                <div>
-                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[5px] mb-2">Just Landed</p>
-                   <h2 className="text-4xl md:text-6xl font-serif text-black tracking-tight font-bold drop-shadow-sm">New Arrivals.</h2>
-                </div>
-                <Link href="/shop" className="text-xs font-bold uppercase border-b-2 border-black pb-1 hover:text-gray-500 transition-all hidden md:block">Shop All</Link>
-             </div>
+         <div className="relative z-10 px-6 md:px-16 max-w-[1600px] mx-auto mb-12 flex justify-between items-end">
+            <div>
+               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[5px] mb-2">Just Landed</p>
+               <h2 className="text-4xl md:text-6xl font-serif text-black tracking-tight font-bold drop-shadow-sm">New Arrivals.</h2>
+            </div>
+            <Link href="/shop" className="text-xs font-bold uppercase border-b-2 border-black pb-1 hover:text-gray-500 transition-all hidden md:block">Shop All</Link>
+         </div>
 
-             <div className="relative z-10 w-full overflow-x-auto custom-scrollbar snap-x snap-mandatory scroll-pl-6 md:scroll-pl-16 pb-10">
-                 <div className="flex gap-6 md:gap-8 px-6 md:px-16 w-max">
-                     {latestWatches.map((watch: any, i: number) => (
+         <div className="relative z-10 w-full overflow-x-auto custom-scrollbar snap-x snap-mandatory scroll-pl-6 md:scroll-pl-16 pb-10">
+             <div className="flex gap-6 md:gap-8 px-6 md:px-16 w-max">
+                 {/* ⚡ SPEED TRICK: SKELETONS FOR NEW ARRIVALS */}
+                 {isDataLoading ? (
+                     Array.from({ length: 4 }).map((_, i) => (
+                         <div key={`skel-${i}`} className="w-[260px] md:w-[340px] shrink-0 snap-start bg-white/95 backdrop-blur-md rounded-[20px] p-6 border border-gray-200 shadow-sm animate-pulse flex flex-col">
+                             <div className="h-56 md:h-72 bg-gray-100 rounded-2xl mb-6"></div>
+                             <div className="h-3 w-1/3 bg-gray-200 rounded mb-3"></div>
+                             <div className="h-6 w-3/4 bg-gray-200 rounded mb-4"></div>
+                             <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
+                                 <div className="h-6 w-1/3 bg-gray-200 rounded"></div>
+                                 <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                             </div>
+                         </div>
+                     ))
+                 ) : latestWatches.length > 0 ? (
+                     latestWatches.map((watch: any, i: number) => (
                          <div key={`horiz-${i}`} onClick={()=>router.push(`/product/${watch.slug || watch._id}`)} className="w-[260px] md:w-[340px] shrink-0 snap-start bg-white/95 backdrop-blur-md rounded-[20px] p-6 border border-gray-200 group hover:border-black hover:shadow-xl transition-all duration-500 cursor-pointer flex flex-col will-change-transform shadow-lg">
                             <div className="h-56 md:h-72 bg-gray-50/50 rounded-2xl mb-6 p-6 flex items-center justify-center relative overflow-hidden">
                                 {watch.badge && <span className="absolute top-3 left-3 bg-black text-white text-[9px] font-bold uppercase px-3 py-1 rounded-full z-10 shadow-sm">{watch.badge}</span>}
+                                {/* ⚡ SPEED TRICK: Fetch priority on top watches */}
                                 <img 
-                                src={watch.imageUrl || (watch.images && watch.images[0])} 
-                                className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
-                                loading="lazy" 
-                                alt={`${watch.brand} ${watch.name} - Premium Timepiece`}
-                            />
+                                    src={watch.imageUrl || (watch.images && watch.images[0])} 
+                                    className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
+                                    loading={i < 2 ? "eager" : "lazy"} 
+                                    fetchPriority={i < 2 ? "high" : "auto"}
+                                    alt={`${watch.brand} ${watch.name} - Premium Timepiece`}
+                                />
                             </div>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-1">{watch.brand}</p>
                             <h4 className="text-lg md:text-xl font-serif text-black leading-tight line-clamp-1 mb-4 font-bold">{watch.name}</h4>
@@ -616,15 +618,17 @@ export default function Home() {
                                 </button>
                             </div>
                          </div>
-                     ))}
-                 </div>
+                     ))
+                 ) : (
+                     <p className="text-gray-500 font-serif italic py-10 px-6">New arrivals dropping soon.</p>
+                 )}
              </div>
-          </section>
-      )}
+         </div>
+      </section>
 
       <CinematicBreak videoUrl={promoVideos[1]} title="Premium Selection" />
 
-      {/* 🌟 COLLECTION 🌟 */}
+      {/* 🌟 COLLECTION (WITH SKELETONS) 🌟 */}
       <section id="ourcollection" className="py-20 md:py-32 relative overflow-hidden bg-white">
         {promoVideos[2] && (
             <div className="absolute top-0 right-0 w-full md:w-1/2 h-full z-0 opacity-[0.03] pointer-events-none">
@@ -650,11 +654,24 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
-             {filteredWatches.length === 0 ? (
+             {/* ⚡ SPEED TRICK: SKELETONS FOR SHOP GRID */}
+             {isDataLoading ? (
+                 Array.from({ length: 8 }).map((_, i) => (
+                     <div key={`shop-skel-${i}`} className="bg-white/90 p-4 md:p-6 rounded-[20px] border border-gray-200 h-full flex flex-col animate-pulse">
+                         <div className="aspect-square bg-gray-100 rounded-xl mb-6"></div>
+                         <div className="h-3 w-1/4 bg-gray-200 rounded mb-2"></div>
+                         <div className="h-5 w-3/4 bg-gray-200 rounded mb-4"></div>
+                         <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-end">
+                             <div className="h-6 w-1/2 bg-gray-200 rounded"></div>
+                             <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                         </div>
+                     </div>
+                 ))
+             ) : filteredWatches.length === 0 ? (
                  <div className="col-span-full py-32 text-center flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-sm rounded-[30px] border border-gray-200">
-                    <Sparkles size={40} className="text-gray-300 mb-6 animate-pulse"/>
-                    <h3 className="text-2xl font-serif text-black mb-3 font-bold">Loading Watches</h3>
-                    <p className="text-gray-500 text-sm max-w-sm px-4">Please wait while we fetch the latest watches.</p>
+                    <Sparkles size={40} className="text-gray-300 mb-6"/>
+                    <h3 className="text-2xl font-serif text-black mb-3 font-bold">No watches found</h3>
+                    <p className="text-gray-500 text-sm max-w-sm px-4">Try selecting a different category.</p>
                  </div>
               ) : (
                 <AnimatePresence mode='popLayout'>

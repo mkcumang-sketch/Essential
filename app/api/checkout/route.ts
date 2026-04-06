@@ -1,43 +1,41 @@
 import { NextResponse } from 'next/server';
-import connectDB  from '@/lib/mongodb'; // 🚨 DB Helper Import
+import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
     try {
-        // 1. Sabse pehle Database Connect kar (Yahi miss ho raha hoga)
         await connectDB();
-
         const session = await getServerSession(authOptions);
-        const body = await req.json();
-
-        // 2. Strict Security: Bina login order nahi hoga
-        if (!session || !session.user) {
-            return NextResponse.json({ success: false, error: "Please login to place an order." }, { status: 401 });
+        
+        if (!session || !session.user || !(session.user as any).id) {
+            return NextResponse.json({ success: false, error: "Session expired. Please login again." }, { status: 401 });
         }
 
+        const body = await req.json();
         const userId = (session.user as any).id;
-
-        // Order Model load kar
+        
+        // Flexible schema taaki koi extra field aane par crash na ho
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
 
-        // 3. Order Create kar
+        // 📝 Order generate karo with FULL body spread
         const newOrder = await Order.create({
-            orderId: `ORD-${Date.now()}`,
-            userId: userId, // 🔒 Strict Lock
-            customer: body.customer,
-            items: body.items,
-            totalAmount: body.totalAmount,
+            ...body, // Cart, shipping data sab kuch direct save hoga
+            orderId: `ORD-${Date.now().toString().slice(-6).toUpperCase()}`,
+            userId: userId, 
             status: 'PROCESSING',
             createdAt: new Date()
         });
 
-        // 4. Success Response
-        return NextResponse.json({ success: true, orderId: newOrder.orderId });
+        return NextResponse.json({ success: true, orderId: newOrder.orderId || newOrder._id });
 
-    } catch (error) {
-        console.error("Checkout Error:", error);
-        return NextResponse.json({ success: false, error: "Server Error during checkout" }, { status: 500 });
+    } catch (error: any) {
+        console.error("Checkout Crash Details:", error);
+        // 🚨 AB ERROR CHHUPEGA NAHI, EXACT REASON TOAST MEIN DIKHEGA
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message || "Database Error during checkout." 
+        }, { status: 500 });
     }
 }
