@@ -11,6 +11,10 @@ import {
   Sparkles, ChevronRight, ShoppingBag, Search, X
 } from "lucide-react";
 
+// 🚨 FIX: DYNAMIC IMPORTS OUTSIDE COMPONENT
+const CuratedGiftingSuite = dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false });
+const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: false });
+
 export default function PremiumAccountDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -19,7 +23,6 @@ export default function PremiumAccountDashboard() {
   const [dashLoading, setDashLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
 
-  // 🚨 TRACKING STATES 🚨
   const [trackingId, setTrackingId] = useState("");
   const [isTracking, setIsTracking] = useState(false);
   const [trackedOrder, setTrackedOrder] = useState<any>(null);
@@ -51,16 +54,6 @@ export default function PremiumAccountDashboard() {
       .finally(() => setDashLoading(false));
   }, [status]);
 
-  const CuratedGiftingSuite = useMemo(
-    () => dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false }),
-    []
-  );
-
-  const VirtualVault = useMemo(
-    () => dynamic(() => import("@/components/VirtualVault"), { ssr: false }),
-    []
-  );
-
   const showToast = (msg: string) => {
     setToastMsg(msg);
     window.setTimeout(() => setToastMsg(""), 2600);
@@ -75,7 +68,6 @@ export default function PremiumAccountDashboard() {
     }
   };
 
-  // 🚨 TRACKING FUNCTION 🚨
   const handleTrackOrder = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!trackingId.trim()) return;
@@ -102,7 +94,6 @@ export default function PremiumAccountDashboard() {
       }
   };
 
-  // ⚡ INSTANT UI RENDER LOGIC (Bypassing heavy skeletons)
   if (status === "loading") {
       return (
         <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -119,19 +110,19 @@ export default function PremiumAccountDashboard() {
   const email = su?.email || "—";
   const name = su?.name || "Member";
 
-  // 🚨 FIX: Strict TypeScript casting for numeric variables before using toLocaleString
-  const walletPoints: number = Number(dashData?.walletPoints ?? su?.walletPoints ?? 0);
-  const totalEarned: number = Number(dashData?.totalEarned ?? 0);
-  const spent: number = Number(dashData?.totalSpent ?? 0);
-  const goal: number = 100000;
-  const progress: number = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
-  const tier: string = (dashData?.tier as string) || (spent >= goal ? "Gold" : "Silver");
-  const remaining: number = tier === "Gold" ? 0 : Math.max(0, goal - spent);
+  // 🚨 FIX: Explicitly setting numbers to avoid TypeScript issues
+  const walletPoints = Number(dashData?.walletPoints ?? su?.walletPoints ?? 0);
+  const totalEarned = Number(dashData?.totalEarned ?? 0);
+  const spent = Number(dashData?.totalSpent ?? 0);
+  const goal = 100000;
   
-  // 🚨 SMART REFERRAL LOGIC
+  const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
+  const tier = (dashData?.tier as string) || (spent >= goal ? "Gold" : "Silver");
+  const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
+  
   const firstName = name.split(" ")[0] || "VIP";
   const fallbackRef = `REF-${firstName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()}10`;
-  const myReferralCode = dashData?.myReferralCode as string || fallbackRef;
+  const myReferralCode = (dashData?.myReferralCode as string) || fallbackRef;
   const loyaltyTier = (dashData?.loyaltyTier as string) || su?.loyaltyTier || "Silver Vault";
 
   const giftingWatches = useMemo(() => {
@@ -157,7 +148,7 @@ export default function PremiumAccountDashboard() {
     <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 selection:bg-black selection:text-white">
       
       <AnimatePresence>
-        {toastMsg ? (
+        {toastMsg && (
           <motion.div
             initial={{ opacity: 0, y: 18, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
@@ -168,10 +159,9 @@ export default function PremiumAccountDashboard() {
             <ShieldCheck className="text-green-600" size={20} />
             <p className="text-sm font-serif text-black font-bold">{toastMsg}</p>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
 
-      {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-xl shadow-sm">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between gap-4">
           <Link href="/" className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-500 hover:text-black transition-colors flex items-center gap-2">
@@ -190,7 +180,6 @@ export default function PremiumAccountDashboard() {
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pt-10 md:pt-14 space-y-10">
         
-        {/* WELCOME SECTION */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 overflow-hidden shadow-lg relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gray-50 rounded-full blur-3xl opacity-60 -z-10 pointer-events-none"></div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 relative z-10">
@@ -224,7 +213,6 @@ export default function PremiumAccountDashboard() {
           </div>
         </section>
 
-        {/* STATS & REFERRAL */}
         <div className="grid md:grid-cols-2 gap-6 transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-gray-200 bg-white p-8 flex items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow">
             <div>
@@ -248,7 +236,6 @@ export default function PremiumAccountDashboard() {
           </motion.div>
         </div>
 
-        {/* 🚨 TRACK SHIPMENT WIDGET 🚨 */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-32 h-32 bg-gray-50 rounded-br-full -z-10"></div>
           <div className="max-w-2xl">

@@ -313,10 +313,17 @@ export default function Home() {
     return ["ALL", ...Array.from(new Set([...fetchedCats, ...aiCats]))];
   }, [liveWatches, config]);
 
-  const filteredWatches = useMemo(() => {
+ const filteredWatches = useMemo(() => {
     return liveWatches.filter(w => {
       const catMatch = activeCategory === "ALL" || w.category === activeCategory;
-      const searchMatch = w.name?.toLowerCase().includes(searchTerm.toLowerCase()) || w.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // 🚨 FIX: Made string methods completely safe from undefined crashes
+      const safeName = w.name || "";
+      const safeBrand = w.brand || "";
+      
+      const searchMatch = safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          safeBrand.toLowerCase().includes(searchTerm.toLowerCase());
+                          
       return catMatch && searchMatch;
     });
   }, [liveWatches, activeCategory, searchTerm]);
