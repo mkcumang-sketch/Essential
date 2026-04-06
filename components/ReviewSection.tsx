@@ -1,16 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Star, User } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
 
 export default function ReviewSection({ productId }: { productId: string }) {
   const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState({ name: "", rating: 5, comment: "" });
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const fetchReviews = () => {
     fetch(`/api/reviews?productId=${productId}`)
       .then(res => res.json())
-      .then(data => data.success && setReviews(data.reviews));
+      .then(data => data.success && setReviews(data.data || []));
   };
 
   useEffect(() => { fetchReviews(); }, [productId]);
@@ -18,17 +20,31 @@ export default function ReviewSection({ productId }: { productId: string }) {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      body: JSON.stringify({ ...form, productId }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      alert("Review Shared! ✨");
-      setForm({ name: "", rating: 5, comment: "" });
-      fetchReviews();
+    try {
+        const res = await fetch("/api/reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+              userName: form.name, 
+              rating: form.rating, 
+              comment: form.comment, 
+              product: productId || 'GLOBAL',
+              visibility: 'pending' 
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Review Shared! ✨", "success");
+          setForm({ name: "", rating: 5, comment: "" });
+          fetchReviews();
+        } else {
+            showToast(data.error || "Failed to share review", "error");
+        }
+    } catch (err) {
+        showToast("Network error", "error");
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -52,7 +68,7 @@ export default function ReviewSection({ productId }: { productId: string }) {
           {reviews.length === 0 ? <p className="text-xs text-gray-400 italic">No reviews yet.</p> : reviews.map((r: any) => (
             <div key={r._id} className="space-y-3 pb-8 border-b border-gray-50 last:border-0">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest flex items-center"><User className="w-3 h-3 mr-2" /> {r.customerName}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest flex items-center"><User className="w-3 h-3 mr-2" /> {r.userName || r.customerName}</span>
                 <div className="flex space-x-1">
                   {[1,2,3,4,5].map(s => <Star key={s} className={`w-3 h-3 ${r.rating >= s ? 'fill-gold text-gold' : 'text-gray-100'}`} />)}
                 </div>
