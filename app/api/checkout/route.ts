@@ -19,20 +19,32 @@ export async function POST(req: Request) {
         // Flexible schema taaki koi extra field aane par crash na ho
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
 
+        // 🚨 GENERATE A UNIQUE ID 🚨
+        const uniqueId = `ORD-${Date.now().toString().slice(-6).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+
         // 📝 Order generate karo with FULL body spread
         const newOrder = await Order.create({
-            ...body, // Cart, shipping data sab kuch direct save hoga
-            orderId: `ORD-${Date.now().toString().slice(-6).toUpperCase()}`,
+            ...body, 
+            orderId: uniqueId,
+            orderNumber: uniqueId, // 👈 FIX: Ye line "duplicate key error" ko theek karegi
             userId: userId, 
             status: 'PROCESSING',
             createdAt: new Date()
         });
 
-        return NextResponse.json({ success: true, orderId: newOrder.orderId || newOrder._id });
+        return NextResponse.json({ success: true, orderId: newOrder.orderId || newOrder.orderNumber || newOrder._id });
 
     } catch (error: any) {
         console.error("Checkout Crash Details:", error);
-        // 🚨 AB ERROR CHHUPEGA NAHI, EXACT REASON TOAST MEIN DIKHEGA
+        
+        // Agar fir bhi duplicate error aata hai, toh usko clean message mein dikhao
+        if (error.code === 11000) {
+             return NextResponse.json({ 
+                success: false, 
+                error: "Database syncing issue. Please try placing the order again." 
+            }, { status: 500 });
+        }
+
         return NextResponse.json({ 
             success: false, 
             error: error.message || "Database Error during checkout." 
