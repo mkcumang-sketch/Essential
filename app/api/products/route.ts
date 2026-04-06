@@ -4,6 +4,8 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // 🌟 BULLETPROOF DB CONNECTION 🌟
 let isConnected = false;
@@ -12,6 +14,11 @@ const connectDB = async () => {
     if (isConnected || mongoose.connection.readyState >= 1) return;
     await mongoose.connect(process.env.MONGODB_URI as string, { maxPoolSize: 10 });
     isConnected = true;
+};
+
+const isSuperAdmin = async () => {
+    const session = await getServerSession(authOptions);
+    return (session?.user as any)?.role === 'SUPER_ADMIN';
 };
 
 // 🌟 THE ENHANCED LUXURY PRODUCT SCHEMA 🌟
@@ -63,6 +70,9 @@ export async function GET(req: Request) {
 // POST: Add a new product from Godmode Admin Panel
 export async function POST(req: Request) {
     try {
+        if (!(await isSuperAdmin())) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
         await connectDB();
         const body = await req.json();
         const newProduct = await Product.create(body);
@@ -76,6 +86,9 @@ export async function POST(req: Request) {
 // PUT: Update an existing product
 export async function PUT(req: Request) {
     try {
+        if (!(await isSuperAdmin())) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
         await connectDB();
         const body = await req.json();
         const { _id, ...updateData } = body;
@@ -93,6 +106,9 @@ export async function PUT(req: Request) {
 // DELETE: Remove a product (BULLETPROOF HARD DELETE)
 export async function DELETE(req: Request) {
     try {
+        if (!(await isSuperAdmin())) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
         await connectDB();
         
         // Support both URL params and Body payload for ID

@@ -62,7 +62,7 @@ export default function PremiumAccountDashboard() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      showToast("Referral code copied to clipboard!");
+      showToast("Code copied to clipboard!");
     } catch {
       showToast("Failed to copy code");
     }
@@ -236,73 +236,110 @@ export default function PremiumAccountDashboard() {
           </motion.div>
         </div>
 
+        {/* 🌟 REFERRAL & REWARDS HUB (ELITE TIER) 🌟 */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-32 h-32 bg-gray-50 rounded-br-full -z-10"></div>
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/5 rounded-bl-full -z-10"></div>
           <div className="max-w-2xl">
               <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black mb-2">
-                  <Package size={24} className="text-gray-400" /> Track Shipment
+                  <Sparkles size={24} className="text-[#D4AF37]" /> Referral & Rewards
               </h2>
-              <p className="text-sm text-gray-500 font-serif italic mb-8">Enter the Order ID you received during checkout to see real-time updates.</p>
+              <p className="text-sm text-gray-500 font-serif italic mb-8">Share your elite status and earn credits for your next acquisition.</p>
               
-              <form onSubmit={handleTrackOrder} className="flex flex-col sm:flex-row gap-4 mb-8">
-                  <div className="relative flex-1">
-                      <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                          type="text" 
-                          value={trackingId} 
-                          onChange={(e) => setTrackingId(e.target.value)} 
-                          placeholder="e.g. ORD-17385..." 
-                          className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-black font-mono uppercase transition-colors" 
-                          required 
-                      />
+              <div className="grid md:grid-cols-2 gap-6 mb-10">
+                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Your Elite Code</p>
+                      <div className="flex items-center justify-between">
+                          <p className="text-2xl font-bold font-mono tracking-tighter text-black">{dashLoading ? "..." : myReferralCode}</p>
+                          <button 
+                              onClick={() => copyToClipboard(String(myReferralCode))}
+                              className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-black transition-all"
+                          >
+                              <Copy size={16} />
+                          </button>
+                      </div>
                   </div>
-                  <button 
-                      type="submit" 
-                      disabled={isTracking || !trackingId.trim()} 
-                      className="px-8 py-4 bg-black text-white font-black uppercase text-[10px] tracking-[2px] rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50 shrink-0"
-                  >
-                      {isTracking ? 'Searching...' : 'Track Order'}
+                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Vault Credits</p>
+                      <p className="text-3xl font-bold font-serif text-[#D4AF37]">₹{dashLoading ? "..." : walletPoints.toLocaleString('en-IN')}</p>
+                  </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-4">
+                  <button className="flex-1 py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl">
+                      Invite a Collector
                   </button>
-              </form>
-
-              {trackError && (
-                  <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold flex items-center gap-2">
-                      <X size={16}/> {trackError}
-                  </motion.div>
-              )}
-
-              {trackedOrder && (
-                  <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="mt-8 border-t border-gray-100 pt-8">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                          <div>
-                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Status</p>
-                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm inline-block ${trackedOrder.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800 border border-green-200'}`}>
-                                  {trackedOrder.status || "PROCESSING"}
-                              </span>
-                          </div>
-                          <div className="md:text-right">
-                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Total Value</p>
-                              <p className="text-xl font-serif font-bold text-black flex items-center md:justify-end gap-1">₹{Number(trackedOrder.totalAmount || 0).toLocaleString('en-IN')}</p>
-                          </div>
-                      </div>
-
-                      <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-gray-400">Order Items</h3>
-                      <div className="space-y-4">
-                          {(trackedOrder.items || []).map((item: any, idx: number) => (
-                              <div key={idx} className="flex gap-4 items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm cursor-pointer hover:border-black transition-colors" onClick={() => router.push(`/product/${item.id || item._id}`)}>
-                                  <div className="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
-                                      <img src={item.imageUrl || item.image || '/placeholder-watch.png'} className="w-full h-full object-contain mix-blend-multiply" />
-                                  </div>
-                                  <div className="flex-1">
-                                      <p className="text-sm font-bold text-black line-clamp-1">{item.name}</p>
-                                      <p className="text-xs text-gray-500 font-mono mt-1">Qty: {item.qty || 1} · ₹{Number(item.offerPrice || item.price || 0).toLocaleString('en-IN')}</p>
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  </motion.div>
-              )}
+                  <Link href="/shop" className="flex-1 py-4 bg-white border border-gray-200 text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:border-black transition-all text-center flex items-center justify-center">
+                      Redeem Credits
+                  </Link>
+              </div>
           </div>
+        </section>
+
+        {/* 🌟 ORDER TRACKING 🌟 */}
+        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
+          <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black mb-2">
+              <Package size={24} className="text-black" /> Track Your Order
+          </h2>
+          <p className="text-sm text-gray-500 font-serif italic mb-8">Enter the Order ID you received during checkout to see real-time updates.</p>
+          
+          <form onSubmit={handleTrackOrder} className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="relative flex-1">
+                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                      type="text" 
+                      value={trackingId} 
+                      onChange={(e) => setTrackingId(e.target.value)} 
+                      placeholder="e.g. ORD-17385..." 
+                      className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-black font-mono uppercase transition-colors" 
+                      required 
+                  />
+              </div>
+              <button 
+                  type="submit" 
+                  disabled={isTracking || !trackingId.trim()} 
+                  className="px-8 py-4 bg-black text-white font-black uppercase text-[10px] tracking-[2px] rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50 shrink-0"
+              >
+                  {isTracking ? 'Searching...' : 'Track Order'}
+              </button>
+          </form>
+
+          {trackError && (
+              <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold flex items-center gap-2">
+                  <X size={16}/> {trackError}
+              </motion.div>
+          )}
+
+          {trackedOrder && (
+              <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="mt-8 border-t border-gray-100 pt-8">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                      <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Status</p>
+                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm inline-block ${trackedOrder.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800 border border-green-200'}`}>
+                              {trackedOrder.status || "PROCESSING"}
+                          </span>
+                      </div>
+                      <div className="md:text-right">
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Total Value</p>
+                          <p className="text-xl font-serif font-bold text-black flex items-center md:justify-end gap-1">₹{Number(trackedOrder.totalAmount || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                  </div>
+
+                  <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-gray-400">Order Items</h3>
+                  <div className="space-y-4">
+                      {(trackedOrder.items || []).map((item: any, idx: number) => (
+                          <div key={idx} className="flex gap-4 items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm cursor-pointer hover:border-black transition-colors" onClick={() => router.push(`/product/${item.id || item._id}`)}>
+                              <div className="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
+                                  <img src={item.imageUrl || item.image || '/placeholder-watch.png'} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
+                              </div>
+                              <div className="flex-1">
+                                  <p className="text-sm font-bold text-black line-clamp-1">{item.name}</p>
+                                  <p className="text-xs text-gray-500 font-mono mt-1">Qty: {item.qty || 1} · ₹{Number(item.offerPrice || item.price || 0).toLocaleString('en-IN')}</p>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </motion.div>
+          )}
         </section>
 
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>

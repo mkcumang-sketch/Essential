@@ -320,9 +320,18 @@ src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png
                     </div>
 
                     <div className="mt-auto">
-                        {/* 🚨 THE SECURE ACQUISITION BUTTON 🚨 */}
-                        <button onClick={handleAddToCartClick} className="w-full py-6 bg-black text-white rounded-[20px] font-black uppercase text-sm tracking-[4px] hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3">
-                            <ShoppingBag size={18}/> Add to cart
+                        {/* 🚨 THE SECURE ACQUISITION BUTTON (SOLD OUT LOGIC) 🚨 */}
+                        <button 
+                            onClick={handleAddToCartClick} 
+                            disabled={product.stock <= 0}
+                            className={`w-full py-6 rounded-[20px] font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 ${
+                                product.stock <= 0 
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                : 'bg-black text-white hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)]'
+                            }`}
+                        >
+                            <ShoppingBag size={18}/> 
+                            {product.stock <= 0 ? 'Sold Out' : 'Add to cart'}
                         </button>
                     </div>
                 </div>

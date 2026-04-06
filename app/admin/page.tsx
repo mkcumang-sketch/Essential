@@ -199,16 +199,17 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
+                        className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm cursor-pointer hover:border-black transition-all"
+                        onClick={() => router.push("/admin/products")}
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-500 mb-1">Total Revenue</p>
+                                <p className="text-sm text-gray-500 mb-1">Manage Collection</p>
                                 <p className="text-3xl font-bold text-gray-900">
-                                    ₹{users.reduce((sum, u) => sum + (u.totalSpent || 0), 0).toLocaleString()}
+                                    {users.length > 0 ? "Inventory" : "Loading..."}
                                 </p>
                             </div>
-                            <TrendingUp className="text-[#D4AF37]" size={32} />
+                            <Package className="text-[#D4AF37]" size={32} />
                         </div>
                     </motion.div>
                 </div>

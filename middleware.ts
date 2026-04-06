@@ -49,7 +49,7 @@ export async function middleware(req: NextRequest) {
     // 👑 GODMODE / ADMIN PROTECTION
     if (pathname.startsWith('/godmode') || pathname.startsWith('/admin')) {
         if (!token) return NextResponse.redirect(new URL('/login', req.url));
-        if (token.role !== 'SUPER_ADMIN') return NextResponse.redirect(new URL('/account', req.url)); 
+        if ((token as any).role !== 'SUPER_ADMIN') return NextResponse.redirect(new URL('/account', req.url)); 
     }
 
     // 👤 CLIENT ACCOUNT PROTECTION

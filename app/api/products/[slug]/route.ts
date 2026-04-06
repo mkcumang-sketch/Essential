@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
@@ -8,18 +10,20 @@ const connectDB = async () => {
 
 const Product = mongoose.models.Product || mongoose.model('Product', new mongoose.Schema({}, { strict: false }));
 
-// 🚨 Any type lagaya taaki TypeScript pareshan na kare
-export async function PATCH(req: Request, { params }: { params: any }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ slug: string }> }) {
     try {
+        const session = await getServerSession(authOptions);
+        if ((session?.user as any)?.role !== 'SUPER_ADMIN') {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
+
         if (!process.env.MONGODB_URI) {
             return NextResponse.json({ success: false, error: "Database is not connected." }, { status: 500 });
         }
 
         await connectDB();
         
-        // 🚨 THE FIX: Next.js 15 requires AWAITING params! (Dabbe ko kholna zaroori hai)
-        const resolvedParams = await params;
-        const slug = resolvedParams.slug;
+        const { slug } = await params;
         
         if (!slug) {
             return NextResponse.json({ success: false, error: "Product ID missing in URL" }, { status: 400 });

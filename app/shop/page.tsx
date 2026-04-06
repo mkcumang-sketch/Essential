@@ -266,10 +266,19 @@ export default function CataloguePage() {
 
               {/* 🚨 PRODUCTS GRID - 4 COLUMNS (AMAZON STYLE) 🚨 */}
               {loading ? (
-                 <div className="py-32 flex flex-col items-center justify-center">
-                     <Sparkles size={40} className="text-gray-300 mb-4 animate-pulse" />
-                     <p className="text-sm font-bold uppercase tracking-widest text-gray-400">Loading Vault...</p>
-                 </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
+                      {[...Array(8)].map((_, i) => (
+                          <div key={i} className="bg-white p-4 rounded-[16px] border border-gray-100 flex flex-col h-full animate-pulse">
+                              <div className="aspect-square bg-gray-100 rounded-xl mb-4" />
+                              <div className="h-2 w-1/3 bg-gray-100 rounded mb-2" />
+                              <div className="h-4 w-3/4 bg-gray-100 rounded mb-4" />
+                              <div className="mt-auto pt-3 border-t border-gray-50 flex justify-between">
+                                  <div className="h-6 w-1/2 bg-gray-100 rounded" />
+                                  <div className="h-8 w-8 bg-gray-100 rounded-full" />
+                              </div>
+                          </div>
+                      ))}
+                  </div>
               ) : filteredAndSortedProducts.length === 0 ? (
                   <div className="py-32 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
                       <Search size={40} className="text-gray-300 mx-auto mb-4" />

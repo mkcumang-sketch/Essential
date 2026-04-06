@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if ((session?.user as any)?.role !== 'SUPER_ADMIN') {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
+
         const { name, description, type = 'product', brand = 'Essential', category = 'Fine Horology' } = await req.json();
 
         const productName = name || 'Luxury Timepiece';

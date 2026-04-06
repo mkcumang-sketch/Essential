@@ -87,9 +87,17 @@ const ProductCard = ({ watch, addToCart }: { watch: any, addToCart: any }) => {
         </div>
         <div className="flex justify-between items-center mt-auto pt-8 border-t border-gray-50">
           <p className="text-3xl text-[#002B19] font-black tracking-tighter font-serif">₹{Number(watch.offerPrice || watch.price).toLocaleString('en-IN')}</p>
-          <button onClick={(e) => { e.preventDefault(); addToCart(watch); }} className="p-5 bg-[#050505] text-white rounded-3xl hover:bg-[#D4AF37] transition-all shadow-xl">
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Plus size={24}/>
+          <button 
+            disabled={watch.stock <= 0}
+            onClick={(e) => { e.preventDefault(); if (watch.stock > 0) addToCart(watch); }} 
+            className={`p-5 rounded-3xl transition-all shadow-xl ${watch.stock <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#050505] text-white hover:bg-[#D4AF37]'}`}
+          >
+            <motion.div whileHover={watch.stock > 0 ? { scale: 1.1 } : {}} whileTap={watch.stock > 0 ? { scale: 0.9 } : {}}>
+              {watch.stock <= 0 ? (
+                <span className="text-[10px] font-black uppercase tracking-widest px-2">Sold Out</span>
+              ) : (
+                <Plus size={24}/>
+              )}
             </motion.div>
           </button>
         </div>
