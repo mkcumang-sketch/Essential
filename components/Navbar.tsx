@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { User, Search, ShoppingBag, Menu, X, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '@/context/CartContext';
 
 export default function Navbar() {
     const { data: session, status } = useSession();
+    const { openCart } = useCart();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -64,10 +66,13 @@ export default function Navbar() {
                             )}
                         </div>
 
-                        <Link href="/checkout" className="text-gray-900 hover:text-gray-500 transition-colors relative">
+                        <button 
+                            onClick={openCart}
+                            className="text-gray-900 hover:text-gray-500 transition-colors relative"
+                        >
                             <ShoppingBag size={20} strokeWidth={1.5} />
                             {/* Optional: Add a red dot here if cart has items */}
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </header>

@@ -24,6 +24,8 @@ interface CartContextType {
   setIsCartOpen: (open: boolean) => void;
   cartTotal: number;
   isSyncing: boolean;
+  openCart: () => void;
+  closeCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -31,6 +33,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const { data: session, status } = useSession();
@@ -157,7 +161,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isCartOpen, 
         setIsCartOpen,
         cartTotal,
-        isSyncing
+        isSyncing,
+        openCart,
+        closeCart
     }}>
       {children}
     </CartContext.Provider>
