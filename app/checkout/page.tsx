@@ -35,9 +35,8 @@ export default function CheckoutPage() {
     
     const [cart, setCart] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [placedOrderId, setPlacedOrderId] = useState<string | null>(null); // 🚨 Added for Tracking ID
+    const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
 
-    // 🎟️ PROMO STATES
     const [vaultKeyInput, setVaultKeyInput] = useState('');
     const [promoDetails, setPromoDetails] = useState<{code: string, type: 'product'|'global'|'referral', discountValue: number} | null>(null);
     const [isVerifying, setIsVerifying] = useState(false);
@@ -76,8 +75,8 @@ export default function CheckoutPage() {
         let sub = 0; let disc = 0; let transit = 0; let tax = 0;
 
         cart.forEach(item => {
-            let itemPrice = Number(item.offerPrice || item.price);
-            const qty = Number(item.qty);
+            let itemPrice = Number(item.offerPrice || item.price) || 0;
+            const qty = Number(item.qty) || 1;
             sub += itemPrice * qty;
 
             if (promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase()) {
@@ -101,7 +100,14 @@ export default function CheckoutPage() {
             disc += globalDisc;
         }
 
-        return { subtotal: sub, totalDiscount: disc, totalTransit: transit, totalTaxes: tax, grandTotal: (sub - disc) + transit + tax };
+        // Return strict numbers
+        return { 
+            subtotal: Number(sub), 
+            totalDiscount: Number(disc), 
+            totalTransit: Number(transit), 
+            totalTaxes: Number(tax), 
+            grandTotal: Number((sub - disc) + transit + tax) 
+        };
     }, [cart, promoDetails]);
 
     const handleApplyPromoCode = async () => {
@@ -174,7 +180,7 @@ export default function CheckoutPage() {
             if (res.ok && data.success) {
                 localStorage.removeItem('luxury_cart');
                 localStorage.removeItem('guest_lead_captured');
-                setPlacedOrderId(data.orderId || `ORD-${Date.now().toString().slice(-6)}`); // 🚨 SAVE TRACKING ID
+                setPlacedOrderId(data.orderId || `ORD-${Date.now().toString().slice(-6)}`); 
             } else {
                 showLuxuryToast(data.error || "Order did not go through. Check details.", "error");
             }
@@ -185,7 +191,6 @@ export default function CheckoutPage() {
         }
     };
 
-    // 🚨 UPDATED SUCCESS SCREEN WITH TRACKING ID 🚨
     if (placedOrderId) {
         return (
             <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 text-center text-black selection:bg-black selection:text-white">
@@ -219,7 +224,7 @@ export default function CheckoutPage() {
                     <ArrowLeft size={16}/> Back to Cart
                 </Link>
                 <h1 className="text-lg md:text-2xl font-serif font-black tracking-[4px] uppercase text-black absolute left-1/2 -translate-x-1/2">Essential</h1>
-                <div className="flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest hidden md:flex">
+                <div className="hidden md:flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest">
                     <ShieldCheck size={14}/> 256-Bit Secure
                 </div>
             </header>
@@ -276,7 +281,7 @@ export default function CheckoutPage() {
                                         <div className="flex-1 pr-8">
                                             <h4 className="text-xs font-black uppercase tracking-widest line-clamp-1 pr-2 text-black">{item.name}</h4>
                                             <p className="text-[10px] text-gray-400 font-mono mt-1">QTY: {item.qty}</p>
-                                            <p className="font-bold text-sm mt-1 text-black">₹{(Number(item.offerPrice || item.price) * item.qty).toLocaleString()}</p>
+                                            <p className="font-bold text-sm mt-1 text-black">₹{Number((item.offerPrice || item.price) * (item.qty || 1)).toLocaleString('en-IN')}</p>
                                             {promoDetails?.type === 'product' && promoDetails.code === item.vipVaultKey?.toUpperCase() && (
                                                 <span className="inline-block bg-green-50 text-green-700 border border-green-200 text-[8px] font-black px-2 py-0.5 rounded mt-2 uppercase tracking-widest">-₹{item.vipDiscount} VIP Code</span>
                                             )}
@@ -307,19 +312,19 @@ export default function CheckoutPage() {
                         </div>
 
                         <div className="space-y-4 border-t border-gray-100 pt-8">
-                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span className="text-black">₹{subtotal.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Subtotal</span><span className="text-black">₹{subtotal.toLocaleString('en-IN')}</span></div>
                             
                             {totalDiscount > 0 && <div className="flex justify-between text-[11px] font-black uppercase text-green-600 tracking-widest">
                                 <span>{promoDetails?.type === 'referral' ? 'Friend referral' : 'Discount'} ({promoDetails?.discountValue || 10}%)</span>
-                                <span>-₹{totalDiscount.toLocaleString()}</span>
+                                <span>-₹{totalDiscount.toLocaleString('en-IN')}</span>
                             </div>}
                             
-                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Transit & Insurance</span><span className="text-black">{totalTransit === 0 ? "Complimentary" : `₹${totalTransit.toLocaleString()}`}</span></div>
-                            {totalTaxes > 0 && <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Taxes & Duties</span><span className="text-black">₹{totalTaxes.toLocaleString()}</span></div>}
+                            <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Transit & Insurance</span><span className="text-black">{totalTransit === 0 ? "Complimentary" : `₹${totalTransit.toLocaleString('en-IN')}`}</span></div>
+                            {totalTaxes > 0 && <div className="flex justify-between text-[11px] font-bold uppercase text-gray-400 tracking-widest"><span>Taxes & Duties</span><span className="text-black">₹{totalTaxes.toLocaleString('en-IN')}</span></div>}
                             
                             <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-100">
                                 <span className="font-black text-xs uppercase tracking-[4px] text-gray-500">Grand Total</span>
-                                <span className="text-4xl font-serif font-bold tracking-tighter text-black">₹{grandTotal.toLocaleString()}</span>
+                                <span className="text-4xl font-serif font-bold tracking-tighter text-black">₹{grandTotal.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
                     </div>

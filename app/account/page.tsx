@@ -119,14 +119,14 @@ export default function PremiumAccountDashboard() {
   const email = su?.email || "—";
   const name = su?.name || "Member";
 
-  // ⚡ Optimistic Values (Will show '...' then populate instantly)
-  const walletPoints = dashData?.walletPoints ?? su?.walletPoints ?? 0;
-  const totalEarned = dashData?.totalEarned ?? 0;
-  const spent = dashData?.totalSpent ?? 0;
-  const goal = 100000;
-  const progress = Math.min(100, Math.max(0, (Number(spent) / goal) * 100)) || 0;
-  const tier = (dashData?.tier as string) || (Number(spent) >= goal ? "Gold" : "Silver");
-  const remaining = tier === "Gold" ? 0 : Math.max(0, goal - Number(spent));
+  // 🚨 FIX: Strict TypeScript casting for numeric variables before using toLocaleString
+  const walletPoints: number = Number(dashData?.walletPoints ?? su?.walletPoints ?? 0);
+  const totalEarned: number = Number(dashData?.totalEarned ?? 0);
+  const spent: number = Number(dashData?.totalSpent ?? 0);
+  const goal: number = 100000;
+  const progress: number = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
+  const tier: string = (dashData?.tier as string) || (spent >= goal ? "Gold" : "Silver");
+  const remaining: number = tier === "Gold" ? 0 : Math.max(0, goal - spent);
   
   // 🚨 SMART REFERRAL LOGIC
   const firstName = name.split(" ")[0] || "VIP";
@@ -190,7 +190,7 @@ export default function PremiumAccountDashboard() {
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pt-10 md:pt-14 space-y-10">
         
-        {/* WELCOME SECTION - Instantly load details from session */}
+        {/* WELCOME SECTION */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 overflow-hidden shadow-lg relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gray-50 rounded-full blur-3xl opacity-60 -z-10 pointer-events-none"></div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 relative z-10">
@@ -224,7 +224,7 @@ export default function PremiumAccountDashboard() {
           </div>
         </section>
 
-        {/* STATS & REFERRAL - Optimistic Loading */}
+        {/* STATS & REFERRAL */}
         <div className="grid md:grid-cols-2 gap-6 transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-gray-200 bg-white p-8 flex items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow">
             <div>
@@ -248,7 +248,7 @@ export default function PremiumAccountDashboard() {
           </motion.div>
         </div>
 
-        {/* 🚨 NEW: TRACK SHIPMENT WIDGET (REPLACED HISTORY) 🚨 */}
+        {/* 🚨 TRACK SHIPMENT WIDGET 🚨 */}
         <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-32 h-32 bg-gray-50 rounded-br-full -z-10"></div>
           <div className="max-w-2xl">
@@ -278,14 +278,12 @@ export default function PremiumAccountDashboard() {
                   </button>
               </form>
 
-              {/* TRACKING ERROR */}
               {trackError && (
                   <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold flex items-center gap-2">
                       <X size={16}/> {trackError}
                   </motion.div>
               )}
 
-              {/* TRACKING RESULT */}
               {trackedOrder && (
                   <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="mt-8 border-t border-gray-100 pt-8">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
