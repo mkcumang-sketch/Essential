@@ -13,6 +13,7 @@ import {
   Terminal, Radar, Fingerprint, Cpu, Network
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import RedirectManager from '@/components/Admin/RedirectManager';
 import dynamic from 'next/dynamic';
 
@@ -83,9 +84,11 @@ const PremiumUploadNode = ({ onUploadSuccess, placeholder="Image/Video" }: any) 
 
 function AdminDashboard() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('FULL_DASHBOARD');
   const [dashboardView, setDashboardView] = useState<'orders' | 'abandoned'>('orders');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const [systemLogs, setSystemLogs] = useState<string[]>(["System initialized. Production environment connected."]);
 
@@ -321,39 +324,56 @@ function AdminDashboard() {
   
   const handleDeleteProduct = async (id: string) => {
     if(!confirm("Delete this product from vault?")) return;
-// API call success hone ke baad ye line zaroor honi chahiye:
-setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
-    try { await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
+    setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
+    try { 
+      await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
+      router.refresh();
+    } catch(e) {}
   };
 
   const handleDeleteCoupon = async (id: string) => {
       if(!confirm("Delete this coupon code?")) return;
       setCoupons(prev => prev.filter(c => c._id !== id)); 
-      try { await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); } catch(e) {}
+      try { 
+        await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); 
+        router.refresh();
+      } catch(e) {}
   };
 
   const handleDeleteAffiliate = async (id: string) => {
       if(!confirm("Remove this affiliate partner?")) return;
       setAgents(prev => prev.filter(a => a._id !== id)); 
-      try { await fetch(`/api/agents`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
+      try { 
+        await fetch(`/api/agents`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
+        router.refresh();
+      } catch(e) {}
   };
 
   const handleDeleteReview = async (id: string) => {
       if(!confirm("Permanently delete this review?")) return;
       setAllReviews(prev => prev.filter(r => r._id !== id)); 
-      try { await fetch(`/api/reviews`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
+      try { 
+        await fetch(`/api/reviews`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
+        router.refresh();
+      } catch(e) {}
   };
 
   const handleDeleteOrder = async (id: string) => {
       if(!confirm("Permanently delete this order?")) return;
       setOrders(prev => prev.filter(o => o._id !== id)); 
-      try { await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
+      try { 
+        await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
+        router.refresh();
+      } catch(e) {}
   };
 
   const handleDeleteLead = async (id: string) => {
       if(!confirm("Permanently erase this client record?")) return;
       setLeads(prev => prev.filter(l => l._id !== id)); 
-      try { await fetch(`/api/admin/users/${id}`, { method: 'DELETE' }); } catch(e) {}
+      try { 
+        await fetch(`/api/admin/users/${id}`, { method: 'DELETE' }); 
+        router.refresh();
+      } catch(e) {}
   };
 
   const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
@@ -411,7 +431,10 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
   const handleDeleteCeleb = async (id: string) => {
       if(!confirm("Remove this ambassador?")) return;
       setCelebs(prev => prev.filter(c => c._id !== id)); 
-      try { await fetch(`/api/celebrity`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); } catch(e) {}
+      try { 
+        await fetch(`/api/celebrity`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
+        router.refresh();
+      } catch(e) {}
   };
 
   const exportToCSV = () => {
@@ -436,6 +459,82 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
   return (
     <div className="flex h-screen bg-[#050505] text-white overflow-hidden selection:bg-[#D4AF37] selection:text-black relative font-sans">
       
+      {/* ORDER DETAILS MODAL */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-6">
+            <motion.div initial={{scale:0.95, y:20}} animate={{scale:1, y:0}} exit={{scale:0.95, y:20}} className="bg-[#0A0A0A] border border-white/10 p-10 rounded-[40px] w-full max-w-3xl relative shadow-2xl overflow-hidden">
+               <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none"><Truck size={200}/></div>
+               <button onClick={() => setSelectedOrder(null)} className="absolute top-8 right-8 text-gray-500 hover:text-white transition-colors p-2 bg-white/5 rounded-full"><X size={24}/></button>
+               
+               <h3 className="text-3xl font-bold text-[#D4AF37] mb-2 italic font-serif">Deep Intelligence Report</h3>
+               <p className="text-[10px] font-black uppercase tracking-[5px] text-gray-500 mb-10">ORDER ID: {selectedOrder.orderId}</p>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10 border-b border-white/5 pb-10">
+                  <div className="space-y-6">
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-3">Client Protocol</p>
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-2">
+                           <p className="text-xl font-bold text-white">{selectedOrder.shippingData?.name || selectedOrder.customer?.name}</p>
+                           <p className="text-sm text-gray-400 font-mono">{selectedOrder.shippingData?.phone || selectedOrder.customer?.phone}</p>
+                           <p className="text-sm text-gray-400 font-mono">{selectedOrder.shippingData?.email || selectedOrder.customer?.email}</p>
+                        </div>
+                     </div>
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-3">Delivery Vector</p>
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
+                           <p className="text-sm text-gray-300 leading-relaxed italic font-serif">
+                              {selectedOrder.shippingData?.address}<br/>
+                              {selectedOrder.shippingData?.city}, {selectedOrder.shippingData?.state}<br/>
+                              {selectedOrder.shippingData?.pincode}
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-6">
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-3">Acquired Assets</p>
+                        <div className="space-y-3 max-h-[250px] overflow-y-auto pr-4 custom-scrollbar">
+                           {selectedOrder.items.map((item: any, i: number) => (
+                              <div key={i} className="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5 group hover:border-[#D4AF37]/30 transition-all">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-black rounded-lg p-2 border border-white/10 flex items-center justify-center shrink-0">
+                                       <img src={item.imageUrl || item.image} className="w-full h-full object-contain" alt="" />
+                                    </div>
+                                    <div>
+                                       <p className="text-xs font-bold text-white line-clamp-1">{item.name}</p>
+                                       <p className="text-[9px] text-gray-500 font-black uppercase mt-1">QTY: {item.qty || item.quantity || 1} UNIT(S)</p>
+                                    </div>
+                                 </div>
+                                 <p className="text-sm font-bold text-[#D4AF37] font-mono">₹{((item.offerPrice || item.price) * (item.qty || item.quantity || 1)).toLocaleString()}</p>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                     <div className="pt-6 border-t border-white/5">
+                        <div className="flex justify-between items-end">
+                           <div>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Clearance Value</p>
+                              <p className="text-3xl font-bold text-green-400 font-mono">₹{(selectedOrder.totalAmount || 0).toLocaleString()}</p>
+                           </div>
+                           <div className="text-right">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Payment Status</p>
+                              <p className="text-sm font-bold text-white uppercase tracking-widest">{selectedOrder.paymentStatus || 'PAID'}</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="flex justify-end">
+                  <button onClick={() => setSelectedOrder(null)} className="px-10 py-4 bg-[#D4AF37] text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.2)]">Close Intelligence Brief</button>
+               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* BACKGROUND */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[#D4AF37]/[0.05] blur-[150px] rounded-full pointer-events-none z-0"></div>
@@ -963,7 +1062,7 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                              <p className="text-xs text-gray-400 flex items-center gap-2"><MapPin size={12}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-2 text-white/20">|</span> <Package size={12}/> {o.items?.length || 1} Unit(s)</p>
                           </div>
                        </div>
-                       <div className="flex flex-wrap md:flex-nowrap items-center gap-8 w-full md:w-auto justify-between md:justify-end">
+                          <div className="flex flex-wrap md:flex-nowrap items-center gap-8 w-full md:w-auto justify-between md:justify-end">
                           <div className="text-left md:text-right">
                             <p className="text-xs text-gray-500 mb-1">Clearance Value</p>
                             <p className="font-bold text-green-400 text-2xl">₹{(o.totalAmount || 0).toLocaleString()}</p>
@@ -976,9 +1075,14 @@ setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
                             <option className="text-red-500" value="CANCELLED">Aborted</option>
                           </select>
                           
-                          <button onClick={() => handleDeleteOrder(o._id)} className="p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
-                              <Trash2 size={18}/>
-                          </button>
+                          <div className="flex gap-2">
+                             <button onClick={() => setSelectedOrder(o)} className="p-4 bg-white/5 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl transition-all border border-white/10">
+                                 <Eye size={18}/>
+                             </button>
+                             <button onClick={() => handleDeleteOrder(o._id)} className="p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                                 <Trash2 size={18}/>
+                             </button>
+                          </div>
                        </div>
                     </div>
                  ))}

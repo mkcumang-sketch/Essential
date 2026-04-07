@@ -36,6 +36,8 @@ export async function POST(req: Request) {
             { upsert: true, new: true }
         );
 
+        revalidatePath('/', 'layout');
+
         return NextResponse.json({ success: true, data: policy });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -57,8 +59,7 @@ export async function DELETE(req: Request) {
         await connectDB();
         await Policy.findByIdAndDelete(id);
 
-        revalidatePath('/policies/[slug]', 'page');
-        revalidatePath('/admin/cms/policies');
+        revalidatePath('/', 'layout');
 
         return NextResponse.json({ success: true, message: "Policy deleted" });
     } catch (error: any) {

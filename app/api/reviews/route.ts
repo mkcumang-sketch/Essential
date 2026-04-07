@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { getToken } from "next-auth/jwt";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { revalidatePath } from 'next/cache';
 
 // 🌟 1. BULLETPROOF DB CONNECTION
 let isConnected = false;
@@ -136,6 +137,7 @@ export async function DELETE(req: NextRequest) {
         if (!id) return NextResponse.json({ success: false, error: "Review ID missing." }, { status: 400 });
 
         await Review.findByIdAndDelete(id);
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true, message: "Review removed." });
     } catch (error) {
         console.error("DELETE Review Error:", error);

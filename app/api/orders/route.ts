@@ -115,8 +115,7 @@ export async function DELETE(req: Request) {
       mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
     await Order.findByIdAndDelete(orderId);
 
-    revalidatePath('/admin');
-    revalidatePath('/account');
+    revalidatePath('/', 'layout');
 
     return NextResponse.json({ success: true, message: "Order deleted." });
   } catch (error) {

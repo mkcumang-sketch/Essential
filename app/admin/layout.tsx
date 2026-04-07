@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
     { name: 'Policies CMS', icon: FileText, href: '/admin/cms/policies' },
-    { name: 'About Page', icon: Info, href: '/admin/cms/about' },
+    { name: 'About Page CMS', icon: Info, href: '/admin/cms/about' },
     { name: 'Abandoned Carts', icon: ShoppingCart, href: '/admin/abandoned-carts' },
     { name: 'Settings', icon: Settings, href: '/admin/settings' },
   ];

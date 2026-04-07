@@ -62,7 +62,9 @@ export default function CataloguePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`/api/products?t=${Date.now()}`);
+        const res = await fetch(`/api/products`, {
+            next: { revalidate: 60 }
+        });
         if (res.ok) {
           const data = await res.json();
           setProducts(data.data || []);
@@ -270,7 +272,7 @@ export default function CataloguePage() {
               {/* 🚨 PRODUCTS GRID - 4 COLUMNS (AMAZON STYLE) 🚨 */}
               {loading ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
-                      {[...Array(8)].map((_, i) => (
+                      {[...Array(6)].map((_, i) => (
                           <ProductCardSkeleton key={i} />
                       ))}
                   </div>

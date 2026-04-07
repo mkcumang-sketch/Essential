@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, 
   Trash2, 
@@ -19,6 +20,7 @@ import {
 import { toast } from 'react-hot-toast';
 
 export default function PoliciesCMS() {
+  const router = useRouter();
   const [policies, setPolicies] = useState<any[]>([]);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -117,6 +119,7 @@ export default function PoliciesCMS() {
       const data = await res.json();
       if (data.success) {
         toast.success("Policy deleted");
+        router.refresh();
         if (selectedPolicy?._id === id) setIsEditing(false);
       } else {
         setPolicies(previousPolicies);

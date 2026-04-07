@@ -45,9 +45,9 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
         // 🛡️ ENTERPRISE INPUT VALIDATION
         const body = await req.json();
         const validatedData = validateInput(referralApplySchema, body);
-        const { referralCode } = validatedData;
+        const referralCode = validatedData.referralCode?.toUpperCase().trim();
 
-        // �️ FIREWALL: Get current user with security
+        // 🛡️ FIREWALL: Get current user with security
         const currentUser = await UserService.findUserById(session.user.id);
         if (!currentUser) {
             return NextResponse.json({ 
@@ -56,15 +56,24 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
             }, { status: 404 });
         }
 
-        // �️ FIREWALL: Prevent self-referral
-        if (currentUser.myReferralCode === referralCode) {
+        // 🛡️ FIREWALL: Prevent self-referral (case-insensitive)
+        if (currentUser.myReferralCode?.toUpperCase() === referralCode) {
             return NextResponse.json({ 
                 success: false, 
-                error: "Cannot use your own referral code" 
+                error: "You cannot use your own referral code." 
             }, { status: 400 });
         }
 
-        // �️ FIREWALL: Check if already used referral
+        // 🛡️ FIREWALL: Verify if code exists (case-insensitive)
+        const referrer = await User.findOne({ 
+            myReferralCode: { $regex: new RegExp(`^${referralCode}$`, 'i') } 
+        }).select('_id name');
+        
+        if (!referrer) {
+            return NextResponse.json({ success: false, error: "This referral/promo code does not exist." }, { status: 404 });
+        }
+
+        // 🛡️ FIREWALL: Check if already used referral
         if (currentUser.referredBy) {
             return NextResponse.json({ 
                 success: false, 

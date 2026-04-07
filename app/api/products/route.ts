@@ -1,11 +1,11 @@
 export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+export const revalidate = 60; // 🚨 CACHE FOR 60 SECONDS FOR SPEED 🚨
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { revalidatePath } from 'next/cache';
 
 // 🌟 BULLETPROOF DB CONNECTION 🌟
 let isConnected = false;
@@ -56,9 +56,9 @@ export async function GET(req: Request) {
 
         const products = await Product.find(query).sort({ priority: -1, createdAt: -1 });
         
-        // 🚨 FORCE VERCEL TO NEVER CACHE THIS RESPONSE 🚨
+        // 🚨 CACHE FOR 60 SECONDS FOR SPEED 🚨
         const response = NextResponse.json({ success: true, data: products });
-        response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+        response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
         return response;
 
     } catch (error) {
@@ -123,6 +123,8 @@ export async function DELETE(req: Request) {
         if (!id) return NextResponse.json({ success: false, error: "Product ID is required" }, { status: 400 });
 
         await Product.findByIdAndDelete(id);
+        revalidatePath('/', 'layout');
+        
         return NextResponse.json({ success: true, message: "Product deleted safely and permanently" });
     } catch (error) {
         console.error("Delete Product Error:", error);

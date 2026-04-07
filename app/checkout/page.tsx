@@ -146,10 +146,10 @@ export default function CheckoutPage() {
                 setVaultKeyInput('');
             } else {
                 setPromoDetails(null);
-                showLuxuryToast("That code is not valid. Try again.", "error");
+                showLuxuryToast(data.error || 'Invalid code applied.', "error");
             }
         } catch (err) {
-            showLuxuryToast("Something went wrong. Try again.", "error");
+            showLuxuryToast("Network error while verifying code.", "error");
         } finally {
             setIsVerifying(false);
         }

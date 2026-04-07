@@ -41,6 +41,7 @@ export default function PremiumAccountDashboard() {
   const [dashData, setDashData] = useState<Record<string, any> | null>(null);
   const [dashLoading, setDashLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<any>(null);
 
   const [trackingId, setTrackingId] = useState("");
   const [isTracking, setIsTracking] = useState(false);
@@ -153,6 +154,57 @@ export default function PremiumAccountDashboard() {
     <div className="min-h-screen bg-[#F9FAFB] text-black selection:bg-[#D4AF37] selection:text-black font-sans">
       
       <AnimatePresence>
+        {selectedOrderDetails && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6">
+             <motion.div initial={{scale:0.95, y:20}} animate={{scale:1, y:0}} exit={{scale:0.95, y:20}} className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative">
+                <button onClick={() => setSelectedOrderDetails(null)} className="absolute top-8 right-8 p-3 bg-gray-50 text-gray-400 hover:text-black rounded-xl transition-all"><X size={20}/></button>
+                <div className="p-12">
+                   <h3 className="text-3xl font-serif font-black italic tracking-tighter mb-2">Order Details</h3>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-10">{selectedOrderDetails.orderId}</p>
+                   
+                   <div className="grid grid-cols-2 gap-10 mb-10 pb-10 border-b border-gray-100">
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-4">Shipping Protocol</h4>
+                        <div className="space-y-1 text-sm text-gray-600">
+                           <p className="font-bold text-black">{selectedOrderDetails.shippingData?.name || selectedOrderDetails.customer?.name}</p>
+                           <p>{selectedOrderDetails.shippingData?.phone || selectedOrderDetails.customer?.phone}</p>
+                           <p>{selectedOrderDetails.shippingData?.email || selectedOrderDetails.customer?.email}</p>
+                           <p className="mt-2">{selectedOrderDetails.shippingData?.address}</p>
+                           <p>{selectedOrderDetails.shippingData?.city}, {selectedOrderDetails.shippingData?.pincode}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-4">Financial Status</h4>
+                        <div className="space-y-1 text-sm text-gray-600">
+                           <p className="flex justify-between"><span>Amount</span> <span className="font-bold text-black">₹{selectedOrderDetails.totalAmount.toLocaleString()}</span></p>
+                           <p className="flex justify-between"><span>Method</span> <span className="font-bold text-black uppercase">{selectedOrderDetails.paymentMethod || 'Razorpay'}</span></p>
+                           <p className="flex justify-between"><span>Status</span> <span className="px-3 py-1 bg-black text-[#D4AF37] rounded-full text-[9px] font-black uppercase tracking-widest">{selectedOrderDetails.status}</span></p>
+                        </div>
+                      </div>
+                   </div>
+
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-6">Acquired Assets</h4>
+                   <div className="space-y-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
+                      {selectedOrderDetails.items.map((item: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-white rounded-lg p-2 border border-gray-100 flex items-center justify-center">
+                                 <img src={item.imageUrl || item.image} className="w-full h-full object-contain mix-blend-multiply" alt="" />
+                              </div>
+                              <div>
+                                 <p className="text-xs font-bold text-black">{item.name}</p>
+                                 <p className="text-[9px] text-gray-400 uppercase font-black">QTY: {item.qty || item.quantity || 1}</p>
+                              </div>
+                           </div>
+                           <p className="text-sm font-bold text-black font-mono">₹{((item.offerPrice || item.price) * (item.qty || item.quantity || 1)).toLocaleString()}</p>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+
         {toastMsg && (
           <motion.div
             initial={{ opacity: 0, y: 20, x: "-50%" }}
@@ -284,9 +336,14 @@ export default function PremiumAccountDashboard() {
                                 <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Status</p>
                                 <span className="text-[10px] font-black uppercase tracking-widest bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">{order.status}</span>
                               </div>
-                              <button onClick={() => {setTrackingId(order.orderId); handleTrackOrder({preventDefault:()=>null} as any);}} className="p-4 bg-white rounded-2xl hover:bg-black hover:text-white transition-all shadow-sm">
-                                <Search size={18} />
-                              </button>
+                              <div className="flex gap-2">
+                                <button onClick={() => setSelectedOrderDetails(order)} className="p-4 bg-white rounded-2xl hover:bg-black hover:text-[#D4AF37] transition-all shadow-sm">
+                                  <ExternalLink size={18} />
+                                </button>
+                                <button onClick={() => {setTrackingId(order.orderId); handleTrackOrder({preventDefault:()=>null} as any);}} className="p-4 bg-white rounded-2xl hover:bg-black hover:text-white transition-all shadow-sm">
+                                  <Search size={18} />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}

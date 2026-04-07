@@ -33,6 +33,9 @@ const CmsSchema = new mongoose.Schema({
 
 const CMS = mongoose.models.CMS || mongoose.model('CMS', CmsSchema);
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 300; // 5 minute cache for CMS
+
 // 🌟 GET METHOD: Frontend aur Admin ko data bhejne ke liye 🌟
 export async function GET() {
     try {
@@ -43,7 +46,9 @@ export async function GET() {
             return NextResponse.json({ success: true, data: {} });
         }
         
-        return NextResponse.json({ success: true, data: cmsData });
+        const response = NextResponse.json({ success: true, data: cmsData });
+        response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+        return response;
     } catch (error) {
         return NextResponse.json({ success: false, error: "Failed to fetch CMS data" }, { status: 500 });
     }

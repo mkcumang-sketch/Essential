@@ -3,19 +3,23 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { UserStatsSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
 import { 
     Shield, Crown, Users, TrendingUp, Package,
     Search, Edit2, Save, X, AlertCircle,
     ChevronDown, Check, Eye, EyeOff,
-    DollarSign, ShoppingBag, ArrowUpRight
+    DollarSign, ShoppingBag, ArrowUpRight,
+    ChevronRight
 } from "lucide-react";
 
 export default function AdminDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [users, setUsers] = useState<any[]>([]);
-    const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, topPerformer: "Rolex Daytona" });
+    const [orders, setOrders] = useState<any[]>([]);
+    const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, activeUsers: 0, topPerformer: "Rolex Daytona" });
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [editingUser, setEditingUser] = useState<string | null>(null);
@@ -34,16 +38,27 @@ export default function AdminDashboard() {
 
     const fetchDashboardData = async () => {
         try {
-            const usersRes = await fetch("/api/admin/users");
-            const usersData = await usersRes.json();
-            if (usersData.success) {
+            const [usersRes, analyticsRes, ordersRes] = await Promise.all([
+                fetch("/api/admin/users"),
+                fetch("/api/dashboard/full-analytics"),
+                fetch("/api/orders")
+            ]);
+
+            const [usersData, analyticsData, ordersData] = await Promise.all([
+                usersRes.json(),
+                analyticsRes.json(),
+                ordersRes.json()
+            ]);
+
+            if (usersData.success && analyticsData.success && ordersData.success) {
                 setUsers(usersData.data.users || []);
-                const revenue = usersData.data.users?.reduce((sum: number, u: any) => sum + (u.totalSpent || 0), 0) || 0;
-                setStats(prev => ({
-                    ...prev,
-                    totalRevenue: revenue,
-                    totalOrders: 142
-                }));
+                setOrders(ordersData.data.slice(0, 5) || []);
+                setStats({
+                    totalRevenue: analyticsData.metrics.totalRevenue,
+                    totalOrders: analyticsData.metrics.totalOrders,
+                    activeUsers: usersData.data.totalUsers,
+                    topPerformer: "Rolex Daytona"
+                });
             }
         } catch (error) {
             console.error("Dashboard Data Fetch Error:", error);
@@ -99,8 +114,18 @@ export default function AdminDashboard() {
     );
 
     if (loading) return (
-        <div className="flex items-center justify-center h-96">
-            <div className="w-10 h-10 border-4 border-gray-100 border-t-black rounded-full animate-spin"></div>
+        <div className="space-y-12">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                    <div className="h-10 bg-gray-100 rounded-lg animate-pulse w-64" />
+                    <div className="h-4 bg-gray-50 rounded animate-pulse w-48" />
+                </div>
+            </header>
+            <UserStatsSkeleton />
+            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-sm">
+                <div className="h-6 bg-gray-100 rounded w-48 mb-8 animate-pulse" />
+                <TableSkeleton rows={8} />
+            </div>
         </div>
     );
 
@@ -123,7 +148,7 @@ export default function AdminDashboard() {
             </header>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard 
                     title="Total Revenue" 
                     value={`₹${stats.totalRevenue.toLocaleString()}`} 
@@ -139,12 +164,49 @@ export default function AdminDashboard() {
                     color="bg-white text-black border border-gray-100"
                 />
                 <StatCard 
+                    title="Active Users" 
+                    value={stats.activeUsers.toString()} 
+                    icon={<Users size={24}/>} 
+                    trend="+5.1%" 
+                    color="bg-white text-black border border-gray-100"
+                />
+                <StatCard 
                     title="Top Asset" 
                     value={stats.topPerformer} 
                     icon={<Crown size={24}/>} 
                     trend="Trending" 
                     color="bg-white text-black border border-gray-100"
                 />
+            </div>
+
+            {/* Recent Orders Section */}
+            <div className="bg-white rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden mb-10">
+                <div className="p-8 border-b border-gray-100 flex justify-between items-center">
+                    <h3 className="text-xl font-serif font-black italic tracking-tighter">Recent Operations</h3>
+                    <Link href="/godmode" className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] hover:text-black transition-colors">View All Tracker</Link>
+                </div>
+                <div className="p-8 space-y-4">
+                    {orders.map((order: any) => (
+                        <div key={order._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-black transition-all group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-bold text-gray-400 border border-gray-100">
+                                    <Package size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-black">{order.orderId}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-8">
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-black">₹{order.totalAmount.toLocaleString()}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-[#D4AF37]">{order.status}</p>
+                                </div>
+                                <ChevronRight size={16} className="text-gray-300 group-hover:text-black transition-all" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Client Management */}

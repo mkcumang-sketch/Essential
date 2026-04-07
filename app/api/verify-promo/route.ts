@@ -32,30 +32,29 @@ export async function POST(req: Request) {
         }
 
         // 🌟 2. SECURE REFERRAL SYSTEM (REAL DB CHECK)
-        if (code.startsWith('REF-') || code.startsWith('VIP-')) {
-            const referrer = await User.findOne({ myReferralCode: code }).select('_id name');
-            
-            if (!referrer) {
-                return NextResponse.json({ success: false, error: "Invalid Referral Code" }, { status: 400 });
-            }
-
-            // 🛡️ SECURITY: Prevent self-referral
-            if (session?.user?.id === String(referrer._id)) {
-                return NextResponse.json({ success: false, error: "You cannot use your own referral code." }, { status: 400 });
-            }
-
-            return NextResponse.json({ 
-                success: true, 
-                type: 'referral', 
-                discountValue: 10, 
-                isReferral: true 
-            });
+        // Ensure query is case-insensitive (already handled by regex)
+        const referrer = await User.findOne({ 
+            myReferralCode: { $regex: new RegExp(`^${code}$`, 'i') } 
+        }).select('_id name');
+        
+        if (!referrer) {
+            return NextResponse.json({ success: false, error: "This referral/promo code does not exist." }, { status: 404 });
         }
 
-        return NextResponse.json({ success: false, error: "Invalid promo code" }, { status: 400 });
+        // 🛡️ SECURITY: Prevent self-referral
+        if (session?.user?.id && String(session.user.id) === String(referrer._id)) {
+            return NextResponse.json({ success: false, error: "You cannot use your own referral code." }, { status: 400 });
+        }
+
+        return NextResponse.json({ 
+            success: true, 
+            type: 'referral', 
+            discountValue: 10, 
+            isReferral: true 
+        });
 
     } catch (error) {
         console.error("Promo Verification Error:", error);
-        return NextResponse.json({ success: false, error: "Server Error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Server error during verification." }, { status: 500 });
     }
 }
