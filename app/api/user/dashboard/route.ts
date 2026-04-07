@@ -20,10 +20,17 @@ export async function POST(req: Request) {
         }
 
         const userId = (session.user as any).id;
+        const userEmail = session.user.email;
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
 
-        // 🕵️‍♂️ STRICT FILTERING: Sirf is logged-in user ke orders nikalna
-        const userOrders = await Order.find({ userId: userId }).sort({ createdAt: -1 });
+        // 🕵️‍♂️ STRICT FILTERING: Sirf is logged-in user ke orders nikalna (userId ya email match hona chahiye)
+        const userOrders = await Order.find({ 
+            $or: [
+                { userId: userId },
+                { 'shippingData.email': userEmail },
+                { 'customer.email': userEmail }
+            ]
+        }).sort({ createdAt: -1 });
 
         // User ki current real-time details nikalna 
         const dbUser = await User.findById(userId).select("walletPoints loyaltyTier role name email").lean() as any;
