@@ -65,6 +65,11 @@ export default function AdminDashboard() {
         });
     };
 
+    const cancelEdit = () => {
+        setEditingUser(null);
+        setEditForm({ totalSpent: "", loyaltyTier: "" });
+    };
+
     const saveEdit = async (userId: string) => {
         try {
             const res = await fetch("/api/admin/users", {
