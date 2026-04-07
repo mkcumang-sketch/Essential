@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
 
         if (body.honeyPot && body.honeyPot.length > 0) {
-            console.log("🛡️ [SECURITY] Bot submission blocked via Honeypot.");
             return NextResponse.json({ success: false, message: "Security check failed. Refresh the page and try again." }, { status: 400 });
         }
 

@@ -176,9 +176,19 @@ export default function CuratedGiftingSuite({
                     <span className={`text-[10px] font-black uppercase tracking-[4px] ${textClass}`}>
                       Selected
                     </span>
-                    <span className={isLight ? "text-black" : "text-white"}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleSelect(w.id);
+                      }}
+                      className={`relative z-[9999] pointer-events-auto flex-shrink-0 ${
+                        isLight ? "text-black" : "text-white"
+                      }`}
+                    >
                       <X size={14} />
-                    </span>
+                    </button>
                   </div>
                 )}
               </motion.button>

@@ -17,7 +17,6 @@ const connectDB = async () => {
             maxPoolSize: 10,
         });
         isConnected = true;
-        console.log("✅ MongoDB Connected Successfully");
     } catch (error) {
         console.error("❌ DB Connection Error:", error);
         throw new Error("Database connection failed!");

@@ -79,7 +79,6 @@ export async function GET(req: NextRequest) {
         const config = await CmsConfig.findOne({});
         
         if (!config) {
-            console.log("Seeding one-time premium CMS data...");
             await CmsConfig.create(LUXURY_DEFAULT_DATA);
             return NextResponse.json({ success: true, message: "Sample data added." });
         } else {
