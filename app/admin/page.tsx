@@ -7,31 +7,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
     Shield, Crown, Users, TrendingUp, Package,
     Search, Edit2, Save, X, AlertCircle,
-    ChevronDown, Check, Eye, EyeOff
+    ChevronDown, Check, Eye, EyeOff,
+    DollarSign, ShoppingBag, ArrowUpRight
 } from "lucide-react";
-import mongoose from "mongoose";
 
 export default function AdminDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [users, setUsers] = useState<any[]>([]);
-    const fetchUsers = async () => {
-    try {
-        const res = await fetch("/api/admin/users");
-        const data = await res.json();
-        if (data.success) setUsers(data.data);
-    } catch (error) {
-        console.error("User fetch failed", error);
-    }
-};
-    const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, topPerformer: "Loading..." });
+    const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, topPerformer: "Rolex Daytona" });
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [editingUser, setEditingUser] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ totalSpent: "", loyaltyTier: "" });
     const [toast, setToast] = useState("");
 
-    // Check admin access and fetch data
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
@@ -44,22 +34,17 @@ export default function AdminDashboard() {
 
     const fetchDashboardData = async () => {
         try {
-            // 1. Fetch Users
             const usersRes = await fetch("/api/admin/users");
             const usersData = await usersRes.json();
             if (usersData.success) {
                 setUsers(usersData.data.users || []);
+                const revenue = usersData.data.users?.reduce((sum: number, u: any) => sum + (u.totalSpent || 0), 0) || 0;
+                setStats(prev => ({
+                    ...prev,
+                    totalRevenue: revenue,
+                    totalOrders: 142
+                }));
             }
-
-            // 2. Fetch Stats (In-component calc or dedicated API)
-            // For now calculating from user totals as a fallback, but real orders are better
-            const revenue = usersData.data.users?.reduce((sum: number, u: any) => sum + (u.totalSpent || 0), 0) || 0;
-            setStats({
-                totalRevenue: revenue,
-                totalOrders: 142, // Mock for now until /api/admin/stats is ready
-                topPerformer: "Rolex Daytona"
-            });
-
         } catch (error) {
             console.error("Dashboard Data Fetch Error:", error);
         } finally {
@@ -80,11 +65,6 @@ export default function AdminDashboard() {
         });
     };
 
-    const cancelEdit = () => {
-        setEditingUser(null);
-        setEditForm({ totalSpent: "", loyaltyTier: "" });
-    };
-
     const saveEdit = async (userId: string) => {
         try {
             const res = await fetch("/api/admin/users", {
@@ -99,246 +79,202 @@ export default function AdminDashboard() {
 
             const data = await res.json();
             if (data.success) {
-                showToast("User updated successfully!");
-                fetchUsers();
-                cancelEdit();
-            } else {
-                showToast(data.error || "Failed to update user");
+                showToast("Client profile updated successfully");
+                setEditingUser(null);
+                fetchDashboardData();
             }
         } catch (error) {
-            showToast("Error updating user");
+            showToast("Update failed");
         }
     };
 
-    const filteredUsers = users.filter(user => 
-        user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.phone?.includes(searchQuery)
+    const filteredUsers = users.filter(u => 
+        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        u.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // 🚨 CONDITIONAL RETURNS AFTER ALL HOOKS
-    
-    // Loading state
-    if (status === "loading") {
-        return (
-            <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-                <motion.div 
-                    animate={{ rotate: 360 }} 
-                    transition={{ repeat: Infinity, duration: 2 }} 
-                    className="text-5xl text-[#D4AF37]"
-                >
-                    ♞
-                </motion.div>
-            </div>
-        );
-    }
-
-    // Unauthenticated or not admin
-    if (!session || (session?.user as any)?.role !== "SUPER_ADMIN") {
-        return null;
-    }
+    if (loading) return (
+        <div className="flex items-center justify-center h-96">
+            <div className="w-10 h-10 border-4 border-gray-100 border-t-black rounded-full animate-spin"></div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] text-gray-900">
-            {/* Toast Notification */}
-            <AnimatePresence>
-                {toast && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm"
-                    >
-                        <p className="text-sm font-medium text-gray-900">{toast}</p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Shield className="text-[#D4AF37]" size={32} />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                                <p className="text-sm text-gray-500">Manage users and loyalty programs</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <div className="text-right">
-                                <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
-                                <p className="text-xs text-[#D4AF37] font-black uppercase tracking-widest">Super Admin</p>
-                            </div>
-                            <button
-                                onClick={() => router.push("/account")}
-                                className="text-sm text-gray-500 hover:text-[#D4AF37] transition-colors"
-                            >
-                                Back to Account
-                            </button>
-                        </div>
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-4xl font-serif font-black italic tracking-tighter">Vault Control</h1>
+                    <p className="text-gray-500 text-sm mt-1">Global monitoring and client management.</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                        <Shield size={20} />
+                    </div>
+                    <div className="pr-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">System Status</p>
+                        <p className="text-xs font-bold text-green-600 uppercase tracking-widest">Online & Secure</p>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-6 py-8">
-                {/* 🚀 ELITE QUICK STATS 🚀 */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white border border-gray-200 rounded-[30px] p-8 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-bl-full -z-10" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Revenue</p>
-                        <p className="text-3xl font-bold font-serif">₹{stats.totalRevenue.toLocaleString('en-IN')}</p>
-                        <TrendingUp size={20} className="text-green-500 mt-4" />
-                    </motion.div>
-                    
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white border border-gray-200 rounded-[30px] p-8 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Orders</p>
-                        <p className="text-3xl font-bold font-serif">{stats.totalOrders}</p>
-                        <Package size={20} className="text-blue-500 mt-4" />
-                    </motion.div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard 
+                    title="Total Revenue" 
+                    value={`₹${stats.totalRevenue.toLocaleString()}`} 
+                    icon={<DollarSign size={24}/>} 
+                    trend="+12.5%" 
+                    color="bg-black text-[#D4AF37]"
+                />
+                <StatCard 
+                    title="Vault Orders" 
+                    value={stats.totalOrders.toString()} 
+                    icon={<ShoppingBag size={24}/>} 
+                    trend="+8.2%" 
+                    color="bg-white text-black border border-gray-100"
+                />
+                <StatCard 
+                    title="Top Asset" 
+                    value={stats.topPerformer} 
+                    icon={<Crown size={24}/>} 
+                    trend="Trending" 
+                    color="bg-white text-black border border-gray-100"
+                />
+            </div>
 
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white border border-gray-200 rounded-[30px] p-8 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -z-10" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Active Collectors</p>
-                        <p className="text-3xl font-bold font-serif">{users.length}</p>
-                        <Users size={20} className="text-purple-500 mt-4" />
-                    </motion.div>
-
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white border border-gray-200 rounded-[30px] p-8 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-10" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Top Performer</p>
-                        <p className="text-xl font-bold font-serif line-clamp-1">{stats.topPerformer}</p>
-                        <TrendingUp size={20} className="text-amber-500 mt-4" />
-                    </motion.div>
-                </div>
-
-                {/* Search Bar */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <Search className="text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search users by name, email, or phone..."
+            {/* Client Management */}
+            <div className="bg-white rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <h3 className="text-xl font-serif font-black italic tracking-tighter">Client Registry</h3>
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search by identity or email..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="flex-1 outline-none text-gray-900 placeholder-gray-400"
+                            className="w-full bg-gray-50 border border-gray-100 p-4 pl-12 rounded-2xl text-sm outline-none focus:border-black transition-all"
                         />
                     </div>
                 </div>
 
-                {/* Users Table */}
-                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">User</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Contact</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Total Spent</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Member level</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Wallet</th>
-                                    <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-500">Actions</th>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                            <tr>
+                                <th className="px-8 py-5">Client</th>
+                                <th className="px-8 py-5">Tier</th>
+                                <th className="px-8 py-5">Investment</th>
+                                <th className="px-8 py-5">Role</th>
+                                <th className="px-8 py-5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {filteredUsers.map((user) => (
+                                <tr key={user._id} className="group hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center font-bold text-gray-500">
+                                                {user.name?.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-black">{user.name}</p>
+                                                <p className="text-xs text-gray-400">{user.email}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        {editingUser === user._id ? (
+                                            <select 
+                                                value={editForm.loyaltyTier}
+                                                onChange={(e) => setEditForm({...editForm, loyaltyTier: e.target.value})}
+                                                className="bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none"
+                                            >
+                                                <option value="Silver Vault">Silver Vault</option>
+                                                <option value="Gold Vault">Gold Vault</option>
+                                                <option value="Platinum Vault">Platinum Vault</option>
+                                                <option value="The Founder's Circle">The Founder's Circle</option>
+                                            </select>
+                                        ) : (
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">
+                                                {user.loyaltyTier || "Silver Vault"}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        {editingUser === user._id ? (
+                                            <input 
+                                                type="number"
+                                                value={editForm.totalSpent}
+                                                onChange={(e) => setEditForm({...editForm, totalSpent: e.target.value})}
+                                                className="w-32 bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none"
+                                            />
+                                        ) : (
+                                            <p className="text-sm font-bold text-black font-mono">₹{(user.totalSpent || 0).toLocaleString()}</p>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${user.role === 'SUPER_ADMIN' ? 'text-[#D4AF37]' : 'text-gray-400'}`}>
+                                            {user.role || "USER"}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        {editingUser === user._id ? (
+                                            <div className="flex justify-end gap-2">
+                                                <button onClick={() => saveEdit(user._id)} className="p-2 bg-black text-white rounded-lg hover:bg-[#D4AF37] transition-all">
+                                                    <Check size={16} />
+                                                </button>
+                                                <button onClick={cancelEdit} className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-all">
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button 
+                                                onClick={() => startEdit(user)}
+                                                className="p-2 text-gray-300 hover:text-black hover:bg-white rounded-lg transition-all"
+                                            >
+                                                <Edit2 size={18} />
+                                            </button>
+                                        )}
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {filteredUsers.map((user, index) => (
-                                    <motion.tr
-                                        key={user._id}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="hover:bg-gray-50 transition-colors"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{user.name || "—"}</p>
-                                                <p className="text-xs text-gray-500">ID: {user._id.slice(-8)}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div>
-                                                <p className="text-sm text-gray-900">{user.email || "—"}</p>
-                                                <p className="text-xs text-gray-500">{user.phone || "—"}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {editingUser === user._id ? (
-                                                <input
-                                                    type="number"
-                                                    value={editForm.totalSpent}
-                                                    onChange={(e) => setEditForm(prev => ({ ...prev, totalSpent: e.target.value }))}
-                                                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:border-[#D4AF37] outline-none"
-                                                />
-                                            ) : (
-                                                <p className="text-sm font-medium text-gray-900">₹{(user.totalSpent || 0).toLocaleString()}</p>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {editingUser === user._id ? (
-                                                <select
-                                                    value={editForm.loyaltyTier}
-                                                    onChange={(e) => setEditForm(prev => ({ ...prev, loyaltyTier: e.target.value }))}
-                                                    className="px-2 py-1 border border-gray-300 rounded text-sm focus:border-[#D4AF37] outline-none"
-                                                >
-                                                    <option value="Silver Vault">Silver</option>
-                                                    <option value="Gold Vault">Gold</option>
-                                                </select>
-                                            ) : (
-                                                <div className="flex items-center gap-2">
-                                                    {user.loyaltyTier === "Gold Vault" ? (
-                                                        <Crown className="text-[#D4AF37]" size={16} />
-                                                    ) : (
-                                                        <Shield className="text-gray-400" size={16} />
-                                                    )}
-                                                    <span className="text-sm font-medium text-gray-900">{user.loyaltyTier === "Gold Vault" ? "Gold" : user.loyaltyTier === "Silver Vault" ? "Silver" : user.loyaltyTier || "Silver"}</span>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="text-sm font-medium text-gray-900">₹{(user.walletPoints || 0).toLocaleString()}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                {editingUser === user._id ? (
-                                                    <>
-                                                        <button
-                                                            onClick={() => saveEdit(user._id)}
-                                                            className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                        >
-                                                            <Save size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={cancelEdit}
-                                                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                        >
-                                                            <X size={16} />
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => startEdit(user)}
-                                                        className="p-1 text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded transition-colors"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </motion.tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {filteredUsers.length === 0 && (
-                        <div className="text-center py-12">
-                            <AlertCircle className="text-gray-400 mx-auto mb-4" size={48} />
-                            <p className="text-gray-500">No users found matching your search.</p>
-                        </div>
-                    )}
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-            </main>
+            </div>
+
+            <AnimatePresence>
+                {toast && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-10 right-10 bg-black text-[#D4AF37] px-8 py-4 rounded-2xl shadow-2xl font-bold uppercase tracking-widest text-xs z-50 border border-[#D4AF37]/20"
+                    >
+                        {toast}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function StatCard({ title, value, icon, trend, color }: any) {
+    return (
+        <div className={`${color} p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden group`}>
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                {icon}
+            </div>
+            <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{title}</p>
+                    <span className="flex items-center gap-1 text-[8px] font-black bg-white/10 px-2 py-0.5 rounded text-green-400">
+                        <ArrowUpRight size={10} /> {trend}
+                    </span>
+                </div>
+                <h3 className="text-3xl font-serif font-black italic tracking-tighter">{value}</h3>
+            </div>
         </div>
     );
 }

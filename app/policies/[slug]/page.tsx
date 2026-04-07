@@ -1,61 +1,72 @@
-import DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
+import { ShieldCheck, ArrowLeft, Clock, Scale } from 'lucide-react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { connectDB } from '@/lib/db';
+import { Policy } from '@/models/Policy';
 
 export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
     
-    let policyContent = "";
-    let policyTitle = "";
+    await connectDB();
+    const policy = await Policy.findOne({ slug });
 
-    try {
-        const apiUrl = process.env.NEXTAUTH_URL || 'https://essential-gamma.vercel.app';
-        const res = await fetch(`${apiUrl}/api/cms`, { cache: 'no-store' });
-        
-        if (res.ok) {
-            const data = await res.json();
-            const legalPages = data?.data?.legalPages || [];
-            const matchedPolicy = legalPages.find((p: any) => p.slug === slug);
-            
-            if (matchedPolicy && matchedPolicy.content) {
-                policyContent = matchedPolicy.content;
-                policyTitle = matchedPolicy.title;
-            }
-        }
-    } catch (error) {
-        console.error("Error fetching policy:", error);
+    if (!policy) {
+        return notFound();
     }
 
-    if (!policyContent) return notFound();
-
-  // 🛡️ INDUSTRY STANDARD XSS SANITIZER (Replaced unsafe Regex)
-    const { window } = new JSDOM('');
-    const purify = DOMPurify(window as any);
-    const safePolicyContent = purify.sanitize(policyContent);
-
     return (
-        // 🚨 FIX: Forced Background White and Text Black/Dark Gray for Premium look
-        <div className="min-h-screen bg-white text-gray-900 flex flex-col w-full font-sans antialiased">
-            
-            <main className="flex-grow pt-32 pb-24 px-6 md:px-12 w-full max-w-4xl mx-auto">
-                <div className="border-b border-gray-200 pb-8 mb-12 text-center">
-                    <h1 className="text-4xl md:text-5xl font-serif text-black uppercase tracking-widest">{policyTitle}</h1>
-                    <p className="text-xs text-gray-500 uppercase tracking-widest mt-4">Essential Rush Official Document</p>
-                </div>
+        <div className="min-h-screen bg-[#FAFAFA] text-black pb-24">
+            {/* LUXURY HEADER */}
+            <div className="bg-black text-white pt-32 pb-20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#D4AF37]/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
                 
-                {/* Content Renderer targeting specific tags for bright theme */}
-                <div 
-                    className="prose prose-lg prose-gray max-w-none 
-                               prose-headings:font-serif prose-headings:text-black prose-headings:uppercase prose-headings:tracking-wider
-                               prose-p:text-gray-700 prose-p:leading-relaxed
-                               prose-a:text-[#D4AF37] prose-a:font-bold prose-a:no-underline hover:prose-a:underline
-                               prose-strong:text-black prose-strong:font-bold
-                               prose-ul:text-gray-700 prose-li:marker:text-[#D4AF37]
-                               [&>img]:rounded-2xl [&>img]:shadow-2xl [&>img]:border [&>img]:border-gray-200 [&>img]:w-full [&>img]:my-12
-                               [&>video]:rounded-2xl [&>video]:shadow-2xl [&>video]:border [&>video]:border-gray-200 [&>video]:w-full [&>video]:my-12"
-                    dangerouslySetInnerHTML={{ __html: safePolicyContent }} 
-                />
-            </main>
+                <div className="max-w-4xl mx-auto px-6 relative z-10">
+                    <Link href="/" className="inline-flex items-center gap-2 text-[#D4AF37] text-[10px] font-black uppercase tracking-[5px] mb-12 hover:gap-4 transition-all">
+                        <ArrowLeft size={14}/> Back home
+                    </Link>
+                    
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center">
+                            <ShieldCheck size={24}/>
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-[8px] text-gray-500">Legal Protocol</span>
+                    </div>
+
+                    <h1 className="text-5xl md:text-7xl font-serif font-black italic tracking-tighter mb-8">{policy.title}</h1>
+                    
+                    <div className="flex flex-wrap gap-8">
+                        <div className="flex items-center gap-3">
+                            <Clock size={16} className="text-[#D4AF37]"/>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Updated: {new Date(policy.lastUpdated).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Scale size={16} className="text-[#D4AF37]"/>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Legally Binding</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* CONTENT VAULT */}
+            <div className="max-w-4xl mx-auto px-6 -mt-10 relative z-20">
+                <div className="bg-white rounded-[50px] p-12 md:p-20 shadow-2xl border border-gray-100">
+                    <div 
+                        className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:font-black prose-headings:italic prose-headings:tracking-tighter prose-p:text-gray-600 prose-p:leading-relaxed prose-strong:text-black prose-strong:font-black prose-li:text-gray-600"
+                        dangerouslySetInnerHTML={{ __html: policy.content }}
+                    />
+                    
+                    <div className="mt-20 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-full flex items-center justify-center font-bold">♞</div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest">Essential Rush</p>
+                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest italic">Vault Integrity Verified</p>
+                            </div>
+                        </div>
+                        <p className="text-[9px] font-black uppercase tracking-[4px] text-gray-300">© 2026 Fine Horology Vault</p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

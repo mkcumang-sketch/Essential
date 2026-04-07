@@ -7,19 +7,38 @@ import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  ShieldCheck, Crown, Package, LogOut, Wallet, Copy,
-  Sparkles, ChevronRight, ShoppingBag, Search, X
+  ShieldCheck, 
+  Crown, 
+  Package, 
+  LogOut, 
+  Wallet, 
+  Copy,
+  Sparkles, 
+  ChevronRight, 
+  ShoppingBag, 
+  Search, 
+  X,
+  LayoutDashboard,
+  History,
+  Award,
+  MessageSquare,
+  ExternalLink,
+  Download,
+  CreditCard,
+  Gift
 } from "lucide-react";
 
-// 🚨 FIX: DYNAMIC IMPORTS OUTSIDE COMPONENT
 const CuratedGiftingSuite = dynamic(() => import("@/components/CuratedGiftingSuite"), { ssr: false });
 const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: false });
+
+type TabType = 'overview' | 'orders' | 'certificates' | 'rewards' | 'concierge';
 
 export default function PremiumAccountDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   
-  const [dashData, setDashData] = useState<Record<string, unknown> | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [dashData, setDashData] = useState<Record<string, any> | null>(null);
   const [dashLoading, setDashLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState("");
 
@@ -96,47 +115,33 @@ export default function PremiumAccountDashboard() {
 
   if (status === "loading") {
       return (
-        <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-gray-100 border-t-[#D4AF37] rounded-full animate-spin"></div>
         </div>
       );
   }
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   const su = session.user as any;
-  const email = su?.email || "—";
   const name = su?.name || "Member";
-
-  // 🚨 FIX: Explicitly setting numbers to avoid TypeScript issues
+  const email = su?.email || "—";
   const walletPoints = Number(dashData?.walletPoints ?? su?.walletPoints ?? 0);
-  const totalEarned = Number(dashData?.totalEarned ?? 0);
-  const spent = Number(dashData?.totalSpent ?? 0);
-  const goal = 100000;
-  
-  const progress = Math.min(100, Math.max(0, (spent / goal) * 100)) || 0;
-  const tier = (dashData?.tier as string) || (spent >= goal ? "Gold" : "Silver");
-  const remaining = tier === "Gold" ? 0 : Math.max(0, goal - spent);
-  
-  const firstName = name.split(" ")[0] || "VIP";
-  const fallbackRef = `REF-${firstName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()}10`;
-  const myReferralCode = (dashData?.myReferralCode as string) || fallbackRef;
+  const totalSpent = Number(dashData?.totalSpent ?? 0);
   const loyaltyTier = (dashData?.loyaltyTier as string) || su?.loyaltyTier || "Silver Vault";
+  const myReferralCode = (dashData?.myReferralCode as string) || "VAULT-VIP";
+
+  const orders = Array.isArray(dashData?.orders) ? dashData.orders : [];
 
   const giftingWatches = useMemo(() => {
-    const safeOrders = Array.isArray(dashData?.orders) ? dashData.orders : [];
-    const rawItems = safeOrders.flatMap((o: any) => Array.isArray(o?.items) ? o.items : []);
+    const rawItems = orders.flatMap((o: any) => Array.isArray(o?.items) ? o.items : []);
     const seen = new Set<string>();
     return rawItems.map((it: any, idx: number) => ({
       id: String(it?._id || it?.id || it?.sku || it?.name || idx),
       name: (it?.name as string) || "Premium Timepiece",
       brand: (it?.brand as string) || "Essential",
-      imageUrl: it?.imageUrl,
-      image: it?.image,
-      offerPrice: it?.offerPrice,
-      price: it?.price,
+      imageUrl: it?.imageUrl || it?.image,
+      price: it?.offerPrice || it?.price,
     })).filter((w) => {
       if (seen.has(w.id)) return false;
       seen.add(w.id);
@@ -145,219 +150,311 @@ export default function PremiumAccountDashboard() {
   }, [dashData]);
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-black pb-24 selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-[#F9FAFB] text-black selection:bg-[#D4AF37] selection:text-black font-sans">
       
       <AnimatePresence>
         {toastMsg && (
           <motion.div
-            initial={{ opacity: 0, y: 18, x: "-50%" }}
+            initial={{ opacity: 0, y: 20, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 10, x: "-50%" }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            className="fixed bottom-10 left-1/2 z-[1000] px-8 py-4 rounded-2xl backdrop-blur-xl shadow-2xl bg-white border border-gray-200 flex items-center gap-3"
+            className="fixed bottom-10 left-1/2 z-[9999] px-8 py-4 rounded-2xl bg-black text-[#D4AF37] border border-[#D4AF37]/20 shadow-2xl flex items-center gap-3 font-bold text-xs uppercase tracking-widest"
           >
-            <ShieldCheck className="text-green-600" size={20} />
-            <p className="text-sm font-serif text-black font-bold">{toastMsg}</p>
+            <ShieldCheck size={18} /> {toastMsg}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-xl shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between gap-4">
-          <Link href="/" className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-500 hover:text-black transition-colors flex items-center gap-2">
-            <ChevronRight className="rotate-180 w-4 h-4" /> Essential Rush
+      {/* LUXURY TOP NAV */}
+      <header className="sticky top-0 z-[100] bg-white/80 backdrop-blur-2xl border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-xl flex items-center justify-center font-black transition-transform group-hover:scale-110">♞</div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black">Essential Rush</p>
+              <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest italic">The Client Vault</p>
+            </div>
           </Link>
-          <div className="flex gap-4">
-             <Link href="/shop" className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full border border-gray-200 bg-gray-50 text-[10px] font-black uppercase tracking-[0.25em] text-gray-600 hover:border-black hover:text-black hover:bg-white transition-all">
-                <ShoppingBag size={14} /> Shop Now
-             </Link>
-             <button onClick={() => signOut({ callbackUrl: "/login" })} className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-gray-200 bg-black text-[10px] font-black uppercase tracking-[0.25em] text-white hover:bg-gray-800 transition-all">
-                <LogOut size={14} /> Sign Out
-             </button>
+
+          <div className="flex items-center gap-6">
+            <Link href="/shop" className="hidden md:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors">
+              <ShoppingBag size={14} /> Acquisition
+            </Link>
+            <button onClick={() => signOut({ callbackUrl: "/login" })} className="p-3 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl transition-all">
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 pt-10 md:pt-14 space-y-10">
-        
-        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 overflow-hidden shadow-lg relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gray-50 rounded-full blur-3xl opacity-60 -z-10 pointer-events-none"></div>
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 relative z-10">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 mb-3">Your account</p>
-              <h1 className="text-3xl md:text-5xl font-serif tracking-tight text-black font-bold">{name}</h1>
-              <p className="mt-3 text-sm text-gray-500 font-serif italic">{email}</p>
-              <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-gray-50 shadow-sm">
-                <Sparkles className="w-4 h-4 text-black" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black">{dashLoading ? "..." : loyaltyTier}</span>
-              </div>
-            </div>
-
-            <div className="w-full lg:max-w-sm bg-gray-50 p-6 rounded-3xl border border-gray-100 transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-500 mb-4">Loyalty progress</p>
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <span className="text-sm font-serif font-bold text-black flex items-center gap-2">
-                  {tier === "Gold" ? <Crown size={18} className="text-[#D4AF37]" /> : <ShieldCheck size={18} className="text-gray-400" />} {tier} tier
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 bg-white px-3 py-1 rounded-lg shadow-sm">
-                  ₹{dashLoading ? "..." : spent.toLocaleString("en-IN")}
-                </span>
-              </div>
-              <div className="h-2.5 rounded-full overflow-hidden bg-gray-200 shadow-inner">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-black" />
-              </div>
-              <p className="mt-3 text-xs text-gray-500 font-serif italic">
-                {tier === "Gold" ? "Gold unlocked — priority help enabled." : remaining > 0 ? `Spend ₹${remaining.toLocaleString("en-IN")} more for Gold.` : "Updating progress…"}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <div className="grid md:grid-cols-2 gap-6 transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-gray-200 bg-white p-8 flex items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-400">Wallet points</p>
-              <h3 className="text-3xl md:text-5xl font-serif font-bold text-black mt-2 tabular-nums">{dashLoading ? "..." : walletPoints.toLocaleString("en-IN")}</h3>
-              <p className="text-[10px] text-gray-500 font-bold mt-3 uppercase tracking-wider bg-gray-50 inline-block px-3 py-1 rounded-md">Total earned · ₹{dashLoading ? "..." : totalEarned.toLocaleString("en-IN")}</p>
-            </div>
-            <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50"><Wallet className="text-black" size={32} /></div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-[2rem] border border-gray-200 bg-black p-8 relative overflow-hidden shadow-lg">
-            <div className="relative z-10">
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-gray-400">Your Referral code</p>
-              <div className="flex items-center gap-3 mt-4 flex-wrap">
-                <h3 className="text-2xl md:text-3xl font-mono font-bold tracking-[0.1em] text-white uppercase bg-white/10 px-4 py-2 rounded-xl">{dashLoading ? "..." : myReferralCode}</h3>
-                <button type="button" onClick={() => copyToClipboard(String(myReferralCode))} disabled={dashLoading} className="p-3.5 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white hover:text-black transition-all disabled:opacity-40"><Copy size={20} /></button>
-              </div>
-              <p className="text-xs text-gray-400 mt-5 uppercase tracking-[0.15em] font-bold">Share this code — you earn when friends buy.</p>
-            </div>
-            <Crown className="absolute -right-6 -bottom-8 text-white/[0.05] rotate-12 pointer-events-none" size={160} />
-          </motion.div>
-        </div>
-
-        {/* 🌟 REFERRAL & REWARDS HUB (ELITE TIER) 🌟 */}
-        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/5 rounded-bl-full -z-10"></div>
-          <div className="max-w-2xl">
-              <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black mb-2">
-                  <Sparkles size={24} className="text-[#D4AF37]" /> Referral & Rewards
-              </h2>
-              <p className="text-sm text-gray-500 font-serif italic mb-8">Share your elite status and earn credits for your next acquisition.</p>
-              
-              <div className="grid md:grid-cols-2 gap-6 mb-10">
-                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Your Elite Code</p>
-                      <div className="flex items-center justify-between">
-                          <p className="text-2xl font-bold font-mono tracking-tighter text-black">{dashLoading ? "..." : myReferralCode}</p>
-                          <button 
-                              onClick={() => copyToClipboard(String(myReferralCode))}
-                              className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-black transition-all"
-                          >
-                              <Copy size={16} />
-                          </button>
-                      </div>
-                  </div>
-                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Vault Credits</p>
-                      <p className="text-3xl font-bold font-serif text-[#D4AF37]">₹{dashLoading ? "..." : walletPoints.toLocaleString('en-IN')}</p>
-                  </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-4">
-                  <button className="flex-1 py-4 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl">
-                      Invite a Collector
-                  </button>
-                  <Link href="/shop" className="flex-1 py-4 bg-white border border-gray-200 text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:border-black transition-all text-center flex items-center justify-center">
-                      Redeem Credits
-                  </Link>
-              </div>
-          </div>
-        </section>
-
-        {/* 🌟 ORDER TRACKING 🌟 */}
-        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm relative overflow-hidden">
-          <h2 className="text-2xl md:text-3xl font-serif font-bold flex items-center gap-3 text-black mb-2">
-              <Package size={24} className="text-black" /> Track Your Order
-          </h2>
-          <p className="text-sm text-gray-500 font-serif italic mb-8">Enter the Order ID you received during checkout to see real-time updates.</p>
+      <div className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          <form onSubmit={handleTrackOrder} className="flex flex-col sm:flex-row gap-4 mb-8">
-              <div className="relative flex-1">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input 
-                      type="text" 
-                      value={trackingId} 
-                      onChange={(e) => setTrackingId(e.target.value)} 
-                      placeholder="e.g. ORD-17385..." 
-                      className="w-full bg-gray-50 border border-gray-200 p-4 pl-12 rounded-xl text-sm outline-none focus:border-black font-mono uppercase transition-colors" 
-                      required 
-                  />
+          {/* SIDEBAR TABS */}
+          <aside className="lg:col-span-3 space-y-8">
+            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gray-50 rounded-[2rem] mx-auto mb-4 flex items-center justify-center border border-gray-100 relative overflow-hidden">
+                  <span className="text-3xl font-serif font-black italic">{name.charAt(0)}</span>
+                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-black text-[#D4AF37] flex items-center justify-center rounded-tl-lg">
+                    <ShieldCheck size={12} />
+                  </div>
+                </div>
+                <h2 className="text-xl font-serif font-black italic tracking-tighter">{name}</h2>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{loyaltyTier}</p>
               </div>
-              <button 
-                  type="submit" 
-                  disabled={isTracking || !trackingId.trim()} 
-                  className="px-8 py-4 bg-black text-white font-black uppercase text-[10px] tracking-[2px] rounded-xl hover:bg-gray-800 transition-all disabled:opacity-50 shrink-0"
-              >
-                  {isTracking ? 'Searching...' : 'Track Order'}
-              </button>
-          </form>
 
-          {trackError && (
-              <motion.div initial={{opacity:0}} animate={{opacity:1}} className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold flex items-center gap-2">
-                  <X size={16}/> {trackError}
-              </motion.div>
-          )}
+              <nav className="space-y-2">
+                <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<LayoutDashboard size={18}/>} label="Overview" />
+                <TabButton active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} icon={<History size={18}/>} label="My Timepieces" />
+                <TabButton active={activeTab === 'certificates'} onClick={() => setActiveTab('certificates')} icon={<Award size={18}/>} label="Certificates" />
+                <TabButton active={activeTab === 'rewards'} onClick={() => setActiveTab('rewards')} icon={<Sparkles size={18}/>} label="Rewards" />
+                <TabButton active={activeTab === 'concierge'} onClick={() => setActiveTab('concierge')} icon={<MessageSquare size={18}/>} label="Concierge" />
+              </nav>
+            </div>
 
-          {trackedOrder && (
-              <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="mt-8 border-t border-gray-100 pt-8">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                      <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Status</p>
-                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm inline-block ${trackedOrder.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800 border border-green-200'}`}>
-                              {trackedOrder.status || "PROCESSING"}
-                          </span>
+            <div className="bg-black text-[#D4AF37] rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-[#D4AF37]/10 transition-colors" />
+              <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-60">Vault Credit</p>
+              <h3 className="text-3xl font-serif font-black italic tracking-tighter mb-6">₹{walletPoints.toLocaleString('en-IN')}</h3>
+              <Link href="/shop" className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[4px] border-b border-[#D4AF37] pb-1 hover:gap-4 transition-all">
+                Acquire <ChevronRight size={12}/>
+              </Link>
+            </div>
+          </aside>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="lg:col-span-9">
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div key="overview" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-20}} className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 text-gray-50"><CreditCard size={120} /></div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Tier Status</p>
+                      <h3 className="text-4xl font-serif font-black italic tracking-tighter mb-4">{loyaltyTier}</h3>
+                      <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden mt-8">
+                        <div className="h-full bg-black rounded-full" style={{width: '65%'}} />
                       </div>
-                      <div className="md:text-right">
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 mb-1">Total Value</p>
-                          <p className="text-xl font-serif font-bold text-black flex items-center md:justify-end gap-1">₹{Number(trackedOrder.totalAmount || 0).toLocaleString('en-IN')}</p>
-                      </div>
+                      <p className="text-[9px] font-bold text-gray-400 mt-4 uppercase tracking-widest">₹{(100000 - totalSpent).toLocaleString()} to next tier upgrade</p>
+                    </div>
+
+                    <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm relative overflow-hidden">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Referral Code</p>
+                      <h3 className="text-3xl font-mono font-black tracking-tighter mb-8 uppercase">{myReferralCode}</h3>
+                      <button 
+                        onClick={() => copyToClipboard(myReferralCode)}
+                        className="flex items-center gap-3 px-6 py-3 bg-black text-[#D4AF37] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#D4AF37] hover:text-black transition-all shadow-lg"
+                      >
+                        Copy Access Code <Copy size={14}/>
+                      </button>
+                    </div>
                   </div>
 
-                  <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-gray-400">Order Items</h3>
-                  <div className="space-y-4">
-                      {(trackedOrder.items || []).map((item: any, idx: number) => (
-                          <div key={idx} className="flex gap-4 items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm cursor-pointer hover:border-black transition-colors" onClick={() => router.push(`/product/${item.id || item._id}`)}>
-                              <div className="w-16 h-16 bg-gray-50 rounded-xl p-2 shrink-0 border border-gray-100">
-                                  <img src={item.imageUrl || item.image || '/placeholder-watch.png'} className="w-full h-full object-contain mix-blend-multiply" alt={item.name} />
+                  <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
+                    <h3 className="text-2xl font-serif font-black italic tracking-tighter mb-8">Virtual Vault</h3>
+                    <VirtualVault isLight={true} />
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'orders' && (
+                <motion.div key="orders" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-20}} className="space-y-8">
+                  <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
+                    <h3 className="text-2xl font-serif font-black italic tracking-tighter mb-8 flex items-center gap-4">
+                      <History className="text-[#D4AF37]" /> Acquisition History
+                    </h3>
+                    
+                    {orders.length > 0 ? (
+                      <div className="space-y-6">
+                        {orders.map((order: any) => (
+                          <div key={order._id} className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-8 group hover:border-black transition-all">
+                            <div className="flex items-center gap-6">
+                              <div className="w-20 h-20 bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-center shrink-0">
+                                <img src={order.items?.[0]?.imageUrl || order.items?.[0]?.image} className="w-full h-full object-contain mix-blend-multiply" alt="Watch" />
                               </div>
-                              <div className="flex-1">
-                                  <p className="text-sm font-bold text-black line-clamp-1">{item.name}</p>
-                                  <p className="text-xs text-gray-500 font-mono mt-1">Qty: {item.qty || 1} · ₹{Number(item.offerPrice || item.price || 0).toLocaleString('en-IN')}</p>
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{order.orderId}</p>
+                                <h4 className="text-lg font-serif font-black italic tracking-tighter">{order.items?.[0]?.name}</h4>
+                                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString()}</p>
                               </div>
+                            </div>
+                            <div className="flex items-center gap-8">
+                              <div className="text-right">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Status</p>
+                                <span className="text-[10px] font-black uppercase tracking-widest bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100">{order.status}</span>
+                              </div>
+                              <button onClick={() => {setTrackingId(order.orderId); handleTrackOrder({preventDefault:()=>null} as any);}} className="p-4 bg-white rounded-2xl hover:bg-black hover:text-white transition-all shadow-sm">
+                                <Search size={18} />
+                              </button>
+                            </div>
                           </div>
-                      ))}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-[3rem]">
+                        <p className="text-gray-400 font-serif italic text-lg">No timepieces acquired yet.</p>
+                        <Link href="/shop" className="inline-block mt-6 px-10 py-4 bg-black text-[#D4AF37] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl">Start Acquisition</Link>
+                      </div>
+                    )}
                   </div>
-              </motion.div>
-          )}
-        </section>
 
-        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>
-          <h2 className="text-2xl md:text-3xl font-serif font-bold text-black border-b border-gray-100 pb-4">Curated Gifting Suite</h2>
-          <p className="mt-4 text-sm text-gray-500 font-serif italic">Pair watches with a gift note for someone special.</p>
-          <div className="mt-8"><CuratedGiftingSuite watches={dashLoading ? [] : giftingWatches} isLight={true} onToast={showToast} /></div>
-        </section>
+                  {/* TRACKING TOOL */}
+                  <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
+                    <h3 className="text-2xl font-serif font-black italic tracking-tighter mb-4">Track Real-Time</h3>
+                    <p className="text-sm text-gray-400 mb-8">Enter your Order ID to verify the logistics status of your asset.</p>
+                    <form onSubmit={handleTrackOrder} className="flex gap-4">
+                      <input 
+                        type="text" 
+                        value={trackingId} 
+                        onChange={(e)=>setTrackingId(e.target.value)}
+                        placeholder="ORD-XXXX-XXXX"
+                        className="flex-1 bg-gray-50 border border-gray-100 p-5 rounded-2xl outline-none focus:border-black font-mono text-sm transition-all"
+                      />
+                      <button type="submit" disabled={isTracking} className="px-10 py-5 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#D4AF37] hover:text-black transition-all shadow-lg disabled:opacity-50">
+                        {isTracking ? "Locating..." : "Track"}
+                      </button>
+                    </form>
+                    {trackedOrder && (
+                      <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} className="mt-10 p-8 bg-gray-50 rounded-[2rem] border border-gray-100">
+                         <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-200">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Current Status</span>
+                            <span className="px-4 py-1.5 bg-black text-[#D4AF37] rounded-full text-[10px] font-black uppercase tracking-widest">{trackedOrder.status}</span>
+                         </div>
+                         <div className="space-y-4">
+                            {trackedOrder.items.map((it:any, i:number)=>(
+                              <div key={i} className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white rounded-lg p-2 border border-gray-100">
+                                  <img src={it.imageUrl || it.image} className="w-full h-full object-contain" alt="" />
+                                </div>
+                                <p className="text-sm font-bold">{it.name}</p>
+                              </div>
+                            ))}
+                         </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
-        <section className="rounded-[2rem] border border-gray-200 bg-white p-8 md:p-10 shadow-sm transition-opacity duration-300" style={{ opacity: dashLoading ? 0.6 : 1 }}>
-          <h2 className="text-2xl md:text-3xl font-serif font-bold text-black border-b border-gray-100 pb-4">Virtual Vault</h2>
-          <p className="mt-4 text-sm text-gray-500 font-serif italic">Watches you save show up here.</p>
-          <div className="mt-8"><VirtualVault isLight={true} /></div>
-        </section>
+              {activeTab === 'certificates' && (
+                <motion.div key="certificates" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-20}} className="space-y-8">
+                  <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
+                    <h3 className="text-2xl font-serif font-black italic tracking-tighter mb-8 flex items-center gap-4">
+                      <Award className="text-[#D4AF37]" /> Authenticity Certificates
+                    </h3>
+                    
+                    {orders.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {orders.map((order: any) => (
+                          <div key={order._id} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50 hover:border-[#D4AF37] transition-all group">
+                             <div className="flex justify-between items-start mb-8">
+                                <div className="w-12 h-12 bg-white text-[#D4AF37] rounded-xl flex items-center justify-center shadow-sm">
+                                  <ShieldCheck size={24} />
+                                </div>
+                                <button className="p-3 bg-white text-black hover:bg-black hover:text-[#D4AF37] rounded-xl transition-all shadow-sm">
+                                  <Download size={18} />
+                                </button>
+                             </div>
+                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{order.orderId}</p>
+                             <h4 className="text-xl font-serif font-black italic tracking-tighter mb-4 line-clamp-1">{order.items?.[0]?.name}</h4>
+                             <p className="text-[9px] font-bold text-[#D4AF37] uppercase tracking-[5px] border-t border-gray-200 pt-4 group-hover:tracking-[8px] transition-all">Verified Masterpiece</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center">
+                        <p className="text-gray-400 font-serif italic text-lg">Acquire a timepiece to receive digital authenticity proof.</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
-        <p className="text-center text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 pb-8">
-          Essential Rush · Your Premium Account
-        </p>
-      </main>
+              {activeTab === 'rewards' && (
+                <motion.div key="rewards" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-20}} className="space-y-8">
+                  <div className="bg-black text-[#D4AF37] p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden">
+                    <Crown className="absolute -right-10 -bottom-10 text-white/5 rotate-12" size={300} />
+                    <div className="relative z-10">
+                      <h3 className="text-4xl md:text-6xl font-serif font-black italic tracking-tighter mb-8">Refer & Acquire.</h3>
+                      <p className="max-w-md text-[#D4AF37]/60 text-sm leading-relaxed mb-10">
+                        Invite fellow collectors to the Essential Rush vault. When they make their first acquisition, you earn ₹2,500 in vault credits.
+                      </p>
+                      
+                      <div className="flex flex-col md:flex-row gap-6">
+                        <div className="bg-white/10 backdrop-blur-xl p-6 rounded-[2rem] border border-white/10 flex-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">Your Invite Code</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl font-mono font-black text-white">{myReferralCode}</span>
+                            <button onClick={()=>copyToClipboard(myReferralCode)} className="p-3 bg-white text-black rounded-xl hover:bg-[#D4AF37] transition-all">
+                              <Copy size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-xl p-6 rounded-[2rem] border border-white/10 flex-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">Total Referrals</p>
+                          <span className="text-3xl font-serif font-black italic text-white">0</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
+                    <h3 className="text-2xl font-serif font-black italic tracking-tighter mb-8 flex items-center gap-4">
+                      <Gift className="text-[#D4AF37]" /> Curated Gifting Suite
+                    </h3>
+                    <CuratedGiftingSuite watches={dashLoading ? [] : giftingWatches} isLight={true} onToast={showToast} />
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'concierge' && (
+                <motion.div key="concierge" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-20}} className="space-y-8">
+                  <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm text-center py-20">
+                    <div className="w-24 h-24 bg-green-50 text-green-600 rounded-[2.5rem] mx-auto mb-8 flex items-center justify-center shadow-sm">
+                      <MessageSquare size={40} />
+                    </div>
+                    <h3 className="text-4xl font-serif font-black italic tracking-tighter mb-4">Vault Concierge</h3>
+                    <p className="max-w-md mx-auto text-gray-400 text-sm leading-relaxed mb-12">
+                      Need assistance with an acquisition, tracking, or a technical inquiry? Our elite concierge team is available 24/7 via WhatsApp.
+                    </p>
+                    <a 
+                      href="https://wa.me/918700000000" 
+                      target="_blank" 
+                      className="inline-flex items-center gap-3 px-12 py-6 bg-black text-white rounded-[2rem] font-black uppercase tracking-[5px] text-xs hover:bg-[#25D366] transition-all shadow-2xl group"
+                    >
+                      Connect to Concierge <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
+      </div>
+
+      <footer className="py-12 border-t border-gray-100 text-center">
+        <p className="text-[10px] font-black uppercase tracking-[8px] text-gray-300">Essential Rush · Pure Horology Vault</p>
+      </footer>
     </div>
+  );
+}
+
+function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 ${
+        active 
+          ? 'bg-black text-[#D4AF37] shadow-xl translate-x-2' 
+          : 'text-gray-400 hover:bg-gray-50 hover:text-black'
+      }`}
+    >
+      <div className={`${active ? 'text-[#D4AF37]' : 'text-gray-300'} transition-colors`}>
+        {icon}
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+      {active && <ChevronRight size={14} className="ml-auto" />}
+    </button>
   );
 }

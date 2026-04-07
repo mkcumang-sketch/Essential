@@ -58,7 +58,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-[#FAFAFA] text-gray-900 antialiased overflow-x-hidden">
+      <body className="antialiased overflow-x-hidden">
         <GlobalProvider>
           <ToastProvider>
             <main> 

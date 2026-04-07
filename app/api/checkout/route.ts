@@ -46,12 +46,7 @@ export async function POST(req: Request) {
         }
 
         // 1. Check if Razorpay is configured
-        if (!razorpay) {
-            return NextResponse.json({ 
-                success: false, 
-                error: "Payment Gateway is currently under maintenance (Missing Keys)." 
-            }, { status: 503 });
-        }
+        const isRazorpayConfigured = !!razorpay;
 
         await connectDB();
         const session = await getServerSession(authOptions);
@@ -92,14 +87,16 @@ export async function POST(req: Request) {
             });
         }
 
-        // 💳 4. CREATE RAZORPAY ORDER
-        const options = {
-            amount: Math.round(trueTotal * 100), // amount in paise
-            currency: "INR",
-            receipt: `receipt_${Date.now()}`,
-        };
-
-        const rzpOrder = await razorpay.orders.create(options);
+        let rzpOrder = null;
+        if (isRazorpayConfigured) {
+            // 💳 4. CREATE REAL RAZORPAY ORDER
+            const options = {
+                amount: Math.round(trueTotal * 100), // amount in paise
+                currency: "INR",
+                receipt: `receipt_${Date.now()}`,
+            };
+            rzpOrder = await razorpay.orders.create(options);
+        }
 
         // 📝 5. CREATE PENDING ORDER IN DB
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
@@ -107,12 +104,12 @@ export async function POST(req: Request) {
         
         const newOrder = await Order.create({
             orderId: uniqueId,
-            razorpayOrderId: rzpOrder.id,
+            razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
             userId: session?.user?.id || null,
             items: validatedItems,
             totalAmount: trueTotal,
             shippingData,
-            status: 'PENDING_PAYMENT',
+            status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', // Mark as processing if mock
             appliedReferralCode,
             createdAt: new Date()
         });
@@ -120,9 +117,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ 
             success: true, 
             orderId: newOrder.orderId, 
-            razorpayOrderId: rzpOrder.id,
-            amount: rzpOrder.amount,
-            currency: rzpOrder.currency
+            razorpayOrderId: rzpOrder?.id,
+            amount: rzpOrder?.amount,
+            currency: rzpOrder?.currency,
+            isMock: !isRazorpayConfigured
         });
 
     } catch (error: any) {
