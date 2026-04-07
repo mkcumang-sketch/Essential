@@ -153,7 +153,8 @@ export default async function ProductPage({
       <>
         <JsonLdSchema product={serializedProduct} slug={slug} />
 // Props ke naam wahi rakho jo component mang raha hai
-return <ProductClientPage initialProduct={serializedProduct} slug={slug} />;      </>
+return <ProductClientPage initialProduct={serializedProduct} slug={slug} />;     
+ </>
     );
   } catch (error) {
     console.error("Product Page Error:", error);

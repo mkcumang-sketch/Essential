@@ -8,42 +8,55 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { z } from "zod";
 import Razorpay from 'razorpay';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+// 🛡️ BUILD-SAFE RAZORPAY INITIALIZATION
+let razorpay: any = null;
+
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+}
 
 // 🛡️ STRICT PAYLOAD VALIDATION SCHEMA
 const checkoutSchema = z.object({
-  items: z.array(z.object({
-    _id: z.string(),
-    qty: z.number().int().positive(),
-  })).min(1),
-  shippingData: z.object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    phone: z.string().min(10),
-    address: z.string().min(10),
-    city: z.string(),
-    pincode: z.string(),
-  }),
-  appliedReferralCode: z.string().nullable().optional(),
+    items: z.array(z.object({
+        _id: z.string(),
+        qty: z.number().int().positive(),
+    })).min(1),
+    shippingData: z.object({
+        name: z.string().min(2),
+        email: z.string().email(),
+        phone: z.string().min(10),
+        address: z.string().min(10),
+        city: z.string(),
+        pincode: z.string(),
+    }),
+    appliedReferralCode: z.string().nullable().optional(),
 });
 
 export async function POST(req: Request) {
     try {
+        // 1. Check if Razorpay is configured
+        if (!razorpay) {
+            return NextResponse.json({ 
+                success: false, 
+                error: "Payment Gateway is currently under maintenance (Missing Keys)." 
+            }, { status: 503 });
+        }
+
         await connectDB();
         const session = await getServerSession(authOptions);
         const json = await req.json();
         
-        // 1. Zod Validation (Anti-Tamper)
+        // 2. Zod Validation (Anti-Tamper)
         const validation = checkoutSchema.safeParse(json);
         if (!validation.success) {
             return NextResponse.json({ success: false, error: "Invalid request data." }, { status: 400 });
         }
         const { items, shippingData, appliedReferralCode } = validation.data;
 
-        // 2. Server-Side Price & Stock Guard
+        // 3. Server-Side Price & Stock Guard
         let trueTotal = 0;
         const validatedItems = [];
 
@@ -53,7 +66,7 @@ export async function POST(req: Request) {
                 return NextResponse.json({ success: false, error: `Product not found: ${item._id}` }, { status: 404 });
             }
 
-            // 🚨 INVENTORY GUARD (Check only, don't deduct yet)
+            // 🚨 INVENTORY GUARD
             if (dbProduct.stock < item.qty) {
                 return NextResponse.json({ success: false, error: `Insufficient stock for ${dbProduct.name || dbProduct.title}` }, { status: 400 });
             }
@@ -71,7 +84,7 @@ export async function POST(req: Request) {
             });
         }
 
-        // 💳 3. CREATE RAZORPAY ORDER
+        // 💳 4. CREATE RAZORPAY ORDER
         const options = {
             amount: Math.round(trueTotal * 100), // amount in paise
             currency: "INR",
@@ -80,7 +93,7 @@ export async function POST(req: Request) {
 
         const rzpOrder = await razorpay.orders.create(options);
 
-        // 📝 4. CREATE PENDING ORDER
+        // 📝 5. CREATE PENDING ORDER IN DB
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
         
