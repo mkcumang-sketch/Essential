@@ -108,15 +108,22 @@ export default function PoliciesCMS() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this policy?")) return;
 
+    // Optimistic UI update
+    const previousPolicies = [...policies];
+    setPolicies(policies.filter(p => p._id !== id));
+
     try {
       const res = await fetch(`/api/admin/policies?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         toast.success("Policy deleted");
-        fetchPolicies();
         if (selectedPolicy?._id === id) setIsEditing(false);
+      } else {
+        setPolicies(previousPolicies);
+        toast.error(data.error || "Delete failed");
       }
     } catch (error) {
+      setPolicies(previousPolicies);
       toast.error("Delete failed");
     }
   };

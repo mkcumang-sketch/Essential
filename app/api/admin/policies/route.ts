@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db';
 import { Policy } from '@/models/Policy';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { revalidatePath } from 'next/cache';
 
 export async function GET() {
     try {
@@ -55,6 +56,9 @@ export async function DELETE(req: Request) {
 
         await connectDB();
         await Policy.findByIdAndDelete(id);
+
+        revalidatePath('/policies/[slug]', 'page');
+        revalidatePath('/admin/cms/policies');
 
         return NextResponse.json({ success: true, message: "Policy deleted" });
     } catch (error: any) {

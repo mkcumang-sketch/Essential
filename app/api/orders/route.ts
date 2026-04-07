@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
+import { revalidatePath } from 'next/cache';
 
 // 🌟 GET ORDERS — users: strictly by session user id; admins: all
 export async function GET() {
@@ -113,6 +114,9 @@ export async function DELETE(req: Request) {
       mongoose.models.Order ||
       mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
     await Order.findByIdAndDelete(orderId);
+
+    revalidatePath('/admin');
+    revalidatePath('/account');
 
     return NextResponse.json({ success: true, message: "Order deleted." });
   } catch (error) {
