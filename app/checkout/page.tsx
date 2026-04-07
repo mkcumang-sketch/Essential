@@ -166,12 +166,20 @@ export default function CheckoutPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    items: cart,
+                    items: cart.map(it => ({ _id: it._id, qty: it.qty })),
                     totalAmount: grandTotal,
                     financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
                     appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
                     appliedVaultKey: promoDetails?.type === 'product' ? promoDetails.code : null,
-                    customer: shippingData, 
+                    shippingData: {
+                        name: shippingData.name,
+                        email: shippingData.email,
+                        phone: shippingData.phone,
+                        address: shippingData.address,
+                        city: shippingData.city,
+                        state: shippingData.state || undefined,
+                        pincode: shippingData.pincode
+                    }, 
                     paymentMethod: 'COD'
                 })
             });
@@ -246,7 +254,14 @@ export default function CheckoutPage() {
                             <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
                             
                             <div className="grid grid-cols-3 gap-4">
-                                <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="PIN" value={shippingData.pincode} onChange={e=>setShippingData({...shippingData, pincode:e.target.value})}/>
+                                <input 
+                                    required 
+                                    className={`bg-white border p-5 rounded-2xl text-sm outline-none transition-colors shadow-sm ${shippingData.pincode.length !== 6 && shippingData.pincode.length > 0 ? 'border-red-500' : 'border-gray-200 focus:border-black'}`} 
+                                    placeholder="6-Digit PIN" 
+                                    value={shippingData.pincode} 
+                                    maxLength={6}
+                                    onChange={e=>setShippingData({...shippingData, pincode:e.target.value.replace(/\D/g, '')})}
+                                />
                                 <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm col-span-2" placeholder="City" value={shippingData.city} onChange={e=>setShippingData({...shippingData, city:e.target.value})}/>
                             </div>
 

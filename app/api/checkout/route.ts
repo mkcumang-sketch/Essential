@@ -26,12 +26,13 @@ const checkoutSchema = z.object({
         qty: z.number().int().positive(),
     })).min(1),
     shippingData: z.object({
-        name: z.string().min(2),
-        email: z.string().email(),
-        phone: z.string().min(10),
-        address: z.string().min(10),
-        city: z.string(),
-        pincode: z.string(),
+        name: z.string().min(2, "Name is too short"),
+        email: z.string().email("Invalid email address"),
+        phone: z.string().min(10, "Phone number must be at least 10 digits"),
+        address: z.string().min(10, "Address is too short"),
+        city: z.string().min(1, "City is required"),
+        state: z.string().optional(),
+        pincode: z.string().length(6, "Pincode must be exactly 6 digits"),
     }),
     appliedReferralCode: z.string().nullable().optional(),
 });
@@ -55,7 +56,8 @@ export async function POST(req: Request) {
         // 2. Zod Validation (Anti-Tamper)
         const validation = checkoutSchema.safeParse(json);
         if (!validation.success) {
-            return NextResponse.json({ success: false, error: "Invalid request data." }, { status: 400 });
+            const errorMessages = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+            return NextResponse.json({ success: false, error: `Validation failed - ${errorMessages}` }, { status: 400 });
         }
         const { items, shippingData, appliedReferralCode } = validation.data;
 
