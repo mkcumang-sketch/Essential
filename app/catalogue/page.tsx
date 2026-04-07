@@ -78,8 +78,6 @@ export default function RetailCatalogue() {
     // Optional: yahan se router.push('/checkout') bhi kar sakte ho
   };
 
-  if (loading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><motion.div animate={{ rotateY: 360 }} transition={{ repeat: Infinity, duration: 2 }} className="text-5xl text-[#D4AF37]">♞</motion.div></div>;
-
   return (
     <div className="min-h-screen bg-[#F1F2F4] text-[#050505] font-sans">
       

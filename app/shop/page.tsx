@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
+import { ProductCardSkeleton } from '@/components/LoadingSkeletons';
 
 // 🌟 PREMIUM TOAST COMPONENT 🌟
 const LuxuryToast = ({ show, message, type = "success" }: any) => (
@@ -248,10 +249,12 @@ export default function CataloguePage() {
               {/* Top Action Bar */}
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-gray-200 gap-4">
                   <h2 className="text-xl md:text-3xl font-serif font-bold text-black">
-                      {searchQuery ? `Results for "${searchQuery}"` : "All Timepieces"}
-                      <span className="block md:inline md:ml-4 text-xs font-sans text-gray-500 font-normal uppercase tracking-widest mt-1 md:mt-0">
-                          {filteredAndSortedProducts.length} items found
-                      </span>
+                      {loading ? "Searching the Vault..." : (searchQuery ? `Results for "${searchQuery}"` : "All Timepieces")}
+                      {!loading && (
+                          <span className="block md:inline md:ml-4 text-xs font-sans text-gray-500 font-normal uppercase tracking-widest mt-1 md:mt-0">
+                              {filteredAndSortedProducts.length} items found
+                          </span>
+                      )}
                   </h2>
 
                   <div className="relative group min-w-[180px] w-full md:w-auto">
@@ -268,15 +271,7 @@ export default function CataloguePage() {
               {loading ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
                       {[...Array(8)].map((_, i) => (
-                          <div key={i} className="bg-white p-4 rounded-[16px] border border-gray-100 flex flex-col h-full animate-pulse">
-                              <div className="aspect-square bg-gray-100 rounded-xl mb-4" />
-                              <div className="h-2 w-1/3 bg-gray-100 rounded mb-2" />
-                              <div className="h-4 w-3/4 bg-gray-100 rounded mb-4" />
-                              <div className="mt-auto pt-3 border-t border-gray-50 flex justify-between">
-                                  <div className="h-6 w-1/2 bg-gray-100 rounded" />
-                                  <div className="h-8 w-8 bg-gray-100 rounded-full" />
-                              </div>
-                          </div>
+                          <ProductCardSkeleton key={i} />
                       ))}
                   </div>
               ) : filteredAndSortedProducts.length === 0 ? (

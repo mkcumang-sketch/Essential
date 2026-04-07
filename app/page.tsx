@@ -7,7 +7,6 @@ import {
   Instagram, Facebook, Twitter, Youtube, MapPin, Phone, Mail, Linkedin, ArrowRight, Camera, UploadCloud, RefreshCcw, Trash2
 } from 'lucide-react';
 import Link from 'next/link';
-// PhantomGuard imported but temporarily bypassed to prevent localhost JS crash
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
 
@@ -97,6 +96,7 @@ const Isolated4DHero = ({ config }: { config: any }) => {
   const heroRef = useRef(null);
   const router = useRouter();
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   
   const rawSlides = config?.heroSlides || [];
   const slides = (rawSlides.length > 0 && rawSlides[0]?.url?.length > 5) 
@@ -161,17 +161,20 @@ const Isolated4DHero = ({ config }: { config: any }) => {
                     alt={`Essential Rush Banner - Slide ${currentSlideIndex + 1}`}
                  />
               ) : (
-                 <video 
+                 <motion.video 
                    key={currentSlide?.url} 
                    src={currentSlide?.url}
                    autoPlay 
                    muted 
                    loop 
                    playsInline 
-                   preload="auto" 
-                   // ⚡ SPEED TRICK: Added poster so screen is never black while video buffers
-                   poster="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?q=80&w=2000"
-                   className="w-full h-full object-cover opacity-70"
+                   preload="metadata" 
+                   onCanPlay={() => setIsVideoLoaded(true)}
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: isVideoLoaded ? 0.7 : 0 }}
+                   transition={{ duration: 1, ease: "easeOut" }}
+                   poster="https://res.cloudinary.com/your-cloud-name/image/upload/v1/essential/hero-poster.jpg"
+                   className="w-full h-full object-cover"
                  />
               )}
             </motion.div>

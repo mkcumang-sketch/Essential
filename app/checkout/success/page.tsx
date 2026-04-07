@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { CheckCircle, ArrowRight, ShieldCheck, Package, MapPin } from 'lucide-react';
+import { CheckCircle, ArrowRight, ShieldCheck, Package, MapPin, Download, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 function SuccessPage() {
     const router = useRouter();
     const [txnId, setTxnId] = useState("");
+    const [showCertificate, setShowCertificate] = useState(false);
 
     useEffect(() => {
         // Generate a random secure ID for the receipt display
@@ -59,6 +60,9 @@ function SuccessPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onClick={() => setShowCertificate(true)} className="px-8 py-5 bg-white text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-[#D4AF37] transition-all shadow-xl flex items-center justify-center gap-2">
+                        Certificate <Download size={14}/>
+                    </button>
                     <button onClick={() => router.push('/account')} className="px-8 py-5 bg-[#D4AF37] text-black font-black uppercase text-[10px] tracking-[4px] rounded-full hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center justify-center gap-2">
                         Track Order <MapPin size={14}/>
                     </button>
@@ -67,6 +71,49 @@ function SuccessPage() {
                     </button>
                 </div>
             </motion.div>
+
+            {/* 📜 DIGITAL AUTHENTICITY CERTIFICATE MODAL 📜 */}
+            <AnimatePresence>
+                {showCertificate && (
+                    <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl">
+                        <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0}} className="bg-white text-black max-w-4xl w-full rounded-[60px] overflow-hidden relative shadow-[0_0_100px_rgba(212,175,55,0.2)] print:m-0 print:rounded-none">
+                            <button onClick={()=>setShowCertificate(false)} className="absolute top-10 right-10 p-4 bg-gray-100 rounded-full hover:bg-black hover:text-white transition-all print:hidden"><X size={20}/></button>
+                            
+                            <div className="p-16 md:p-24 text-center border-[20px] border-double border-gray-100 m-8 rounded-[40px] relative">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] text-[400px] pointer-events-none">♞</div>
+                                
+                                <p className="text-[12px] font-black uppercase tracking-[20px] mb-12 text-[#D4AF37]">Certificate of Authenticity</p>
+                                <h2 className="text-6xl md:text-8xl font-serif italic mb-12 tracking-tighter">Essential Rush</h2>
+                                
+                                <div className="max-w-md mx-auto space-y-8 mb-16">
+                                    <p className="text-lg font-serif italic text-gray-600">"This document certifies that the timepiece acquired under transaction <span className="text-black font-bold">{txnId}</span> is an authentic masterpiece, curated and verified by the Essential Fine Horology Vault."</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-12 text-left border-t border-b border-gray-100 py-12 mb-12">
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Acquisition Ref</p>
+                                        <p className="text-sm font-mono font-black">{txnId}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Timestamp</p>
+                                        <p className="text-sm font-mono font-black">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-center mb-12">
+                                    <div className="w-32 h-32 border-4 border-black/5 rounded-full flex items-center justify-center p-2">
+                                        <div className="w-full h-full border-2 border-black/10 rounded-full flex items-center justify-center text-4xl">♞</div>
+                                    </div>
+                                </div>
+
+                                <button onClick={()=>window.print()} className="px-12 py-5 bg-black text-[#D4AF37] font-black uppercase text-[10px] tracking-[5px] rounded-full hover:bg-[#D4AF37] hover:text-black transition-all shadow-2xl print:hidden">
+                                    Print Certificate
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* SECURE FOOTER */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 text-gray-600 opacity-50">

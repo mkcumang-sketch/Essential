@@ -1,6 +1,34 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-const ProductSchema = new mongoose.Schema({
+export interface IProduct extends Document {
+  name?: string;
+  title?: string;
+  brand?: string;
+  category: string;
+  price: number;
+  basePrice?: number;
+  offerPrice?: number;
+  stock: number;
+  images: string[];
+  videos: string[];
+  specifications: Map<string, string>;
+  description?: string;
+  slug?: string;
+  totalSold: number;
+  seoScore: number;
+  tags: string[];
+  lifecycleStatus: 'NEW' | 'TRENDING' | 'CLEARANCE' | 'END_OF_LIFE';
+  seo?: {
+    metaTitle: string;
+    metaDescription: string;
+    focusKeyword: string;
+    slug: string;
+    noindex: boolean;
+    imageAltTexts: Record<string, string>;
+  };
+}
+
+const ProductSchema = new Schema<IProduct>({
   name: { type: String },
   title: { type: String }, 
   brand: { type: String },
@@ -20,5 +48,5 @@ const ProductSchema = new mongoose.Schema({
   lifecycleStatus: { type: String, enum: ['NEW', 'TRENDING', 'CLEARANCE', 'END_OF_LIFE'], default: 'NEW' }
 }, { timestamps: true, strict: false }); 
 
-const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+const Product = mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);
 export { Product };

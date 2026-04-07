@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, Search, Plus, LayoutGrid, SlidersHorizontal, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { ProductCardSkeleton } from '@/components/LoadingSkeletons';
 
 const FadeUp = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
   <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay }}>{children}</motion.div>
@@ -67,11 +68,15 @@ export default function ImperialCollectionNode() {
         </section>
 
         <section className="max-w-[2200px] mx-auto p-6 md:p-12 lg:p-24">
-          <div className="flex justify-between items-center mb-16 border-b border-gray-200 pb-10"><div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[5px] text-gray-500"><LayoutGrid size={16}/> {loading ? "Loading…" : `${watches.length} watches`}</div></div>
+          <div className="flex justify-between items-center mb-16 border-b border-gray-200 pb-10"><div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[5px] text-gray-500"><LayoutGrid size={16}/> {loading ? "Authenticating Collection…" : `${watches.length} watches`}</div></div>
 
           <AnimatePresence mode="wait">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">{[...Array(6)].map((_, i) => (<div key={i} className="bg-white p-10 rounded-[60px] border border-gray-100 animate-pulse h-[550px]"><div className="aspect-[4/5] bg-gray-50 rounded-[40px] mb-8"></div></div>))}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
             ) : watches.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 text-center"><div className="text-7xl md:text-9xl text-gray-200 mb-10 italic font-serif">No watches yet</div><button onClick={() => router.push('/catalogue')} className="mt-12 px-12 py-5 bg-[#002B19] text-[#D4AF37] rounded-full text-[10px] font-black uppercase tracking-[5px] shadow-2xl hover:bg-black transition-all">Browse all watches</button></motion.div>
             ) : (

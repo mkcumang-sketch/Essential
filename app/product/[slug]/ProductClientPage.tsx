@@ -91,6 +91,12 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
     
     // Lead Capture State
     const [showLeadModal, setShowLeadModal] = useState(false);
+    
+    // Phase 2: Luxury Features
+    const [showNegotiationModal, setShowNegotiationModal] = useState(false);
+    const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+    const [negotiationPrice, setNegotiationPrice] = useState(Number(initialProduct.offerPrice || initialProduct.price));
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Reviews State
     const [productReviews, setProductReviews] = useState<any[]>([]);
@@ -202,6 +208,62 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
             setReviewStatus('idle');
         }
     }
+
+    // ♞ PHASE 2: LUXURY API HANDLERS ♞
+    const handleMakeOffer = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!session) return showToast("Please login to negotiate.", "error");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/negotiation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: product._id,
+                    productName: product.name,
+                    offeredPrice: Number(negotiationPrice),
+                    originalPrice: product.offerPrice || product.price,
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, "success");
+                setShowNegotiationModal(false);
+            } else {
+                showToast(data.error, "error");
+            }
+        } catch (err) {
+            showToast("Vault connection error.", "error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleJoinWaitlist = async () => {
+        if (!session) return showToast("Please login to join the waitlist.", "error");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/waitlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: product._id,
+                    productName: product.name,
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, "success");
+                setShowWaitlistModal(false);
+            } else {
+                showToast(data.error, "error");
+            }
+        } catch (err) {
+            showToast("Vault connection error.", "error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-black selection:bg-[#D4AF37] selection:text-white pb-20">
@@ -319,20 +381,33 @@ src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png
                         </div>
                     </div>
 
-                    <div className="mt-auto">
+                    <div className="mt-auto space-y-4">
                         {/* 🚨 THE SECURE ACQUISITION BUTTON (SOLD OUT LOGIC) 🚨 */}
-                        <button 
-                            onClick={handleAddToCartClick} 
-                            disabled={product.stock <= 0}
-                            className={`w-full py-6 rounded-[20px] font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 ${
-                                product.stock <= 0 
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                                : 'bg-black text-white hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)]'
-                            }`}
-                        >
-                            <ShoppingBag size={18}/> 
-                            {product.stock <= 0 ? 'Sold Out' : 'Add to cart'}
-                        </button>
+                        {product.stock > 0 ? (
+                            <>
+                                <button 
+                                    onClick={handleAddToCartClick} 
+                                    className="w-full py-6 rounded-[20px] bg-black text-white font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)]"
+                                >
+                                    <ShoppingBag size={18}/> Add to cart
+                                </button>
+                                {(product.offerPrice || product.price) >= 500000 && (
+                                    <button 
+                                        onClick={() => setShowNegotiationModal(true)}
+                                        className="w-full py-6 rounded-[20px] border border-gray-200 bg-transparent text-black font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:border-black"
+                                    >
+                                        <ShieldCheck size={18} className="text-[#D4AF37]"/> Make an Offer
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <button 
+                                onClick={() => setShowWaitlistModal(true)}
+                                className="w-full py-6 rounded-[20px] bg-gray-200 text-gray-400 font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:bg-black hover:text-[#D4AF37]"
+                            >
+                                <Clock size={18}/> Join Waitlist
+                            </button>
+                        )}
                     </div>
                 </div>
             </main>
@@ -459,6 +534,71 @@ src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png
                 onSubmit={executeFinalAddToCart} 
                 productPrice={product.offerPrice || product.price} 
             />
+
+            {/* ♞ LUXURY MODALS (PHASE 2) ♞ */}
+            <AnimatePresence>
+                {showNegotiationModal && (
+                    <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                        <motion.div initial={{scale:0.9, opacity:0}} animate={{scale:1, opacity:1}} exit={{scale:0.9, opacity:0}} className="bg-white rounded-[40px] p-10 max-w-lg w-full relative">
+                            <button onClick={()=>setShowNegotiationModal(false)} className="absolute top-8 right-8 p-2 bg-gray-100 rounded-full hover:bg-black hover:text-white transition-all"><X size={18}/></button>
+                            <div className="text-center mb-8">
+                                <div className="w-16 h-16 bg-[#D4AF37]/10 text-[#D4AF37] rounded-full flex items-center justify-center mx-auto mb-6"><ShieldCheck size={32}/></div>
+                                <h3 className="text-3xl font-serif font-bold text-black mb-2">Private Negotiation</h3>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Inquire about this high-value asset.</p>
+                            </div>
+                            
+                            <form onSubmit={handleMakeOffer} className="space-y-6">
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block pl-2">Your Proposition (₹)</label>
+                                    <input 
+                                        type="number" 
+                                        required 
+                                        value={negotiationPrice}
+                                        onChange={(e)=>setNegotiationPrice(Number(e.target.value))}
+                                        className="w-full bg-gray-50 border border-gray-200 p-5 rounded-2xl text-2xl font-serif font-black outline-none focus:border-black transition-all"
+                                    />
+                                    <p className="text-[9px] text-gray-400 mt-2 pl-2">Original Valuation: ₹{(product.offerPrice || product.price).toLocaleString('en-IN')}</p>
+                                </div>
+                                <button type="submit" disabled={isSubmitting} className="w-full py-5 bg-black text-[#D4AF37] font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl disabled:opacity-50">
+                                    {isSubmitting ? "Transmitting…" : "Transmit Offer"}
+                                </button>
+                                <p className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-loose px-4">Our concierge team will review your proposition within 24 hours.</p>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showWaitlistModal && (
+                    <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                        <motion.div initial={{scale:0.9, opacity:0}} animate={{scale:1, opacity:1}} exit={{scale:0.9, opacity:0}} className="bg-white rounded-[40px] p-10 max-w-lg w-full relative">
+                            <button onClick={()=>setShowWaitlistModal(false)} className="absolute top-8 right-8 p-2 bg-gray-100 rounded-full hover:bg-black hover:text-white transition-all"><X size={18}/></button>
+                            <div className="text-center mb-8">
+                                <div className="w-16 h-16 bg-black text-[#D4AF37] rounded-full flex items-center justify-center mx-auto mb-6"><Clock size={32}/></div>
+                                <h3 className="text-3xl font-serif font-bold text-black mb-2">Enter the Waitlist</h3>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Be first to know when it returns.</p>
+                            </div>
+                            
+                            <div className="space-y-8">
+                                <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-6">
+                                    <img src={optimizeImage(product.imageUrl)} className="w-20 h-20 object-contain mix-blend-multiply" alt={product.name}/>
+                                    <div>
+                                        <p className="text-[9px] font-black text-[#D4AF37] uppercase tracking-widest mb-1">{product.brand}</p>
+                                        <p className="font-serif font-bold text-lg leading-tight text-black">{product.name}</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={handleJoinWaitlist}
+                                    disabled={isSubmitting}
+                                    className="w-full py-5 bg-black text-[#D4AF37] font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl disabled:opacity-50"
+                                >
+                                    {isSubmitting ? "Processing…" : "Confirm Waitlist Entry"}
+                                </button>
+                                <p className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-loose">Secured priority access for your identity.</p>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
         </div>
     );

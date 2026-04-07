@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import User from '@/models/User';
+import { z } from 'zod';
+import { authRateLimit } from '@/lib/ratelimit';
+
+// 🛡️ REGISTRATION VALIDATION SCHEMA
+const registerSchema = z.object({
+    name: z.string().min(2),
+    phone: z.string().min(10),
+    password: z.string().min(6),
+});
 
 // Helper to generate referral code
 const generateReferralCode = (name: string) => {
@@ -12,17 +21,26 @@ const generateReferralCode = (name: string) => {
 
 export async function POST(req: Request) {
     try {
+        // 0. RATE LIMITING (Anti-Bot)
+        const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
+        const { success } = await authRateLimit.limit(ip);
+        if (!success) {
+            return NextResponse.json({ success: false, error: "Too many requests. Please try again later." }, { status: 429 });
+        }
+
         // Connect to MongoDB
         if (mongoose.connection.readyState === 0) {
             await mongoose.connect(process.env.MONGODB_URI as string);
         }
 
         const body = await req.json();
-        const { name, phone, password } = body;
-
-        if (!name || !phone || !password) {
-            return NextResponse.json({ success: false, error: "Please fill all fields" }, { status: 400 });
+        
+        // 1. Zod Validation (Sanitization)
+        const validation = registerSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({ success: false, error: "Invalid registration data. Please check all fields." }, { status: 400 });
         }
+        const { name, phone, password } = validation.data;
 
         // Check if user already exists
         const existingUser = await User.findOne({ phone });

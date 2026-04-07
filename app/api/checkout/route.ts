@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { z } from "zod";
 import Razorpay from 'razorpay';
+import { userRateLimit } from '@/lib/ratelimit';
 
 // 🛡️ BUILD-SAFE RAZORPAY INITIALIZATION
 let razorpay: any = null;
@@ -37,6 +38,13 @@ const checkoutSchema = z.object({
 
 export async function POST(req: Request) {
     try {
+        // 0. RATE LIMITING (Anti-Bot)
+        const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
+        const { success } = await userRateLimit.limit(ip);
+        if (!success) {
+            return NextResponse.json({ success: false, error: "Too many requests. Please try again in a few seconds." }, { status: 429 });
+        }
+
         // 1. Check if Razorpay is configured
         if (!razorpay) {
             return NextResponse.json({ 

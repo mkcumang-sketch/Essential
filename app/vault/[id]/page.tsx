@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck, Zap, Clock, ArrowRight, 
@@ -9,6 +10,8 @@ import {
 import Link from 'next/link';
 
 export default function AssetRequisition() {
+  const params = useParams();
+  const id = params?.id;
   const [quantity, setQuantity] = useState(1);
   const accentColor = '#D4AF37';
 

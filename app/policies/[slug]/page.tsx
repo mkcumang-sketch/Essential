@@ -2,9 +2,8 @@ import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import { notFound } from 'next/navigation';
 
-export default async function PolicyPage({ params }: { params: any }) {
-    const resolvedParams = await params;
-    const slug = resolvedParams.slug;
+export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
     
     let policyContent = "";
     let policyTitle = "";
