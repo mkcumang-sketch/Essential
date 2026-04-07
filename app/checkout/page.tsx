@@ -167,10 +167,6 @@ export default function CheckoutPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     items: cart.map(it => ({ _id: it._id, qty: it.qty })),
-                    totalAmount: grandTotal,
-                    financialBreakdown: { subtotal, totalDiscount, totalTransit, totalTaxes },
-                    appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
-                    appliedVaultKey: promoDetails?.type === 'product' ? promoDetails.code : null,
                     shippingData: {
                         name: shippingData.name,
                         email: shippingData.email,
@@ -179,8 +175,8 @@ export default function CheckoutPage() {
                         city: shippingData.city,
                         state: shippingData.state || undefined,
                         pincode: shippingData.pincode
-                    }, 
-                    paymentMethod: 'COD'
+                    },
+                    appliedReferralCode: (promoDetails?.type === 'referral' || promoDetails?.type === 'global') ? promoDetails.code : null,
                 })
             });
 

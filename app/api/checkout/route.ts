@@ -56,8 +56,8 @@ export async function POST(req: Request) {
         // 2. Zod Validation (Anti-Tamper)
         const validation = checkoutSchema.safeParse(json);
         if (!validation.success) {
-            const errorMessages = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-            return NextResponse.json({ success: false, error: `Validation failed - ${errorMessages}` }, { status: 400 });
+            const errorDetails = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+            return NextResponse.json({ success: false, error: `Validation failed: ${errorDetails}` }, { status: 400 });
         }
         const { items, shippingData, appliedReferralCode } = validation.data;
 
