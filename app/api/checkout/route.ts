@@ -106,6 +106,7 @@ export async function POST(req: Request) {
         
         const newOrder = await Order.create({
             orderId: uniqueId,
+            orderNumber: uniqueId,
             razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
             userId: session?.user?.id || null,
             items: validatedItems,
