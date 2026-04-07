@@ -7,6 +7,10 @@ export interface IOrder extends Document {
   totalAmount: number;
   status: string;
   promoCode?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  paidAt?: Date;
 }
 
 const OrderSchema = new Schema<IOrder>({
@@ -15,7 +19,11 @@ const OrderSchema = new Schema<IOrder>({
   items: { type: Schema.Types.Mixed, required: true },
   totalAmount: { type: Number, required: true },
   status: { type: String, default: 'PENDING' },
-  promoCode: { type: String, default: null }
+  promoCode: { type: String, default: null },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
+  razorpaySignature: { type: String },
+  paidAt: { type: Date },
 }, { timestamps: true, strict: false });
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
