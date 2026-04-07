@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  ShieldCheck, Crown, Package, Clock, LogOut, Wallet, Copy,
+  ShieldCheck, Crown, Package, LogOut, Wallet, Copy,
   Sparkles, ChevronRight, ShoppingBag, Search, X
 } from "lucide-react";
 

@@ -49,7 +49,6 @@ export async function GET(req: NextRequest) {
 
         if (wantsAdminView) {
             if (!(await isSuperAdminRequest(req))) {
-                console.log("🚨 Unauthorized Admin Review Access Blocked!");
                 return NextResponse.json({ success: false, error: 'You do not have access to do that.' }, { status: 403 });
             }
         }
