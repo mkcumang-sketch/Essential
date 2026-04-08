@@ -25,16 +25,6 @@ function CollectionClientPage({ products }: { products: any[] }) {
   );
 }
 
-// Server Component for data fetching
-async function getCollectionProducts() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/products`, { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error('Failed to fetch products');
-  }
-  const data = await res.json();
-  return data.data; // Assuming data.data contains the products array
-}
-
 export default async function Collection() {
   const products = await getCollectionProducts();
   return <CollectionClientPage products={products} />;

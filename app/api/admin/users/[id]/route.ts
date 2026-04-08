@@ -40,7 +40,7 @@ export async function DELETE(
         if (!user) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
 
         revalidatePath('/', 'layout');
-        revalidateTag('users');
+        revalidateTag('users', 'layout');
         return NextResponse.json({ success: true, message: "User deleted." });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

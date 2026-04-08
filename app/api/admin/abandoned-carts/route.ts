@@ -90,7 +90,7 @@ export async function DELETE(req: NextRequest) {
     await AbandonedCart.findByIdAndDelete(id);
 
     revalidatePath('/', 'layout');
-    revalidateTag('abandoned-carts');
+    revalidateTag('abandoned-carts', 'layout');
 
     return NextResponse.json({ success: true, message: "Abandoned cart removed." });
   } catch (error) {
