@@ -66,8 +66,8 @@ export default function AdminSidebar() {
             <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center font-serif italic font-black text-lg">A</div>
             <div>
                 <p className="text-xs font-black uppercase tracking-widest">Admin</p>
-                <p className="text-[9px] font-bold text-gray-400">System Owner</p>
-            </div>
+<p className="text-[9px] font-bold text-gray-400">System Owner</p>     
+       </div>
         </div>
         <button 
           onClick={() => signOut({ callbackUrl: "/login" })} 
