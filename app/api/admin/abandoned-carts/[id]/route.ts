@@ -5,19 +5,22 @@ import { AbandonedCart } from '@/models/AbandonedCart';
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> } // <-- Next.js 15 Promise Type
 ) {
     try {
         await connectDB();
         
-        // 1. Database se delete karo
-        const deletedCart = await AbandonedCart.findByIdAndDelete(params.id);
+        // 1. Params ko await karo (The Fix!)
+        const resolvedParams = await params;
+        
+        // 2. Database se delete karo
+        const deletedCart = await AbandonedCart.findByIdAndDelete(resolvedParams.id);
 
         if (!deletedCart) {
             return NextResponse.json({ success: false, message: 'Cart not found in Vault' }, { status: 404 });
         }
 
-        // 2. THE NUKE: Next.js Cache ko jala do
+        // 3. THE NUKE: Next.js Cache flush
         revalidatePath('/admin/abandoned-carts');
         revalidatePath('/admin', 'layout'); 
 
