@@ -271,7 +271,7 @@ export default function CataloguePage() {
 
               {/* 🚨 PRODUCTS GRID - 4 COLUMNS (AMAZON STYLE) 🚨 */}
               {loading ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
                       {[...Array(6)].map((_, i) => (
                           <ProductCardSkeleton key={i} />
                       ))}
@@ -284,8 +284,8 @@ export default function CataloguePage() {
                       <button onClick={() => {setSearchQuery(""); setSelectedBrands([]); setSelectedCategories([]);}} className="mt-6 px-6 py-2 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-gray-800 transition-all">Clear All Filters</button>
                   </div>
               ) : (
-                  // Grid: 2 on mobile, 3 on tablet, 4 on desktop
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
+                  // Grid: 1 on small mobile, 2 on mobile, 3 on tablet, 4 on desktop
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
                       <AnimatePresence mode='popLayout'>
                           {filteredAndSortedProducts.map((watch) => (
                               <motion.div 

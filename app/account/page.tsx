@@ -240,10 +240,19 @@ export default function PremiumAccountDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
+        {/* MOBILE TAB NAVIGATION (Horizontal Scroll) */}
+        <div className="lg:hidden mb-12 -mx-6 px-6 overflow-x-auto no-scrollbar flex gap-4 border-b border-gray-100 pb-4">
+          <MobileTab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" />
+          <MobileTab active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} label="Orders" />
+          <MobileTab active={activeTab === 'certificates'} onClick={() => setActiveTab('certificates')} label="Certificates" />
+          <MobileTab active={activeTab === 'rewards'} onClick={() => setActiveTab('rewards')} label="Rewards" />
+          <MobileTab active={activeTab === 'concierge'} onClick={() => setActiveTab('concierge')} label="Concierge" />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          {/* SIDEBAR TABS */}
-          <aside className="lg:col-span-3 space-y-8">
+          {/* SIDEBAR TABS (Desktop Only) */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-8">
             <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
               <div className="text-center mb-8">
                 <div className="w-20 h-20 bg-gray-50 rounded-[2rem] mx-auto mb-4 flex items-center justify-center border border-gray-100 relative overflow-hidden">
@@ -494,6 +503,19 @@ export default function PremiumAccountDashboard() {
         <p className="text-[10px] font-black uppercase tracking-[8px] text-gray-300">Essential Rush · Pure Horology Vault</p>
       </footer>
     </div>
+  );
+}
+
+function MobileTab({ active, onClick, label }: { active: boolean, onClick: () => void, label: string }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`shrink-0 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+        active ? 'bg-black text-[#D4AF37]' : 'text-gray-400 border border-gray-100'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 

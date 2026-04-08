@@ -234,50 +234,10 @@ export default function CheckoutPage() {
                 </div>
             </header>
 
-            <div className="max-w-[1300px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16">
+            <div className="max-w-[1300px] mx-auto px-6 flex flex-col lg:flex-row gap-16">
                 
-                {/* --- Left Side: Shipping --- */}
-                <div className="lg:col-span-7 space-y-10">
-                    <div>
-                        <h2 className="text-3xl font-serif font-bold text-black mb-2">Delivery Details</h2>
-                        <p className="text-sm text-gray-500 font-serif italic mb-8">Where should we send your premium timepiece?</p>
-                        <form onSubmit={processFinalOrder} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
-                                <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Phone Number" value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone:e.target.value})}/>
-                            </div>
-                            <input required type="email" className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
-                            <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
-                            
-                            <div className="grid grid-cols-3 gap-4">
-                                <input 
-                                    required 
-                                    className={`bg-white border p-5 rounded-2xl text-sm outline-none transition-colors shadow-sm ${shippingData.pincode.length !== 6 && shippingData.pincode.length > 0 ? 'border-red-500' : 'border-gray-200 focus:border-black'}`} 
-                                    placeholder="6-Digit PIN" 
-                                    value={shippingData.pincode} 
-                                    maxLength={6}
-                                    onChange={e=>setShippingData({...shippingData, pincode:e.target.value.replace(/\D/g, '')})}
-                                />
-                                <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-sm outline-none focus:border-black transition-colors shadow-sm col-span-2" placeholder="City" value={shippingData.city} onChange={e=>setShippingData({...shippingData, city:e.target.value})}/>
-                            </div>
-
-                            <div className="pt-10">
-                                <h3 className="text-xs font-black uppercase tracking-widest mb-6 text-gray-400">Payment Method</h3>
-                                <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-md">
-                                    <div className="flex items-center gap-4"><div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div><span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span></div>
-                                    <CheckCircle size={24} className="text-black"/>
-                                </div>
-                            </div>
-
-                            <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-6 bg-black text-white font-black uppercase tracking-[5px] text-[11px] rounded-2xl hover:bg-gray-800 transition-all shadow-xl disabled:opacity-50 mt-6 flex items-center justify-center gap-3">
-                                {isSubmitting ? 'Processing...' : 'Place order securely'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                
-                {/* --- Right Side: Summary --- */}
-                <div className="lg:col-span-5">
+                {/* --- Right Side: Summary (Order Summary at Top for Mobile UX) --- */}
+                <div className="lg:col-span-5 lg:order-2">
                     <div className="bg-white border border-gray-200 p-8 md:p-10 rounded-[40px] sticky top-24 shadow-xl">
                         <h3 className="text-2xl font-serif font-bold mb-8 border-b border-gray-100 pb-4 flex items-center gap-3"><ShoppingBag size={24} className="text-gray-400"/> Order summary</h3>
                         
@@ -339,6 +299,46 @@ export default function CheckoutPage() {
                                 <span className="text-4xl font-serif font-bold tracking-tighter text-black">₹{grandTotal.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* --- Left Side: Shipping (Delivery Details) --- */}
+                <div className="lg:col-span-7 lg:order-1 space-y-10">
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold text-black mb-2">Delivery Details</h2>
+                        <p className="text-sm text-gray-500 font-serif italic mb-8">Where should we send your premium timepiece?</p>
+                        <form onSubmit={processFinalOrder} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-base outline-none focus:border-black transition-colors shadow-sm" placeholder="Full Name" value={shippingData.name} onChange={e=>setShippingData({...shippingData, name:e.target.value})}/>
+                                <input required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-base outline-none focus:border-black transition-colors shadow-sm" placeholder="Phone Number" value={shippingData.phone} onChange={e=>setShippingData({...shippingData, phone:e.target.value})}/>
+                            </div>
+                            <input required type="email" className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-base outline-none focus:border-black transition-colors shadow-sm" placeholder="Email Address" value={shippingData.email} onChange={e=>setShippingData({...shippingData, email:e.target.value})}/>
+                            <textarea required className="w-full bg-white border border-gray-200 p-5 rounded-2xl text-base outline-none focus:border-black transition-colors shadow-sm" placeholder="Complete Delivery Address" rows={3} value={shippingData.address} onChange={e=>setShippingData({...shippingData, address:e.target.value})}/>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                                <input 
+                                    required 
+                                    className={`bg-white border p-5 rounded-2xl text-base outline-none transition-colors shadow-sm ${shippingData.pincode.length !== 6 && shippingData.pincode.length > 0 ? 'border-red-500' : 'border-gray-200 focus:border-black'}`} 
+                                    placeholder="6-Digit PIN" 
+                                    value={shippingData.pincode} 
+                                    maxLength={6}
+                                    onChange={e=>setShippingData({...shippingData, pincode:e.target.value.replace(/\D/g, '')})}
+                                />
+                                <input required className="bg-white border border-gray-200 p-5 rounded-2xl text-base outline-none focus:border-black transition-colors shadow-sm col-span-2" placeholder="City" value={shippingData.city} onChange={e=>setShippingData({...shippingData, city:e.target.value})}/>
+                            </div>
+
+                            <div className="pt-10">
+                                <h3 className="text-xs font-black uppercase tracking-widest mb-6 text-gray-400">Payment Method</h3>
+                                <div className="p-6 border-2 border-black rounded-3xl bg-white flex items-center justify-between shadow-md">
+                                    <div className="flex items-center gap-4"><div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">₹</div><span className="font-bold text-sm uppercase tracking-widest">Cash on Delivery</span></div>
+                                    <CheckCircle size={24} className="text-black"/>
+                                </div>
+                            </div>
+
+                            <button type="submit" disabled={isSubmitting || cart.length === 0} className="w-full py-6 bg-black text-white font-black uppercase tracking-[5px] text-[11px] rounded-2xl hover:bg-gray-800 transition-all shadow-xl disabled:opacity-50 mt-6 flex items-center justify-center gap-3">
+                                {isSubmitting ? 'Processing...' : 'Place order securely'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
