@@ -1,133 +1,42 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import React from "react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { UserStatsSkeleton, TableSkeleton } from "@/components/LoadingSkeletons";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import { Order } from "@/models/Order";
+import StatCard from "@/components/Admin/StatCard";
+import ClientRegistry from "@/components/Admin/ClientRegistry";
 import { 
-    Shield, Crown, Users, TrendingUp, Package,
-    Search, Edit2, Save, X, AlertCircle,
-    ChevronDown, Check, Eye, EyeOff,
-    DollarSign, ShoppingBag, ArrowUpRight,
-    ChevronRight
+    Shield, Crown, Users, Package,
+    DollarSign, ShoppingBag, ChevronRight
 } from "lucide-react";
 
-export default function AdminDashboard() {
-    const { data: session, status } = useSession();
-    const router = useRouter();
-    const [users, setUsers] = useState<any[]>([]);
-    const [orders, setOrders] = useState<any[]>([]);
-    const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, activeUsers: 0, topPerformer: "Rolex Daytona" });
-    const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [editingUser, setEditingUser] = useState<string | null>(null);
-    const [editForm, setEditForm] = useState({ totalSpent: "", loyaltyTier: "" });
-    const [toast, setToast] = useState("");
+// CRITICAL: Cache for 60 seconds (ISR)
+export const revalidate = 60;
 
-    useEffect(() => {
-        if (status === "unauthenticated") {
-            router.push("/login");
-        } else if (status === "authenticated" && (session?.user as any)?.role !== "SUPER_ADMIN") {
-            router.push("/account");
-        } else if (status === "authenticated") {
-            fetchDashboardData();
-        }
-    }, [status, session, router]);
+export default async function AdminDashboard() {
+    // 1. Auth Guard
+    const session = await getServerSession(authOptions);
+    if (!session?.user || (session.user as any).role !== "SUPER_ADMIN") {
+        redirect("/login");
+    }
 
-    const fetchDashboardData = async () => {
-        try {
-            const [usersRes, analyticsRes, ordersRes] = await Promise.all([
-                fetch("/api/admin/users"),
-                fetch("/api/dashboard/full-analytics"),
-                fetch("/api/orders")
-            ]);
+    // 2. Data Fetching (Directly from MongoDB)
+    await connectDB();
 
-            const [usersData, analyticsData, ordersData] = await Promise.all([
-                usersRes.json(),
-                analyticsRes.json(),
-                ordersRes.json()
-            ]);
+    const [users, allOrders] = await Promise.all([
+        User.find({}).sort({ createdAt: -1 }).lean(),
+        Order.find({}).sort({ createdAt: -1 }).lean()
+    ]);
 
-            if (usersData.success && analyticsData.success && ordersData.success) {
-                setUsers(usersData.data.users || []);
-                setOrders(ordersData.data.slice(0, 5) || []);
-                setStats({
-                    totalRevenue: analyticsData.metrics.totalRevenue,
-                    totalOrders: analyticsData.metrics.totalOrders,
-                    activeUsers: usersData.data.totalUsers,
-                    topPerformer: "Rolex Daytona"
-                });
-            }
-        } catch (error) {
-            console.error("Dashboard Data Fetch Error:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const showToast = (message: string) => {
-        setToast(message);
-        setTimeout(() => setToast(""), 3000);
-    };
-
-    const startEdit = (user: any) => {
-        setEditingUser(user._id);
-        setEditForm({
-            totalSpent: user.totalSpent?.toString() || "",
-            loyaltyTier: user.loyaltyTier || "Silver Vault"
-        });
-    };
-
-    const cancelEdit = () => {
-        setEditingUser(null);
-        setEditForm({ totalSpent: "", loyaltyTier: "" });
-    };
-
-    const saveEdit = async (userId: string) => {
-        try {
-            const res = await fetch("/api/admin/users", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId,
-                    totalSpent: parseFloat(editForm.totalSpent) || undefined,
-                    loyaltyTier: editForm.loyaltyTier || undefined
-                })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                showToast("Client profile updated successfully");
-                setEditingUser(null);
-                fetchDashboardData();
-            }
-        } catch (error) {
-            showToast("Update failed");
-        }
-    };
-
-    const filteredUsers = users.filter(u => 
-        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        u.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    if (loading) return (
-        <div className="space-y-12">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2">
-                    <div className="h-10 bg-gray-100 rounded-lg animate-pulse w-64" />
-                    <div className="h-4 bg-gray-50 rounded animate-pulse w-48" />
-                </div>
-            </header>
-            <UserStatsSkeleton />
-            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-sm">
-                <div className="h-6 bg-gray-100 rounded w-48 mb-8 animate-pulse" />
-                <TableSkeleton rows={8} />
-            </div>
-        </div>
-    );
+    // 3. Metrics Calculation
+    const totalRevenue = allOrders.reduce((acc: number, order: any) => acc + (Number(order.totalAmount) || 0), 0);
+    const totalOrders = allOrders.length;
+    const activeUsers = users.length;
+    const topPerformer = "Rolex Daytona"; // Static for now as per original
+    const recentOrders = allOrders.slice(0, 5);
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -151,28 +60,28 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard 
                     title="Total Revenue" 
-                    value={`₹${stats.totalRevenue.toLocaleString()}`} 
+                    value={`₹${totalRevenue.toLocaleString()}`} 
                     icon={<DollarSign size={24}/>} 
                     trend="+12.5%" 
                     color="bg-black text-[#D4AF37]"
                 />
                 <StatCard 
                     title="Vault Orders" 
-                    value={stats.totalOrders.toString()} 
+                    value={totalOrders.toString()} 
                     icon={<ShoppingBag size={24}/>} 
                     trend="+8.2%" 
                     color="bg-white text-black border border-gray-100"
                 />
                 <StatCard 
                     title="Active Users" 
-                    value={stats.activeUsers.toString()} 
+                    value={activeUsers.toString()} 
                     icon={<Users size={24}/>} 
                     trend="+5.1%" 
                     color="bg-white text-black border border-gray-100"
                 />
                 <StatCard 
                     title="Top Asset" 
-                    value={stats.topPerformer} 
+                    value={topPerformer} 
                     icon={<Crown size={24}/>} 
                     trend="Trending" 
                     color="bg-white text-black border border-gray-100"
@@ -186,8 +95,8 @@ export default function AdminDashboard() {
                     <Link href="/godmode" className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] hover:text-black transition-colors">View All Tracker</Link>
                 </div>
                 <div className="p-8 space-y-4">
-                    {orders.map((order: any) => (
-                        <div key={order._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-black transition-all group">
+                    {recentOrders.map((order: any) => (
+                        <div key={order._id.toString()} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-black transition-all group">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-bold text-gray-400 border border-gray-100">
                                     <Package size={20} />
@@ -209,139 +118,8 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Client Management */}
-            <div className="bg-white rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <h3 className="text-xl font-serif font-black italic tracking-tighter">Client Registry</h3>
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input 
-                            type="text" 
-                            placeholder="Search by identity or email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-100 p-4 pl-12 rounded-2xl text-sm outline-none focus:border-black transition-all"
-                        />
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                            <tr>
-                                <th className="px-8 py-5">Client</th>
-                                <th className="px-8 py-5">Tier</th>
-                                <th className="px-8 py-5">Investment</th>
-                                <th className="px-8 py-5">Role</th>
-                                <th className="px-8 py-5 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredUsers.map((user) => (
-                                <tr key={user._id} className="group hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center font-bold text-gray-500">
-                                                {user.name?.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-black">{user.name}</p>
-                                                <p className="text-xs text-gray-400">{user.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        {editingUser === user._id ? (
-                                            <select 
-                                                value={editForm.loyaltyTier}
-                                                onChange={(e) => setEditForm({...editForm, loyaltyTier: e.target.value})}
-                                                className="bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none"
-                                            >
-                                                <option value="Silver Vault">Silver Vault</option>
-                                                <option value="Gold Vault">Gold Vault</option>
-                                                <option value="Platinum Vault">Platinum Vault</option>
-                                                <option value="The Founder's Circle">The Founder's Circle</option>
-                                            </select>
-                                        ) : (
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">
-                                                {user.loyaltyTier || "Silver Vault"}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        {editingUser === user._id ? (
-                                            <input 
-                                                type="number"
-                                                value={editForm.totalSpent}
-                                                onChange={(e) => setEditForm({...editForm, totalSpent: e.target.value})}
-                                                className="w-32 bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none"
-                                            />
-                                        ) : (
-                                            <p className="text-sm font-bold text-black font-mono">₹{(user.totalSpent || 0).toLocaleString()}</p>
-                                        )}
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${user.role === 'SUPER_ADMIN' ? 'text-[#D4AF37]' : 'text-gray-400'}`}>
-                                            {user.role || "USER"}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        {editingUser === user._id ? (
-                                            <div className="flex justify-end gap-2">
-                                                <button onClick={() => saveEdit(user._id)} className="p-2 bg-black text-white rounded-lg hover:bg-[#D4AF37] transition-all">
-                                                    <Check size={16} />
-                                                </button>
-                                                <button onClick={cancelEdit} className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-all">
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button 
-                                                onClick={() => startEdit(user)}
-                                                className="p-2 text-gray-300 hover:text-black hover:bg-white rounded-lg transition-all"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <AnimatePresence>
-                {toast && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
-                        className="fixed bottom-10 right-10 bg-black text-[#D4AF37] px-8 py-4 rounded-2xl shadow-2xl font-bold uppercase tracking-widest text-xs z-50 border border-[#D4AF37]/20"
-                    >
-                        {toast}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
-
-function StatCard({ title, value, icon, trend, color }: any) {
-    return (
-        <div className={`${color} p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden group`}>
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                {icon}
-            </div>
-            <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{title}</p>
-                    <span className="flex items-center gap-1 text-[8px] font-black bg-white/10 px-2 py-0.5 rounded text-green-400">
-                        <ArrowUpRight size={10} /> {trend}
-                    </span>
-                </div>
-                <h3 className="text-3xl font-serif font-black italic tracking-tighter">{value}</h3>
-            </div>
+            {/* Client Management (Client Component) */}
+            <ClientRegistry initialUsers={JSON.parse(JSON.stringify(users))} />
         </div>
     );
 }
