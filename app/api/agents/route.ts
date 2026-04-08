@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import mongoose from 'mongoose';
 import { Agent } from '@/models/Agent';
 
@@ -46,6 +47,7 @@ export async function DELETE(req: Request) {
 
         const Agent = mongoose.models.Agent || mongoose.model('Agent', new mongoose.Schema({}, { strict: false }));
         await Agent.findByIdAndDelete(id);
+        revalidatePath('/', 'layout');
 
         return NextResponse.json({ success: true, message: "Affiliate Deleted from Database" });
     } catch (error) {

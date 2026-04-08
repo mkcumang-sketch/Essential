@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { HomepageSection, ActivityLog } from "@/models/Enterprise";
 import { NextResponse } from "next/server";
+import { revalidatePath } from 'next/cache';
 
 /**
  * DYNAMIC LAYOUT CONTROLLER v4.0
@@ -125,6 +126,8 @@ export async function DELETE(req: Request) {
     }
 
     const deleted = await HomepageSection.findByIdAndDelete(id);
+
+    revalidatePath('/', 'layout');
 
     if (deleted) {
       await ActivityLog.create({

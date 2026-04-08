@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { Lead, ActivityLog } from "@/models/Enterprise";
 import { NextResponse } from "next/server";
+import { revalidatePath } from 'next/cache';
 
 /**
  * CRM IDENTITY CONTROLLER v4.0
@@ -103,6 +104,8 @@ export async function DELETE(req: Request) {
     }
 
     const deleted = await Lead.findByIdAndDelete(id);
+
+    revalidatePath('/', 'layout');
 
     if (deleted) {
       await ActivityLog.create({

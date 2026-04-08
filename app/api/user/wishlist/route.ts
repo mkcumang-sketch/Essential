@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -151,6 +152,8 @@ export async function DELETE(req: Request) {
             { $pull: { wishlist: productId } },
             { new: true }
         ).select('-password -__v');
+
+        revalidatePath('/', 'layout');
 
         if (!updatedUser) {
             return NextResponse.json({ success: false, error: "We could not remove this from your wishlist." }, { status: 500 });

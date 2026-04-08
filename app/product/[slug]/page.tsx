@@ -79,6 +79,8 @@ const JsonLdSchema = ({
     name: product.name || product.title,
     image: [product.imageUrl, ...(product.images || [])].filter(Boolean),
     description: product.description,
+    sku: product.sku || product._id,
+    mpn: product.sku || product._id,
     brand: {
       "@type": "Brand",
       name: product.brand || "Essential",
@@ -88,21 +90,84 @@ const JsonLdSchema = ({
       url: `${baseUrl}/product/${slug}`,
       priceCurrency: "INR",
       price: product.offerPrice || product.price,
+      priceValidUntil: "2026-12-31",
       itemCondition: "https://schema.org/NewCondition",
       availability:
         product.stock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: "0",
+          currency: "INR"
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: "0",
+            maxValue: "1",
+            unitCode: "DAY"
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: "1",
+            maxValue: "3",
+            unitCode: "DAY"
+          }
+        }
+      }
     },
   };
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": baseUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": `${baseUrl}/shop`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": product.brand,
+        "item": `${baseUrl}/shop?brand=${encodeURIComponent(product.brand)}`
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": product.name,
+        "item": `${baseUrl}/product/${slug}`
+      }
+    ]
+  };
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(schema),
-      }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(schema),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema),
+        }}
+      />
+    </>
   );
 };
 

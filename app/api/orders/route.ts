@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // 🌟 GET ORDERS — users: strictly by session user id; admins: all
 export async function GET() {
@@ -73,6 +73,9 @@ export async function PUT(req: Request) {
       mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
     await Order.findByIdAndUpdate(orderId, { status: newStatus });
 
+    revalidatePath('/', 'layout');
+    revalidateTag('orders', 'layout');
+
     return NextResponse.json({ success: true, message: "Order status updated." });
   } catch (error) {
     return NextResponse.json(
@@ -116,6 +119,7 @@ export async function DELETE(req: Request) {
     await Order.findByIdAndDelete(orderId);
 
     revalidatePath('/', 'layout');
+    revalidateTag('orders', 'layout');
 
     return NextResponse.json({ success: true, message: "Order deleted." });
   } catch (error) {

@@ -1,24 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
 import CelebritySpotlight from "@/components/CelebritySpotlight";
 
-export default function CelebrityPage() {
-  const [celebrities, setCelebrities] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCelebs = async () => {
-      // Admin CMS se data fetch karna
-      const res = await fetch("/api/site-content?key=celebrities");
-      const data = await res.json();
-      if(data.success) setCelebrities(data.content || []);
-      setLoading(false);
-    };
-    fetchCelebs();
-  }, []);
-
-  if (loading) return <div className="h-screen bg-black flex items-center justify-center text-gold-500 animate-pulse tracking-widest uppercase text-xs">Loading…</div>;
-
+// Client Component
+function CelebrityClientPage({ celebrities }: { celebrities: any[] }) {
   return (
     <main className="pt-20 bg-black min-h-screen">
       <CelebritySpotlight celebrities={celebrities} />
@@ -32,4 +16,19 @@ export default function CelebrityPage() {
       </div>
     </main>
   );
+}
+
+// Server Component for data fetching
+async function getCelebritiesData() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/site-content?key=celebrities`, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch celebrity data');
+  }
+  const data = await res.json();
+  return data.success ? (data.content || []) : [];
+}
+
+export default async function CelebrityPage() {
+  const celebrities = await getCelebritiesData();
+  return <CelebrityClientPage celebrities={celebrities} />;
 }

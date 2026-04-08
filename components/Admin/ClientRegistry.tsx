@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Edit2, Check, X } from "lucide-react";
+import { Search, Edit2, Check, X, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,6 +25,7 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
     const [editingUser, setEditingUser] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({ totalSpent: "", loyaltyTier: "" });
     const [toast, setToast] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
 
     const showToast = (message: string) => {
         setToast(message);
@@ -45,6 +46,7 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
     };
 
     const saveEdit = async (userId: string) => {
+        setIsSaving(true);
         try {
             const res = await fetch("/api/admin/users", {
                 method: "PUT",
@@ -71,6 +73,8 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
             }
         } catch (error) {
             showToast("Update failed");
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -80,52 +84,55 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
     );
 
     return (
-        <div className="bg-white rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <h3 className="text-xl font-serif font-black italic tracking-tighter">Client Registry</h3>
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-10 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div>
+                    <h3 className="text-2xl font-serif font-black italic tracking-tighter">Client Registry</h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">Manage Elite Members</p>
+                </div>
+                <div className="relative w-full md:w-96 group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" size={18} />
                     <input 
                         type="text" 
                         placeholder="Search by identity or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-100 p-4 pl-12 rounded-2xl text-sm outline-none focus:border-black transition-all"
+                        className="w-full bg-gray-50/50 border border-gray-100 p-5 pl-14 rounded-[1.5rem] text-sm outline-none focus:border-black focus:bg-white transition-all shadow-sm"
                     />
                 </div>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-50/30 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
                         <tr>
-                            <th className="px-8 py-5">Client</th>
-                            <th className="px-8 py-5">Tier</th>
-                            <th className="px-8 py-5">Investment</th>
-                            <th className="px-8 py-5">Role</th>
-                            <th className="px-8 py-5 text-right">Actions</th>
+                            <th className="px-10 py-6">Client Identity</th>
+                            <th className="px-10 py-6">Tier Status</th>
+                            <th className="px-10 py-6">Total Investment</th>
+                            <th className="px-10 py-6">Role</th>
+                            <th className="px-10 py-6 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                         {filteredUsers.map((user) => (
-                            <tr key={user._id} className="group hover:bg-gray-50/50 transition-colors">
-                                <td className="px-8 py-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center font-bold text-gray-500">
+                            <tr key={user._id} className="group hover:bg-gray-50/20 transition-all duration-300">
+                                <td className="px-10 py-8">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg shadow-black/5 group-hover:scale-110 transition-transform">
                                             {user.name?.charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-black">{user.name}</p>
-                                            <p className="text-xs text-gray-400">{user.email}</p>
+                                            <p className="text-sm font-bold text-black tracking-tight">{user.name}</p>
+                                            <p className="text-xs text-gray-400 font-medium">{user.email}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-8 py-6">
+                                <td className="px-10 py-8">
                                     {editingUser === user._id ? (
                                         <select 
                                             value={editForm.loyaltyTier}
                                             onChange={(e) => setEditForm({...editForm, loyaltyTier: e.target.value})}
-                                            className="bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none"
+                                            className="bg-white border border-gray-200 p-3 rounded-xl text-xs font-bold outline-none focus:border-black transition-all"
                                         >
                                             <option value="Silver Vault">Silver Vault</option>
                                             <option value="Gold Vault">Gold Vault</option>
@@ -133,44 +140,57 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
                                             <option value="The Founder's Circle">The Founder's Circle</option>
                                         </select>
                                     ) : (
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full border ${
+                                            user.loyaltyTier === "The Founder's Circle" ? 'bg-black text-[#D4AF37] border-black' : 'bg-gray-50 text-gray-600 border-gray-100'
+                                        }`}>
                                             {user.loyaltyTier || "Silver Vault"}
                                         </span>
                                     )}
                                 </td>
-                                <td className="px-8 py-6">
+                                <td className="px-10 py-8">
                                     {editingUser === user._id ? (
-                                        <input 
-                                            type="number"
-                                            value={editForm.totalSpent}
-                                            onChange={(e) => setEditForm({...editForm, totalSpent: e.target.value})}
-                                            className="w-32 bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none"
-                                        />
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">₹</span>
+                                            <input 
+                                                type="number"
+                                                value={editForm.totalSpent}
+                                                onChange={(e) => setEditForm({...editForm, totalSpent: e.target.value})}
+                                                className="w-36 bg-white border border-gray-200 p-3 pl-7 rounded-xl text-xs font-bold outline-none focus:border-black transition-all"
+                                            />
+                                        </div>
                                     ) : (
-                                        <p className="text-sm font-bold text-black font-mono">₹{(user.totalSpent || 0).toLocaleString()}</p>
+                                        <p className="text-sm font-black text-black font-mono tracking-tighter">₹{(user.totalSpent || 0).toLocaleString()}</p>
                                     )}
                                 </td>
-                                <td className="px-8 py-6">
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${user.role === 'SUPER_ADMIN' ? 'text-[#D4AF37]' : 'text-gray-400'}`}>
+                                <td className="px-10 py-8">
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${user.role === 'SUPER_ADMIN' ? 'text-[#D4AF37] bg-[#D4AF37]/5 px-3 py-1 rounded-lg' : 'text-gray-400'}`}>
                                         {user.role || "USER"}
                                     </span>
                                 </td>
-                                <td className="px-8 py-6 text-right">
+                                <td className="px-10 py-8 text-right">
                                     {editingUser === user._id ? (
-                                        <div className="flex justify-end gap-2">
-                                            <button onClick={() => saveEdit(user._id)} className="p-2 bg-black text-white rounded-lg hover:bg-[#D4AF37] transition-all">
-                                                <Check size={16} />
+                                        <div className="flex justify-end gap-3">
+                                            <button 
+                                                onClick={() => saveEdit(user._id)} 
+                                                disabled={isSaving}
+                                                className="p-3 bg-black text-white rounded-xl hover:bg-[#D4AF37] hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all disabled:opacity-50"
+                                            >
+                                                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
                                             </button>
-                                            <button onClick={cancelEdit} className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-all">
-                                                <X size={16} />
+                                            <button 
+                                                onClick={cancelEdit} 
+                                                disabled={isSaving}
+                                                className="p-3 bg-gray-100 text-gray-400 rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50"
+                                            >
+                                                <X size={18} />
                                             </button>
                                         </div>
                                     ) : (
                                         <button 
                                             onClick={() => startEdit(user)}
-                                            className="p-2 text-gray-300 hover:text-black hover:bg-white rounded-lg transition-all"
+                                            className="p-3 text-gray-300 hover:text-black hover:bg-gray-50 rounded-xl transition-all"
                                         >
-                                            <Edit2 size={18} />
+                                            <Edit2 size={20} />
                                         </button>
                                     )}
                                 </td>

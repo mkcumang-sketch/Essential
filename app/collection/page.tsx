@@ -1,19 +1,9 @@
-"use client";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
-export default function Collection() {
-  const [products, setProducts] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch("/api/products")
-      .then(res => res.json())
-      .then(data => {
-         if(data.success) setProducts(data.products);
-      });
-  }, []);
-
+// Client Component
+function CollectionClientPage({ products }: { products: any[] }) {
   return (
     <div className="bg-black min-h-screen text-white">
       <Navbar />
@@ -33,4 +23,19 @@ export default function Collection() {
       </div>
     </div>
   );
+}
+
+// Server Component for data fetching
+async function getCollectionProducts() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/products`, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch products');
+  }
+  const data = await res.json();
+  return data.data; // Assuming data.data contains the products array
+}
+
+export default async function Collection() {
+  const products = await getCollectionProducts();
+  return <CollectionClientPage products={products} />;
 }

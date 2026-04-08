@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import mongoose from 'mongoose';
 import User from '@/models/User';
 
@@ -36,8 +36,11 @@ export async function DELETE(
         await connectDB();
         const { id } = await params; // 🚨 MUST AWAIT
 
-        await User.findByIdAndDelete(id);
+        const user = await User.findByIdAndDelete(id);
+        if (!user) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+
         revalidatePath('/', 'layout');
+        revalidateTag('users');
         return NextResponse.json({ success: true, message: "User deleted." });
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

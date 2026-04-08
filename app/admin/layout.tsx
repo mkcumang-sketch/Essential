@@ -12,8 +12,10 @@ import {
   Menu,
   X,
   Info,
-  ShoppingCart
+  ShoppingCart,
+  ShoppingBag
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,73 +25,96 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
     { name: 'Policies CMS', icon: FileText, href: '/admin/cms/policies' },
     { name: 'About Page CMS', icon: Info, href: '/admin/cms/about' },
-    { name: 'Abandoned Carts', icon: ShoppingCart, href: '/admin/abandoned-carts' },
+    { name: 'Abandoned Carts', icon: ShoppingBag, href: '/admin/abandoned-carts' },
+    { name: 'VIP SEO', icon: ShieldCheck, href: '/admin/seo' },
     { name: 'Settings', icon: Settings, href: '/admin/settings' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-gray-900 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-white text-black flex flex-col md:flex-row font-sans">
       {/* Mobile Header Toggle */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 z-[60]">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black text-[#D4AF37] rounded-lg flex items-center justify-center font-bold">♞</div>
-          <span className="font-serif font-black tracking-tighter uppercase text-sm">Vault Admin</span>
+      <div className="md:hidden flex items-center justify-between p-6 bg-white border-b border-gray-100 sticky top-0 z-[60]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-xl flex items-center justify-center font-bold shadow-lg">♞</div>
+          <span className="font-serif font-black tracking-tighter uppercase text-base">Vault Admin</span>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 bg-gray-50 rounded-lg text-black"
+          className="p-3 bg-gray-50 rounded-2xl text-black active:scale-90 transition-transform"
         >
-          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* Sidebar */}
       <aside 
         className={`${
-          isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed h-full z-50 md:sticky top-0`}
+          isSidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0 md:w-24'
+        } bg-white border-r border-gray-100 transition-all duration-500 ease-[0.16, 1, 0.3, 1] flex flex-col fixed h-full z-50 md:sticky top-0`}
       >
-        <div className="hidden md:flex p-6 items-center justify-between border-b border-gray-100">
+        <div className="hidden md:flex p-10 items-center justify-between border-b border-gray-50">
           {isSidebarOpen && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-black text-[#D4AF37] rounded-lg flex items-center justify-center font-bold">♞</div>
-              <span className="font-serif font-black tracking-tighter uppercase text-sm">Vault Admin</span>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-4"
+            >
+              <div className="w-12 h-12 bg-black text-[#D4AF37] rounded-2xl flex items-center justify-center font-bold text-xl shadow-2xl shadow-black/20">♞</div>
+              <span className="font-serif font-black tracking-tighter uppercase text-lg italic">Vault</span>
+            </motion.div>
           )}
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-3 hover:bg-gray-50 rounded-2xl transition-all duration-300 group"
           >
-            {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            {isSidebarOpen ? <X size={20} className="text-gray-300 group-hover:text-black" /> : <Menu size={20} className="text-gray-300 group-hover:text-black" />}
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
-          {menuItems.map((item) => {
+        <nav className="flex-1 p-8 space-y-4 mt-6 overflow-y-auto custom-scrollbar">
+          {menuItems.map((item, idx) => {
             const isActive = pathname === item.href;
             return (
               <Link 
                 key={item.name} 
                 href={item.href}
                 onClick={() => { if(window.innerWidth < 768) setIsSidebarOpen(false); }}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+                className={`flex items-center gap-5 p-5 rounded-[1.5rem] transition-all duration-500 group ${
                   isActive 
-                    ? 'bg-black text-white shadow-lg' 
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-black'
+                    ? 'bg-black text-white shadow-2xl shadow-black/20 scale-[1.02]' 
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-black'
                 }`}
               >
-                <item.icon size={20} />
-                {(isSidebarOpen || window.innerWidth < 768) && <span className="text-sm font-bold uppercase tracking-widest">{item.name}</span>}
-                {isSidebarOpen && isActive && <ChevronRight size={14} className="ml-auto" />}
+                <item.icon size={24} className={`${isActive ? 'text-[#D4AF37]' : 'group-hover:scale-110 transition-transform'}`} />
+                {(isSidebarOpen || window.innerWidth < 768) && (
+                  <motion.span 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-[11px] font-black uppercase tracking-[0.25em]"
+                  >
+                    {item.name}
+                  </motion.span>
+                )}
+                {isSidebarOpen && isActive && (
+                  <motion.div 
+                    layoutId="active-indicator"
+                    className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
+                  />
+                )}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
-          <div className={`flex items-center gap-3 p-3 rounded-xl bg-gray-50 text-gray-400 ${(!isSidebarOpen && window.innerWidth >= 768) && 'justify-center'}`}>
-            <ShieldCheck size={20} />
-            {isSidebarOpen && <span className="text-[10px] font-black uppercase tracking-widest">Secure Node</span>}
+        <div className="p-8 border-t border-gray-50">
+          <div className={`flex items-center gap-4 p-5 rounded-[1.5rem] bg-gray-50/50 text-gray-400 transition-all ${(!isSidebarOpen && window.innerWidth >= 768) && 'justify-center'}`}>
+            <ShieldCheck size={22} className="text-[#D4AF37]" />
+            {isSidebarOpen && (
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black">Secure Node</span>
+                <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-gray-400">v0.1.5-alpha</span>
+              </div>
+            )}
           </div>
         </div>
       </aside>

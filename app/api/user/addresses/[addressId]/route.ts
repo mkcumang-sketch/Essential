@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import User from '@/models/User';
@@ -47,6 +48,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
             { $pull: { addresses: { _id: addressId } } },
             { new: true }
         ).select('-password -__v');
+
+        revalidatePath('/', 'layout');
 
         if (!updatedUser) {
             return NextResponse.json({ success: false, error: "We could not delete this address." }, { status: 500 });

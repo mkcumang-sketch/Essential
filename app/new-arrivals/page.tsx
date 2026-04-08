@@ -7,32 +7,16 @@ import { useRouter } from 'next/navigation';
 import { ShoppingBag, ArrowLeft, Plus, Sparkles } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-function NewArrivalsPage() {
+// This will be the Client Component
+function NewArrivalsClientPage({ liveWatches: initialLiveWatches }: { liveWatches: any[] }) {
     const router = useRouter();
-    const [liveWatches, setLiveWatches] = useState<any[]>([]);
     const [cart, setCart] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         // Safe Client-Side Cart Loading
         setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
-        
-        const fetchProducts = async () => {
-            try {
-                const ts = new Date().getTime();
-                const res = await fetch(`/api/products?t=${ts}`);
-                const data = await res.json();
-                if(data.data) {
-                    // Sort by priority/newest
-                    setLiveWatches(data.data.sort((a:any, b:any) => (b.priority || 0) - (a.priority || 0)));
-                }
-            } catch(e) {
-                console.error("Error fetching products");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchProducts();
+        setIsLoaded(true);
     }, []);
 
     const addToCart = (product: any) => {
@@ -43,7 +27,7 @@ function NewArrivalsPage() {
         router.push('/checkout');
     };
 
-    if (isLoading) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
+    if (!isLoaded) return <div className="h-screen bg-[#FAFAFA] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div></div>;
 
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-[#050505] font-sans selection:bg-[#D4AF37] selection:text-white">
@@ -66,7 +50,7 @@ function NewArrivalsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {liveWatches.map((watch: any, i: number) => (
+                    {initialLiveWatches.map((watch: any, i: number) => ( // Use initialLiveWatches here
                         <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay: i*0.05}} key={watch._id || i} className="group bg-white p-8 rounded-[40px] border border-gray-100 hover:shadow-2xl hover:border-[#D4AF37]/30 transition-all duration-500 flex flex-col h-full relative">
                             {watch.badge && <span className="absolute top-8 left-8 bg-[#D4AF37] text-black text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md z-20">{watch.badge}</span>}
                             
@@ -100,5 +84,20 @@ function NewArrivalsPage() {
     );
 }
 
-// 🌟 THIS LINE BYPASSES THE VERCEL BUILD CRASH 🌟
-export default dynamic(() => Promise.resolve(NewArrivalsPage), { ssr: false });
+// This will be the Server Component wrapper
+async function getNewArrivalsProducts() {
+    const ts = new Date().getTime();
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/products?t=${ts}`, { cache: 'no-store' });
+    if (!res.ok) {
+        throw new Error('Failed to fetch data');
+    }
+    const data = await res.json();
+    return data.data.sort((a:any, b:any) => (b.priority || 0) - (a.priority || 0));
+}
+
+export default async function NewArrivalsPage() {
+    const liveWatches = await getNewArrivalsProducts();
+
+    return <NewArrivalsClientPage liveWatches={liveWatches} />;
+}
+

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongoose';
 import Celebrity from '@/models/Celebrity';
 import mongoose from 'mongoose';
@@ -49,6 +50,7 @@ export async function DELETE(req: Request) {
 
         const Celebrity = mongoose.models.Celebrity || mongoose.model('Celebrity', new mongoose.Schema({}, { strict: false }));
         await Celebrity.findByIdAndDelete(id);
+        revalidatePath('/', 'layout');
 
         return NextResponse.json({ success: true, message: "Ambassador Deleted from Database" });
     } catch (error) {

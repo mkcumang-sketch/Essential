@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import mongoose from 'mongoose';
 
 let isConnected = false;
@@ -51,6 +52,7 @@ export async function DELETE(req: Request) {
         await connectDB();
         const { id } = await req.json();
         await Redirect.findByIdAndDelete(id);
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true });
     } catch (error) {
         return NextResponse.json({ success: false }, { status: 500 });

@@ -23,6 +23,7 @@ function CartPage() {
         const newCart = cart.filter((_, index) => index !== indexToRemove);
         setCart(newCart); 
         localStorage.setItem('luxury_cart', JSON.stringify(newCart));
+        router.refresh();
     };
 
     const cartTotal = cart.reduce((total, item) => total + ((item.offerPrice || item.price) * (item.qty || 1)), 0);

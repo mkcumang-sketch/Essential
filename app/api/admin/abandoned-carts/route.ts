@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import { getToken } from "next-auth/jwt";
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -69,3 +70,30 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    if (!(await isSuperAdminRequest(req))) {
+      return NextResponse.json(
+        { success: false, error: "You do not have access to do that." },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+    const url = new URL(req.url);
+    const id = url.searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "ID missing." }, { status: 400 });
+    }
+
+    await AbandonedCart.findByIdAndDelete(id);
+
+    revalidatePath('/', 'layout');
+    revalidateTag('abandoned-carts');
+
+    return NextResponse.json({ success: true, message: "Abandoned cart removed." });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Delete failed." }, { status: 500 });
+  }
+}

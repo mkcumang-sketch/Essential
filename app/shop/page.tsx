@@ -287,27 +287,41 @@ export default function CataloguePage() {
                   // Grid: 1 on small mobile, 2 on mobile, 3 on tablet, 4 on desktop
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 xl:gap-6">
                       <AnimatePresence mode='popLayout'>
-                          {filteredAndSortedProducts.map((watch) => (
+                          {filteredAndSortedProducts.map((watch, index) => (
                               <motion.div 
                                   layout 
-                                  initial={{ opacity: 0, scale: 0.95 }} 
-                                  animate={{ opacity: 1, scale: 1 }} 
+                                  initial={{ opacity: 0, y: 20 }} 
+                                  animate={{ opacity: 1, y: 0 }} 
                                   exit={{ opacity: 0, scale: 0.9 }} 
-                                  transition={{ duration: 0.3 }} 
+                                  transition={{ 
+                                    duration: 0.5, 
+                                    delay: index * 0.05,
+                                    ease: [0.16, 1, 0.3, 1]
+                                  }} 
                                   key={watch._id} 
-                                  className="group bg-white p-4 rounded-[16px] border border-gray-200 hover:border-black hover:shadow-lg transition-all duration-300 flex flex-col h-full relative cursor-pointer" 
+                                  className="group bg-white p-4 rounded-[16px] border border-gray-200 hover:border-black hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative cursor-pointer" 
+                                  style={{ perspective: "1000px" }}
                                   onClick={() => router.push(`/product/${watch.slug || watch._id}`)}
                               >
                                   {watch.badge && <span className="absolute top-3 left-3 bg-black text-white text-[7px] md:text-[8px] font-bold px-2 py-1 rounded uppercase z-20 shadow-sm">{watch.badge}</span>}
                                   
-                                  <div className="flex aspect-square bg-gray-50/80 rounded-xl overflow-hidden mb-4 items-center justify-center p-4 relative">
+                                  <motion.div 
+                                    className="flex aspect-square bg-gray-50/80 rounded-xl overflow-hidden mb-4 items-center justify-center p-4 relative"
+                                    whileHover={{ 
+                                        rotateX: 5, 
+                                        rotateY: -5,
+                                        translateZ: 20,
+                                        scale: 1.05
+                                    }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                  >
                                       <img 
                                           src={watch.imageUrl || (watch.images && watch.images[0]) || '/placeholder-watch.png'} 
-                                          className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" 
+                                          className="w-full h-full object-contain mix-blend-multiply group-hover:drop-shadow-2xl transition-all duration-500" 
                                           loading="lazy" 
                                           alt={watch.name}
                                       />
-                                  </div>
+                                  </motion.div>
 
                                   <div className="flex-1 flex flex-col justify-between">
                                       <div>
@@ -324,12 +338,14 @@ export default function CataloguePage() {
                                                   ₹{Number(watch.offerPrice || watch.price).toLocaleString()}
                                               </p>
                                           </div>
-                                          <button 
+                                          <motion.button 
+                                              whileHover={{ scale: 1.1 }}
+                                              whileTap={{ scale: 0.9 }}
                                               onClick={(e) => addToCart(watch, e)} 
-                                              className="w-7 h-7 md:w-8 md:h-8 bg-gray-100 text-black rounded-full hover:bg-black hover:text-white transition-all flex items-center justify-center active:scale-90"
+                                              className="w-7 h-7 md:w-8 md:h-8 bg-gray-100 text-black rounded-full hover:bg-black hover:text-white transition-all flex items-center justify-center shadow-sm"
                                           >
                                               <Plus size={14}/>
-                                          </button>
+                                          </motion.button>
                                       </div>
                                   </div>
                               </motion.div>

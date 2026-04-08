@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongoose';
 import Celebrity from '@/models/Celebrity';
 import mongoose from 'mongoose';
@@ -46,6 +47,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         const { id } = await params;
         const celebrityModel = mongoose.models.Celebrity || Celebrity;
         const celeb = await celebrityModel.findByIdAndDelete(id);
+        revalidatePath('/', 'layout');
         if (!celeb) return NextResponse.json({ success: false, error: "Celebrity not found." }, { status: 404 });
         
         if (celeb.cloudinaryPublicId) {
