@@ -1,20 +1,16 @@
 import connectDB from "@/lib/mongodb";
 import { Product } from "@/models/Product";
-import ShopClient from "@/components/ShopClient";
+import NewArrivalsClient from "@/components/NewArrivalsClient";
 
-export default async function CataloguePage() {
+export default async function NewArrivalsPage() {
     await connectDB();
-
-    // Direct DB Fetching (Server-Side)
     const products = await Product.find({})
         .sort({ createdAt: -1 })
+        .limit(20)
         .lean() as any[];
-
-    // Convert MongoDB _id to string for serialization
     const serializedProducts = products.map(p => ({
         ...p,
         _id: p._id.toString()
     }));
-
-    return <ShopClient initialProducts={serializedProducts} />;
+    return <NewArrivalsClient initialLiveWatches={serializedProducts} />;
 }
