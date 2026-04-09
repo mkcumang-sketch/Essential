@@ -59,19 +59,22 @@ export async function PUT(req: Request) {
 
     const body = await req.json();
     const orderId = body._id || body.id;
-    const newStatus = body.status;
 
-    if (!orderId || !newStatus) {
+    if (!orderId) {
       return NextResponse.json(
-        { success: false, error: "Order ID or status missing." },
+        { success: false, error: "Order ID missing." },
         { status: 400 }
       );
     }
 
+    const updateData: any = {};
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.trackingId !== undefined) updateData.trackingId = body.trackingId;
+
     const Order =
       mongoose.models.Order ||
       mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
-    await Order.findByIdAndUpdate(orderId, { status: newStatus });
+    await Order.findByIdAndUpdate(orderId, updateData);
 
     revalidatePath('/', 'layout');
     revalidateTag('orders', 'layout');

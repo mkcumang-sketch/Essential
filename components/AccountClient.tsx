@@ -273,7 +273,15 @@ export default function AccountClient({ initialData, session }: { initialData: a
                             </div>
                             <div className="flex items-center gap-3 w-full sm:w-auto">
                                 <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest w-full sm:w-auto text-center ${o.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-[#0A0A0A] text-[#D4AF37]'}`}>{o.status}</span>
-                                <button onClick={() => notify("Loading tracking details...")} className="px-4 py-2 rounded-xl border border-gray-200 text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-colors whitespace-nowrap">Track</button>
+                                {o.trackingId ? (
+                                    <Link href={`/track-order?id=${o._id}&email=${encodeURIComponent(o.customer?.email || email)}`} className="px-4 py-2 rounded-xl bg-[#D4AF37] text-black text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-colors whitespace-nowrap text-center shadow-lg">
+                                        Track Order
+                                    </Link>
+                                ) : (
+                                    <button onClick={() => notify("Tracking will be generated upon dispatch.")} className="px-4 py-2 rounded-xl border border-gray-200 text-gray-400 text-[9px] font-black uppercase tracking-widest transition-colors whitespace-nowrap cursor-not-allowed">
+                                        Preparing
+                                    </button>
+                                )}
                             </div>
                           </div>
                         ))}
@@ -338,7 +346,15 @@ export default function AccountClient({ initialData, session }: { initialData: a
                     
                     <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
                       <span className={`px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-black text-[#D4AF37]'}`}>{order.status || 'PENDING'}</span>
-                      <motion.button whileTap={{ scale: 0.95 }} onClick={() => notify("Fetching live location...")} className="flex-1 xl:flex-none px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-black text-[10px] font-black uppercase tracking-widest transition-colors text-center">Track</motion.button>
+                      {order.trackingId ? (
+                          <Link href={`/track-order?id=${order._id}&email=${encodeURIComponent(order.customer?.email || email)}`} className="flex-1 xl:flex-none px-6 py-3 rounded-xl bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest transition-colors text-center shadow-lg hover:scale-95 duration-200">
+                             Track Order
+                          </Link>
+                      ) : (
+                          <button onClick={() => notify("Awaiting dispatch. Tracking unavailable yet.")} className="flex-1 xl:flex-none px-6 py-3 rounded-xl bg-gray-100/50 text-gray-400 text-[10px] font-black uppercase tracking-widest transition-colors text-center cursor-not-allowed">
+                             Preparing
+                          </button>
+                      )}
                       <motion.button whileTap={{ scale: 0.95 }} onClick={() => notify("Downloading PDF Invoice...")} className="flex-1 xl:flex-none px-6 py-3 rounded-xl border border-gray-200 hover:border-black text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"><Download size={14}/> Invoice</motion.button>
                     </div>
                   </div>

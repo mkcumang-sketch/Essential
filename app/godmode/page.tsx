@@ -384,6 +384,14 @@ function AdminDashboard() {
     } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
   };
 
+  const handleUpdateTracking = async (id: string, trackingId: string) => {
+    setIsSyncing(true); addLog(`Order ${id.slice(-4)} tracking updated`);
+    try {
+        const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, trackingId }) });
+        if(res.ok) { fetchDashboardData(); alert("Tracking ID Saved!"); }
+    } catch(e) { alert("Failed to update tracking."); } finally { setIsSyncing(false); }
+  };
+
   const handleUpdateReviewStatus = async (reviewId: string, visibility: string) => {
       setIsSyncing(true); addLog(`Updating review visibility...`);
       try {
@@ -1054,35 +1062,50 @@ function AdminDashboard() {
                
                <div className="space-y-4">
                  {orders.length === 0 ? <p className="text-center py-20 text-gray-600 font-bold tracking-widest uppercase">No Active Operations</p> : orders.map((o: any, i: number) => (
-                    <div key={i} className="p-6 bg-[#111] border border-white/10 rounded-[20px] flex flex-col md:flex-row items-center justify-between hover:border-blue-500/50 transition-colors shadow-lg">
-                       <div className="flex items-center gap-6 mb-6 md:mb-0 w-full md:w-auto">
-                          <div className="w-16 h-16 rounded-xl bg-black border border-white/20 flex items-center justify-center text-white font-bold text-sm">#{o.orderId?.slice(-4) || 'UKN'}</div>
-                          <div>
-                             <h4 className="font-bold text-xl text-white mb-1">{o.customer?.name || 'Guest'}</h4>
-                             <p className="text-xs text-gray-400 flex items-center gap-2"><MapPin size={12}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-2 text-white/20">|</span> <Package size={12}/> {o.items?.length || 1} Unit(s)</p>
-                          </div>
+                    <div key={i} className="p-4 md:p-6 bg-[#111] border border-white/10 rounded-[20px] flex flex-col gap-4 hover:border-blue-500/50 transition-colors shadow-lg max-w-[100vw]">
+                       <div className="flex flex-col md:flex-row items-center justify-between w-full">
+                           <div className="flex items-center gap-6 mb-6 md:mb-0 w-full md:w-auto">
+                              <div className="w-16 h-16 rounded-xl bg-black border border-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0">#{o.orderId?.slice(-4) || 'UKN'}</div>
+                              <div className="overflow-hidden">
+                                 <h4 className="font-bold text-xl text-white mb-1 truncate">{o.customer?.name || 'Guest'}</h4>
+                                 <p className="text-xs text-gray-400 flex items-center gap-2"><MapPin size={12}/> {o.customer?.city || 'Unknown'}, {o.customer?.country || 'IN'} <span className="mx-2 text-white/20">|</span> <Package size={12}/> {o.items?.length || 1} Unit(s)</p>
+                              </div>
+                           </div>
+                           <div className="flex flex-wrap md:flex-nowrap items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                              <div className="text-left md:text-right w-1/2 md:w-auto">
+                                <p className="text-xs text-gray-500 mb-1">Clearance Value</p>
+                                <p className="font-bold text-green-400 text-2xl">₹{(o.totalAmount || 0).toLocaleString()}</p>
+                              </div>
+                              <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-1/2 md:w-48 bg-black border border-white/30 text-white font-bold uppercase rounded-xl p-4 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center">
+                                <option value="PENDING">Clearance Pending</option>
+                                <option value="PROCESSING">Processing</option>
+                                <option value="DISPATCHED">In Transit</option>
+                                <option className="text-green-500" value="DELIVERED">Secured Delivery</option>
+                                <option className="text-red-500" value="CANCELLED">Aborted</option>
+                              </select>
+                              
+                              <div className="flex gap-2 w-full md:w-auto justify-end mt-4 md:mt-0">
+                                 <button onClick={() => setSelectedOrder(o)} className="flex-1 md:flex-none p-4 bg-white/5 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl transition-all border border-white/10 flex justify-center items-center">
+                                     <Eye size={18}/>
+                                 </button>
+                                 <button onClick={() => handleDeleteOrder(o._id)} className="flex-1 md:flex-none p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all flex justify-center items-center">
+                                     <Trash2 size={18}/>
+                                 </button>
+                              </div>
+                           </div>
                        </div>
-                          <div className="flex flex-wrap md:flex-nowrap items-center gap-8 w-full md:w-auto justify-between md:justify-end">
-                          <div className="text-left md:text-right">
-                            <p className="text-xs text-gray-500 mb-1">Clearance Value</p>
-                            <p className="font-bold text-green-400 text-2xl">₹{(o.totalAmount || 0).toLocaleString()}</p>
-                          </div>
-                          <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-48 bg-black border border-white/30 text-white font-bold uppercase rounded-xl p-4 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center">
-                            <option value="PENDING">Clearance Pending</option>
-                            <option value="PROCESSING">Processing</option>
-                            <option value="DISPATCHED">In Transit</option>
-                            <option className="text-green-500" value="DELIVERED">Secured Delivery</option>
-                            <option className="text-red-500" value="CANCELLED">Aborted</option>
-                          </select>
-                          
-                          <div className="flex gap-2">
-                             <button onClick={() => setSelectedOrder(o)} className="p-4 bg-white/5 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl transition-all border border-white/10">
-                                 <Eye size={18}/>
-                             </button>
-                             <button onClick={() => handleDeleteOrder(o._id)} className="p-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
-                                 <Trash2 size={18}/>
-                             </button>
-                          </div>
+                       
+                       {/* Tracking ID Mobile Card Row */}
+                       <div className="bg-black/50 p-4 rounded-xl border border-white/10 flex flex-col md:flex-row gap-3 w-full items-center mt-2">
+                           <input 
+                               placeholder="Enter Tracking ID..." 
+                               defaultValue={o.trackingId || ""} 
+                               id={`track-${o._id}`}
+                               className="w-full bg-black border border-white/20 px-4 py-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-white" 
+                           />
+                           <button onClick={() => handleUpdateTracking(o._id, (document.getElementById(`track-${o._id}`) as HTMLInputElement).value)} className="w-full md:w-auto bg-[#D4AF37] text-black px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-white transition-all whitespace-nowrap">
+                               <Truck size={16}/> Save Tracking
+                           </button>
                        </div>
                     </div>
                  ))}

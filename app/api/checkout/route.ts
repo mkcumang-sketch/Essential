@@ -61,6 +61,15 @@ export async function POST(req: Request) {
         }
         const { items, shippingData, appliedReferralCode } = validation.data;
 
+        // 🌟 IDENTITY GLUE: Link Phone to Google/Email User
+        if (session && session.user && (session.user as any).id) {
+            const dbUser = await User.findById((session.user as any).id);
+            if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
+                dbUser.phone = shippingData.phone;
+                await dbUser.save();
+            }
+        }
+
         // 3. Server-Side Price & Stock Guard
         let trueTotal = 0;
         const validatedItems = [];

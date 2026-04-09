@@ -18,7 +18,10 @@ export default async function PremiumAccountDashboard() {
   // Direct DB Fetching (Server-Side)
   const uid = (session.user as any).id;
   const dbUser = await User.findById(uid).lean() as any;
-  const orders = await Order.find({ "customer.email": session.user?.email })
+  const query: any = { $or: [{ userId: (session.user as any).id }, { "customer.email": session.user?.email }] };
+  if ((session.user as any).phone) { query.$or.push({ "customer.phone": (session.user as any).phone }); }
+
+  const orders = await Order.find(query)
     .sort({ createdAt: -1 })
     .lean() as any[];
 
