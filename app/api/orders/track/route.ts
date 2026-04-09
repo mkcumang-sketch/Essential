@@ -19,9 +19,9 @@ export async function POST(request: Request) {
 
     await connectDB();
 
-    // Security: both orderId AND email must match — prevents enumeration attacks
+    // Security: both _id AND email must match — prevents enumeration attacks
     const order = await Order.findOne({
-      orderId: orderId.trim(),
+      _id: orderId.trim(),
       'customer.email': email.trim().toLowerCase(),
     })
       .select('orderId status trackingId totalAmount items createdAt customer')

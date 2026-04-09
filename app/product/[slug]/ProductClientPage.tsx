@@ -401,12 +401,20 @@ src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png
                                 )}
                             </>
                         ) : (
-                            <button 
-                                onClick={() => setShowWaitlistModal(true)}
-                                className="w-full py-6 rounded-[20px] bg-gray-200 text-gray-400 font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:bg-black hover:text-[#D4AF37]"
-                            >
-                                <Clock size={18}/> Join Waitlist
-                            </button>
+                            <div className="flex w-full gap-4">
+                                <button 
+                                    onClick={handleAddToCartClick}
+                                    className="w-full py-6 rounded-[20px] bg-gray-200 text-black font-black uppercase text-xs tracking-[4px] transition-all flex items-center justify-center gap-2 hover:bg-black hover:text-[#D4AF37]"
+                                >
+                                    <ShoppingBag size={16}/> Add to Cart
+                                </button>
+                                <button 
+                                    onClick={() => { handleAddToCartClick(); router.push('/checkout'); }}
+                                    className="w-full py-6 rounded-[20px] bg-black text-[#D4AF37] font-black uppercase text-xs tracking-[4px] transition-all flex items-center justify-center hover:bg-[#D4AF37] hover:text-black shadow-lg"
+                                >
+                                    Buy Now
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

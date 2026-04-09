@@ -142,7 +142,7 @@ export default async function AdminDashboard() {
                         <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
-                <div className="w-full max-w-full overflow-x-auto scrollbar-hide">
+                <div className="w-full max-w-[100vw] overflow-x-auto scrollbar-hide">
                     <div className="p-10 space-y-6 min-w-[520px]">
                         {recentOrders.map((order: any) => (
                             <div key={order._id.toString()} className="flex items-center justify-between p-6 bg-gray-50/50 rounded-[2rem] border border-gray-50 hover:border-black hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group">
