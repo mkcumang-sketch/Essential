@@ -60,7 +60,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const fetchDBCart = async () => {
         try {
           const res = await fetch("/api/cart/sync");
-          const data = await res.json();
+          
+          // 🚀 FIX: Read as text first to prevent JSON parse crash on empty response
+          const textContent = await res.text();
+          
+          if (!textContent) {
+            console.log("Cart Sync API returned empty response, skipping DB merge.");
+            return; 
+          }
+
+          const data = JSON.parse(textContent);
+          
           if (data.success && data.items) {
             // Merge logic: DB takes precedence for quantity, but keep LocalStorage items if not in DB
             setCartItems(prev => {
