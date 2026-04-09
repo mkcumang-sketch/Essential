@@ -10,6 +10,7 @@ export async function DELETE(
     try {
         await connectDB();
         
+        
         // 1. Params ko await karo (The Fix!)
         const resolvedParams = await params;
         

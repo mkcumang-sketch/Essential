@@ -14,8 +14,9 @@ import {
     TrendingUp, Search, ExternalLink
 } from "lucide-react";
 
-// CRITICAL: Cache for 60 seconds (ISR)
-export const revalidate = 60;
+// 🚀 THE GHOST KILLER: Force realtime rendering, strictly no caching
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export default async function AdminDashboard() {
     // 1. Auth Guard
@@ -24,7 +25,7 @@ export default async function AdminDashboard() {
         redirect("/login");
     }
 
-    // 2. Data Fetching (Directly from MongoDB)
+    // 2. Data Fetching (Directly from MongoDB - Always Fresh due to force-dynamic)
     await connectDB();
 
     const [users, allOrders] = await Promise.all([

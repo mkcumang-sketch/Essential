@@ -4,7 +4,7 @@ import { Order } from '@/models/Order';
 import { Product } from '@/models/Product';
 
 export const dynamic = 'force-dynamic';
-
+export const revalidate = 0;
 export async function GET() {
   try {
     await connectDB();

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 
 // 🚨 ENTERPRISE AI SERVICE (Requires OpenAI / Gemini API Key in .env)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export async function POST(req: Request) {
   try {
     const session = await getServerSession();

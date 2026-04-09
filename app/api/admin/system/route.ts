@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Settings from '@/models/Setting'; // ✅ Model yahan sahi hai
-
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export async function GET() {
   await connectDB();
   const config = await Settings.findOne({ id: 'global_config' });

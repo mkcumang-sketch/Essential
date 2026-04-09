@@ -6,6 +6,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 const AbandonedCartSchema = new mongoose.Schema(
   {

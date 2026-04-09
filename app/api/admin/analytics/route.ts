@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
 // 🌟 1. DATABASE CONNECTION 🌟
+
+export const revalidate = 0;
+
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
     if (!process.env.MONGODB_URI) throw new Error("Missing MONGODB_URI");

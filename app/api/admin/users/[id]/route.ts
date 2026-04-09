@@ -1,33 +1,37 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
-import User from '@/models/User'; // Adjust import if your model path is different
+import User from '@/models/User';
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
+const noCacheHeaders = {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store'
+};
 
 export async function DELETE(
     request: Request,
-    { params }: { params: Promise<{ id: string }> } // <-- Next.js 15 Promise Type
+    { params }: { params: Promise<{ id: string }> } 
 ) {
     try {
         await connectDB();
-        
-        // 1. Params ko await karo (The Fix!)
         const resolvedParams = await params;
         
-        // 2. Database se delete karo
         const deletedUser = await User.findByIdAndDelete(resolvedParams.id);
 
         if (!deletedUser) {
-            return NextResponse.json({ success: false, message: 'VIP Member not found' }, { status: 404 });
+            return NextResponse.json({ success: false, message: 'VIP Member not found' }, { status: 404, headers: noCacheHeaders });
         }
 
-        // 3. THE NUKE: Next.js Cache flush
         revalidatePath('/admin/users');
         revalidatePath('/admin', 'layout');
 
-        return NextResponse.json({ success: true, message: 'Member Records Purged' });
-        
+        return NextResponse.json({ success: true, message: 'Client Records Purged' }, { headers: noCacheHeaders });
     } catch (error) {
-        console.error('CRM Deletion Error:', error);
-        return NextResponse.json({ success: false, message: 'Failed to delete member' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Failed to delete client' }, { status: 500, headers: noCacheHeaders });
     }
 }

@@ -1,8 +1,17 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
 import { GlobalProvider } from './GlobalProvider';
 import { ToastProvider } from '@/context/ToastContext';
+
+// 🚀 THE APP-MODE VIEWPORT: Locks zoom and sets the native status bar color
+export const viewport: Viewport = {
+  themeColor: "#050505",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevents zooming to give it a true native app feel
+};
 
 export const metadata: Metadata = {
   title: {
@@ -14,6 +23,16 @@ export const metadata: Metadata = {
   authors: [{ name: 'Essential Rush' }],
   creator: 'Essential Rush',
   publisher: 'Essential Rush',
+  
+  // 🚀 THE PWA METADATA: Tells phones this is an installable app
+  manifest: '/manifest.json',
+  applicationName: 'Essential Rush',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Essential',
+  },
+
   formatDetection: {
     email: false,
     address: false,

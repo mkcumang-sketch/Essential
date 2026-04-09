@@ -32,17 +32,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (isMobile) setIsSidebarOpen(false);
   };
 
+  // 💎 'short' names for the mobile bottom app bar
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-    { name: 'Policies CMS', icon: FileText, href: '/admin/cms/policies' },
-    { name: 'About CMS', icon: Info, href: '/admin/cms/about' },
-    { name: 'Vault Carts', icon: ShoppingBag, href: '/admin/abandoned-carts' },
-    { name: 'VIP SEO', icon: ShieldCheck, href: '/admin/seo' },
-    { name: 'Settings', icon: Settings, href: '/admin/settings' },
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/admin', short: 'Home' },
+    { name: 'Policies CMS', icon: FileText, href: '/admin/cms/policies', short: 'Policies' },
+    { name: 'About CMS', icon: Info, href: '/admin/cms/about', short: 'About' },
+    { name: 'Vault Carts', icon: ShoppingBag, href: '/admin/abandoned-carts', short: 'Carts' },
+    { name: 'VIP SEO', icon: ShieldCheck, href: '/admin/seo', short: 'SEO' },
+    { name: 'Settings', icon: Settings, href: '/admin/settings', short: 'Config' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-[#050505] flex flex-col md:flex-row font-sans">
+    // 💎 Added pb-28 md:pb-0 so content doesn't hide behind the mobile bottom bar
+    <div className="min-h-screen bg-[#F9FAFB] text-[#050505] flex flex-col md:flex-row font-sans pb-28 md:pb-0">
       
       {/* Mobile Header Toggle */}
       <div className="md:hidden flex items-center justify-between p-6 bg-white border-b border-gray-100 sticky top-0 z-[60] shadow-sm">
@@ -165,6 +167,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
       </main>
+
+      {/* 🚀 THE MOBILE APP BOTTOM NAVIGATION (With iPhone Safe Area Fix) 🚀 */}
+      <nav 
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-2 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
+      >
+        {menuItems.slice(0, 4).map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link key={item.name} href={item.href} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${isActive ? "text-[#D4AF37]" : "text-gray-400 hover:text-black"}`}>
+              <item.icon size={20} className={isActive ? "fill-[#D4AF37]/20" : ""} />
+              <span className="text-[8px] font-black uppercase tracking-widest">{item.short}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
     </div>
   );
 }

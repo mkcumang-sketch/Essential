@@ -26,6 +26,15 @@ const nextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com" },
     ],
   },
+  
+  // 🚀 Sirf yeh block add kiya hai Ghost Data (Cache) rokne ke liye
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+      static: 0,
+    },
+  },
+
   async headers() {
     return [
       {

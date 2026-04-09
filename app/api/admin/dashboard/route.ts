@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'; // VERCEL CACHE KILLER
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+export const revalidate = 0;
 
 export async function GET() {
     try {
