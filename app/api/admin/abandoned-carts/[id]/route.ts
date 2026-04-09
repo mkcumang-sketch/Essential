@@ -2,43 +2,37 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import { AbandonedCart } from '@/models/AbandonedCart';
+import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 export async function DELETE(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> } 
+    _request: Request,
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await connectDB();
-        const resolvedParams = await params;
-        const targetId = resolvedParams.id;
+        const { id: targetId } = await params;
 
-        // 🚨 TERMINAL MEIN DEKHNA: Ye print hoga jab tu delete dabayega
-        console.log("🔥 ATTEMPTING TO DELETE CART ID:", targetId);
-        
+        if (!targetId || !mongoose.Types.ObjectId.isValid(targetId)) {
+            return NextResponse.json({ success: false, message: 'Invalid Cart ID' }, { status: 400 });
+        }
+
         const deletedCart = await AbandonedCart.findByIdAndDelete(targetId);
 
         if (!deletedCart) {
-            console.log("❌ CART NOT FOUND IN DATABASE!");
-            return NextResponse.json({ success: false, message: 'Cart already deleted or ID mismatch' }, { status: 404 });
+            return NextResponse.json({ success: false, message: 'Cart not found' }, { status: 404 });
         }
 
-        console.log("✅ CART PERMANENTLY DELETED FROM DB!");
-        
         revalidatePath('/admin/abandoned-carts');
-        revalidatePath('/admin', 'layout'); 
+        revalidatePath('/admin', 'layout');
 
-        return NextResponse.json({ 
-            success: true, 
-            message: 'Cart Purged' 
-        }, { 
-            headers: { 'Cache-Control': 'no-store, max-age=0' } 
-        });
-
+        return NextResponse.json(
+            { success: true, message: 'Cart Purged' },
+            { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+        );
     } catch (error: any) {
-        console.error("🔴 MONGODB CRASH:", error.message);
         return NextResponse.json({ success: false, message: 'Server Database Error' }, { status: 500 });
     }
 }

@@ -76,6 +76,7 @@ export default function Footer() {
                     <Link href="/shop" className="text-gray-400 hover:text-white transition-colors">Collection</Link>
                     <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Concierge</Link>
                     <Link href="/account" className="text-gray-400 hover:text-white transition-colors">My Account</Link>
+                    <Link href="/track-order" className="text-gray-400 hover:text-white transition-colors">Track Order</Link>
                 </div>
             </div>
             <div>

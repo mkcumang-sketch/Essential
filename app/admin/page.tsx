@@ -142,29 +142,31 @@ export default async function AdminDashboard() {
                         <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
-                <div className="p-10 space-y-6">
-                    {recentOrders.map((order: any) => (
-                        <div key={order._id.toString()} className="flex items-center justify-between p-6 bg-gray-50/50 rounded-[2rem] border border-gray-50 hover:border-black hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group">
-                            <div className="flex items-center gap-6">
-                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center font-bold text-gray-400 border border-gray-100 group-hover:bg-black group-hover:text-white group-hover:border-black transition-all duration-500">
-                                    <Package size={24} />
+                <div className="w-full max-w-full overflow-x-auto scrollbar-hide">
+                    <div className="p-10 space-y-6 min-w-[520px]">
+                        {recentOrders.map((order: any) => (
+                            <div key={order._id.toString()} className="flex items-center justify-between p-6 bg-gray-50/50 rounded-[2rem] border border-gray-50 hover:border-black hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center font-bold text-gray-400 border border-gray-100 group-hover:bg-black group-hover:text-white group-hover:border-black transition-all duration-500">
+                                        <Package size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-black text-black tracking-tight">{order.orderId}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-black text-black tracking-tight">{order.orderId}</p>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                <div className="flex items-center gap-12">
+                                    <div className="text-right">
+                                        <p className="text-base font-black text-black font-mono tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mt-1">{order.status}</p>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:border-black transition-colors">
+                                        <ChevronRight size={18} className="text-gray-300 group-hover:text-black transition-all" />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-12">
-                                <div className="text-right">
-                                    <p className="text-base font-black text-black font-mono tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
-                                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mt-1">{order.status}</p>
-                                </div>
-                                <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:border-black transition-colors">
-                                    <ChevronRight size={18} className="text-gray-300 group-hover:text-black transition-all" />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 
