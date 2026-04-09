@@ -3,32 +3,42 @@ import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
 import { AbandonedCart } from '@/models/AbandonedCart';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export async function DELETE(
     request: Request,
-    { params }: { params: Promise<{ id: string }> } // <-- Next.js 15 Promise Type
+    { params }: { params: Promise<{ id: string }> } 
 ) {
     try {
         await connectDB();
-        
-        
-        // 1. Params ko await karo (The Fix!)
         const resolvedParams = await params;
+        const targetId = resolvedParams.id;
+
+        // 🚨 TERMINAL MEIN DEKHNA: Ye print hoga jab tu delete dabayega
+        console.log("🔥 ATTEMPTING TO DELETE CART ID:", targetId);
         
-        // 2. Database se delete karo
-        const deletedCart = await AbandonedCart.findByIdAndDelete(resolvedParams.id);
+        const deletedCart = await AbandonedCart.findByIdAndDelete(targetId);
 
         if (!deletedCart) {
-            return NextResponse.json({ success: false, message: 'Cart not found in Vault' }, { status: 404 });
+            console.log("❌ CART NOT FOUND IN DATABASE!");
+            return NextResponse.json({ success: false, message: 'Cart already deleted or ID mismatch' }, { status: 404 });
         }
 
-        // 3. THE NUKE: Next.js Cache flush
+        console.log("✅ CART PERMANENTLY DELETED FROM DB!");
+        
         revalidatePath('/admin/abandoned-carts');
         revalidatePath('/admin', 'layout'); 
 
-        return NextResponse.json({ success: true, message: 'Cart Permanently Purged' });
-        
-    } catch (error) {
-        console.error('Vault Deletion Error:', error);
-        return NextResponse.json({ success: false, message: 'Failed to purge cart' }, { status: 500 });
+        return NextResponse.json({ 
+            success: true, 
+            message: 'Cart Purged' 
+        }, { 
+            headers: { 'Cache-Control': 'no-store, max-age=0' } 
+        });
+
+    } catch (error: any) {
+        console.error("🔴 MONGODB CRASH:", error.message);
+        return NextResponse.json({ success: false, message: 'Server Database Error' }, { status: 500 });
     }
 }

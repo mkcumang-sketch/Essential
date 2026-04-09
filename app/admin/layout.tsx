@@ -20,10 +20,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Safely check window size only after component mounts (Fixes Hydration Error)
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); // Initial check
+    handleResize(); 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -32,7 +31,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (isMobile) setIsSidebarOpen(false);
   };
 
-  // 💎 'short' names for the mobile bottom app bar
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin', short: 'Home' },
     { name: 'Policies CMS', icon: FileText, href: '/admin/cms/policies', short: 'Policies' },
@@ -43,11 +41,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    // 💎 Added pb-28 md:pb-0 so content doesn't hide behind the mobile bottom bar
-    <div className="min-h-screen bg-[#F9FAFB] text-[#050505] flex flex-col md:flex-row font-sans pb-28 md:pb-0">
+    // 🚀 FIX 1: max-w-[100vw] and relative positioning added to root to completely cage the layout
+    <div className="relative min-h-[100dvh] w-full max-w-[100vw] overflow-x-hidden bg-[#F9FAFB] text-[#050505] flex flex-col md:flex-row font-sans pb-28 md:pb-0">
       
       {/* Mobile Header Toggle */}
-      <div className="md:hidden flex items-center justify-between p-6 bg-white border-b border-gray-100 sticky top-0 z-[60] shadow-sm">
+      <div className="md:hidden flex w-full items-center justify-between p-5 sm:p-6 bg-white border-b border-gray-100 sticky top-0 z-[60] shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-xl flex items-center justify-center font-bold shadow-lg">♞</div>
           <span className="font-serif font-black tracking-tighter uppercase text-base">Vault Admin</span>
@@ -161,16 +159,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-x-hidden">
-        <div className="max-w-7xl mx-auto p-6 md:p-10">
+      {/* 🚀 FIX 2: min-w-0 prevents flexbox from stretching. w-full locks it to screen size */}
+      <main className="flex-1 w-full min-w-0 overflow-x-hidden">
+        <div className="w-full max-w-[100vw] md:max-w-7xl mx-auto p-4 sm:p-6 md:p-10 overflow-x-hidden">
           {children}
         </div>
       </main>
 
-      {/* 🚀 THE MOBILE APP BOTTOM NAVIGATION (With iPhone Safe Area Fix) 🚀 */}
+      {/* 🚀 FIX 3: w-full and max-w-[100vw] explicitly locks the bottom nav so it doesn't float away */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-2 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
+        className="md:hidden fixed bottom-0 left-0 w-full max-w-[100vw] bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-2 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
       >
         {menuItems.slice(0, 4).map((item) => {
