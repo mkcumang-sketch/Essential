@@ -9,11 +9,12 @@ export async function POST(req: Request) {
         
         const body = await req.json();
         const trackingId = body.orderId?.trim();
+        const email = body.email?.trim().toLowerCase();
         
-        // 2. Agar khali request aayi toh reject karo
-        if (!trackingId) {
+        // 2. Agar dono cheezein nahi aayi toh reject karo
+        if (!trackingId || !email) {
             return NextResponse.json(
-                { success: false, error: "Please provide a valid Tracking ID." }, 
+                { success: false, message: "Please provide both Order ID and Billing Email." }, 
                 { status: 400 }
             );
         }
@@ -32,23 +33,39 @@ export async function POST(req: Request) {
         // Agar order nahi mila
         if (!foundOrder) {
             return NextResponse.json(
-                { success: false, error: "Order not found. Please check your Tracking ID." }, 
+                { success: false, message: "Order not found. Please check your Order ID." }, 
                 { status: 404 }
             );
         }
 
-        // 🔒 5. STRICT SECURITY: PII (Personally Identifiable Information) Hatao
-        // Track karte waqt sirf zaroori details bhejo, customer ka phone/address nahi!
+        // 🔒 5. STRICT SECURITY (IDENTITY GLUE): Verify Billing Email
+        // Yahan hum check kar rahe hain ki jis bande ka email hai, usi ko data dikhe
+        const orderEmail = (foundOrder.customer?.email || foundOrder.shippingData?.email || "").toLowerCase();
+        
+        if (orderEmail !== email) {
+            return NextResponse.json(
+                { success: false, message: "Billing email does not match this order." }, 
+                { status: 403 } // 403 Forbidden
+            );
+        }
+
+        // 6. Frontend Format Matching (The UI Fix)
+        // Frontend ko `firstItemName` aur `trackingId` chahiye
+        const firstItemName = foundOrder.items && foundOrder.items.length > 0 
+            ? foundOrder.items[0].name || foundOrder.items[0].title || "Luxury Asset"
+            : "Luxury Asset";
+
         const safeOrderDetails = {
             _id: foundOrder._id,
-            orderId: foundOrder.orderId || foundOrder._id.toString().slice(-6).toUpperCase(),
-            status: foundOrder.status || "PROCESSING",
+            orderId: foundOrder.orderId || foundOrder._id.toString().slice(-8).toUpperCase(),
+            status: foundOrder.status || "PENDING",
             totalAmount: foundOrder.totalAmount,
-            items: foundOrder.items,
+            firstItemName: firstItemName,            // UI ke liye item ka naam
+            trackingId: foundOrder.trackingId || "", // Courier ki Tracking ID (e.g. Delhivery)
             createdAt: foundOrder.createdAt
         };
 
-        // 6. Success Response Frontend ko bhej do
+        // 7. Success Response Frontend ko bhej do
         return NextResponse.json({ 
             success: true, 
             order: safeOrderDetails 
@@ -57,7 +74,7 @@ export async function POST(req: Request) {
     } catch (error) {
         console.error("Tracking API Error:", error);
         return NextResponse.json(
-            { success: false, error: "Server Error while tracking order." }, 
+            { success: false, message: "Server Error while tracking order." }, 
             { status: 500 }
         );
     }

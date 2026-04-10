@@ -111,11 +111,17 @@ export async function POST(req: Request) {
 
         // 📝 5. CREATE PENDING ORDER IN DB
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
+        
+        // Generate Unique Identifiers
         const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        
+        // 🚀 AUTO-TRACKING ID GENERATOR (e.g., TRK-ER-84729104)
+        const autoTrackingId = `TRK-ER-${Math.floor(10000000 + Math.random() * 90000000)}`;
         
         const newOrder = await Order.create({
             orderId: uniqueId,
             orderNumber: uniqueId,
+            trackingId: autoTrackingId, // 👈 YAHAN ADD HUA HAI MAGIC
             razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
             userId: session?.user?.id || null,
             items: validatedItems,
