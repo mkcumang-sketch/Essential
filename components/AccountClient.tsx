@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -16,11 +17,12 @@ const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: f
 type TabType = "overview" | "profile" | "orders" | "addresses" | "wallet" | "wishlist" | "offers" | "security" | "support";
 
 export default function AccountClient({ initialData, session }: { initialData: any; session: any }) {
+  const router = useRouter(); // Added router for cache busting
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
 
-  const su = session.user as any;
+  const su = session?.user as any;
   const name = su?.name || "VIP Member";
   const email = su?.email || "";
   const walletPoints = Number(initialData?.walletPoints ?? 0);
@@ -28,7 +30,13 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const orders = Array.isArray(initialData?.orders) ? initialData.orders : [];
   const lastThreeOrders = orders.slice(0, 3);
 
-  const [profile, setProfile] = useState({ name, email, phone: "", dob: "" });
+  // Load Phone from initialData if available, else empty
+  const [profile, setProfile] = useState({ 
+    name, 
+    email, 
+    phone: initialData?.phone || "", 
+    dob: initialData?.dob || "" 
+  });
   const [profileErrors, setProfileErrors] = useState<any>({});
   const [profileSaving, setProfileSaving] = useState(false);
 
@@ -36,7 +44,7 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const [addrLoading, setAddrLoading] = useState(true);
   const [addrForm, setAddrForm] = useState({ line1: "", city: "", state: "", zip: "", isDefault: false });
 
-  // Animation variants for tabs (TypeScript fixed)
+  // Animation variants for tabs
   const tabVariants: any = {
     hidden: { opacity: 0, y: 15, scale: 0.98 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
@@ -50,6 +58,14 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const notify = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Manual Cache Busting Function
+  const handleRefresh = () => {
+    startTransition(() => {
+      router.refresh();
+      notify("Data synced with Vault");
+    });
   };
 
   useEffect(() => {
@@ -88,13 +104,30 @@ export default function AccountClient({ initialData, session }: { initialData: a
     return Object.keys(errs).length === 0;
   };
 
-  const saveProfile = () => {
+  // UPGRADED: Real API Call to Save Profile & Identity Glue
+  const saveProfile = async () => {
     if (!validateProfile()) return;
     setProfileSaving(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      
+      if (res.ok) {
+        notify("Profile details updated successfully.");
+        startTransition(() => {
+          router.refresh(); // Tell Next.js to update server data on client
+        });
+      } else {
+        notify("Failed to update profile.");
+      }
+    } catch (error) {
+      notify("Network error. Try again.");
+    } finally {
       setProfileSaving(false);
-      notify("Profile details updated successfully.");
-    }, 1200);
+    }
   };
 
   const addAddress = () => {
@@ -112,6 +145,7 @@ export default function AccountClient({ initialData, session }: { initialData: a
           body: JSON.stringify(addrForm),
         });
         notify("New address added to your vault.");
+        router.refresh();
       } catch {
         setAddresses((a) => a.filter((x) => x._id !== optimistic._id));
         notify("Failed to add address.");
@@ -154,7 +188,6 @@ export default function AccountClient({ initialData, session }: { initialData: a
     notify(`${item.name || item.title} moved to cart.`);
   };
 
- 
   const TABS = [
     { key: "overview", label: "Overview", icon: Sparkles },
     { key: "profile", label: "Profile", icon: User },
@@ -190,9 +223,14 @@ export default function AccountClient({ initialData, session }: { initialData: a
           <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-xl flex items-center justify-center font-black group-hover:bg-[#D4AF37] group-hover:text-black transition-colors duration-500">♞</div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] hidden md:block">Essential Rush</p>
         </Link>
-        <button onClick={() => signOut({ callbackUrl: "/login" })} className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
-          <LogOut size={14} /> Logout
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={handleRefresh} className="p-2 text-gray-400 hover:text-black transition-colors">
+            <RefreshCw size={16} className={isPending ? "animate-spin" : ""} />
+          </button>
+          <button onClick={() => signOut({ callbackUrl: "/login" })} className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest">
+            <LogOut size={14} /> Logout
+          </button>
+        </div>
       </header>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10">

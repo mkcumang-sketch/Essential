@@ -30,11 +30,11 @@ export default function AbandonedCartsAdminPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // 1. Extracted fetch function to forcefully sync data
+  // 1. 🚀 THE GHOST KILLER: Extracted fetch function with Cache Buster
   const fetchLeads = useCallback(async () => {
     try {
-      // cache: 'no-store' ensures we never get stale Next.js cache
-      const r = await fetch("/api/admin/abandoned-carts", { cache: "no-store" });
+      // Date.now() ensures Next.js/Browser NEVER caches this request. It always gets fresh data.
+      const r = await fetch(`/api/admin/abandoned-carts?t=${Date.now()}`, { cache: "no-store" });
       const j = await r.json();
       if (j?.success && Array.isArray(j.leads)) {
         setLeads(j.leads);
@@ -62,10 +62,9 @@ export default function AbandonedCartsAdminPage() {
   }, [leads, query]);
 
   const onDelete = (id: string) => {
-    const prev = leads;
     setDeletingId(id);
     
-    // Optimistic UI: Remove instantly
+    // 🚀 INSTANT FRONTEND FIX: Turant screen se hata do bina wait kiye
     setLeads((l) => l.filter((x) => x._id !== id));
     
     startTransition(async () => {
@@ -74,14 +73,15 @@ export default function AbandonedCartsAdminPage() {
         
         if (res?.success) {
           notify("Cart Permanently Purged", "success");
-          router.refresh(); // Sync Next.js server cache
+          // Background me ek baar aur fresh data sync karlo taaki koi discrepancy na rahe
+          fetchLeads(); 
         } else {
-          // If server action fails, bring the ghost back & show error
-          setLeads(prev);
+          // Fail hua toh wapas purana data manga lo
+          fetchLeads();
           notify("Failed to purge cart. Check backend logic.", "error");
         }
       } catch (error) {
-        setLeads(prev);
+        fetchLeads();
         notify("Network error during deletion", "error");
       } finally {
         setDeletingId(null);

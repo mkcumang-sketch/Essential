@@ -94,7 +94,6 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
     
     // Phase 2: Luxury Features
     const [showNegotiationModal, setShowNegotiationModal] = useState(false);
-    const [showWaitlistModal, setShowWaitlistModal] = useState(false);
     const [negotiationPrice, setNegotiationPrice] = useState(Number(initialProduct.offerPrice || initialProduct.price));
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -166,7 +165,11 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         
         setShowLeadModal(false); 
         showToast("Added to your saved list!", "success");
-        setTimeout(() => router.push('/cart'), 500);
+    };
+
+    const handleBuyNowClick = () => {
+        executeFinalAddToCart();
+        router.push('/checkout');
     };
 
     const handleUpload = async (e: any) => {
@@ -239,32 +242,6 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
         }
     };
 
-    const handleJoinWaitlist = async () => {
-        if (!session) return showToast("Please login to join the waitlist.", "error");
-        setIsSubmitting(true);
-        try {
-            const res = await fetch('/api/waitlist', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productId: product._id,
-                    productName: product.name,
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showToast(data.message, "success");
-                setShowWaitlistModal(false);
-            } else {
-                showToast(data.error, "error");
-            }
-        } catch (err) {
-            showToast("Vault connection error.", "error");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[#FAFAFA] text-black selection:bg-[#D4AF37] selection:text-white pb-20">
             
@@ -284,16 +261,14 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                 <div className="lg:col-span-7 space-y-6">
                     <div className="aspect-[4/5] md:aspect-square bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm relative overflow-hidden flex items-center justify-center group">
                         {product.badge && <span className="absolute top-8 left-8 bg-[#D4AF37] text-black text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg">{product.badge}</span>}
-                        {product.stock < 3 && product.stock > 0 && <span className="absolute top-8 right-8 bg-red-500 text-white text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg animate-pulse">Low Stock</span>}
                         
                         <AnimatePresence mode="wait">
                             {activeMedia.type === 'image' && (
                                 <motion.img 
                                     key={activeMedia.url} 
                                     initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0}} transition={{duration:0.4}} 
-src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png'} 
-// Ya fir agar optimizeImage string return nahi karta null/empty par, toh seedha ye laga:
-// src={activeMedia?.url || '/placeholder-watch.png'}                                    alt={product.seo?.imageAltTexts?.[activeMedia.url] || `${product.name} Main View`}
+                                    src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png'} 
+                                    alt={product.seo?.imageAltTexts?.[activeMedia.url] || `${product.name} Main View`}
                                     className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-700"
                                 />
                             )}
@@ -382,39 +357,30 @@ src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png
                     </div>
 
                     <div className="mt-auto space-y-4">
-                        {/* 🚨 THE SECURE ACQUISITION BUTTON (SOLD OUT LOGIC) 🚨 */}
-                        {product.stock > 0 ? (
-                            <>
-                                <button 
-                                    onClick={handleAddToCartClick} 
-                                    className="w-full py-6 rounded-[20px] bg-black text-white font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:bg-[#D4AF37] hover:text-black hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)]"
-                                >
-                                    <ShoppingBag size={18}/> Add to cart
-                                </button>
-                                {(product.offerPrice || product.price) >= 500000 && (
-                                    <button 
-                                        onClick={() => setShowNegotiationModal(true)}
-                                        className="w-full py-6 rounded-[20px] border border-gray-200 bg-transparent text-black font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:border-black"
-                                    >
-                                        <ShieldCheck size={18} className="text-[#D4AF37]"/> Make an Offer
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            <div className="flex w-full gap-4">
-                                <button 
-                                    onClick={handleAddToCartClick}
-                                    className="w-full py-6 rounded-[20px] bg-gray-200 text-black font-black uppercase text-xs tracking-[4px] transition-all flex items-center justify-center gap-2 hover:bg-black hover:text-[#D4AF37]"
-                                >
-                                    <ShoppingBag size={16}/> Add to Cart
-                                </button>
-                                <button 
-                                    onClick={() => { handleAddToCartClick(); router.push('/checkout'); }}
-                                    className="w-full py-6 rounded-[20px] bg-black text-[#D4AF37] font-black uppercase text-xs tracking-[4px] transition-all flex items-center justify-center hover:bg-[#D4AF37] hover:text-black shadow-lg"
-                                >
-                                    Buy Now
-                                </button>
-                            </div>
+                        {/* 🚨 THE UPGRADED ALWAYS-BUYABLE LOGIC 🚨 */}
+                        <div className="flex w-full gap-4">
+                            <button 
+                                onClick={handleAddToCartClick}
+                                className="w-full py-6 rounded-[20px] bg-white border-2 border-black text-black font-black uppercase text-xs tracking-[4px] transition-all flex items-center justify-center gap-2 hover:bg-gray-50 hover:shadow-lg"
+                            >
+                                <ShoppingBag size={16}/> Add to Cart
+                            </button>
+                            <button 
+                                onClick={handleBuyNowClick}
+                                className="w-full py-6 rounded-[20px] bg-black text-[#D4AF37] font-black uppercase text-xs tracking-[4px] transition-all flex items-center justify-center hover:bg-[#D4AF37] hover:text-black shadow-lg"
+                            >
+                                Buy Now
+                            </button>
+                        </div>
+                        
+                        {/* Make an Offer Button (Visible only for high value items) */}
+                        {(product.offerPrice || product.price) >= 500000 && (
+                            <button 
+                                onClick={() => setShowNegotiationModal(true)}
+                                className="w-full py-6 rounded-[20px] border border-gray-200 bg-transparent text-black font-black uppercase text-sm tracking-[4px] transition-all flex items-center justify-center gap-3 hover:border-black"
+                            >
+                                <ShieldCheck size={18} className="text-[#D4AF37]"/> Make an Offer
+                            </button>
                         )}
                     </div>
                 </div>
@@ -572,37 +538,6 @@ src={activeMedia?.url ? optimizeImage(activeMedia.url) : '/placeholder-watch.png
                                 </button>
                                 <p className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-loose px-4">Our concierge team will review your proposition within 24 hours.</p>
                             </form>
-                        </motion.div>
-                    </div>
-                )}
-
-                {showWaitlistModal && (
-                    <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
-                        <motion.div initial={{scale:0.9, opacity:0}} animate={{scale:1, opacity:1}} exit={{scale:0.9, opacity:0}} className="bg-white rounded-[40px] p-10 max-w-lg w-full relative">
-                            <button onClick={()=>setShowWaitlistModal(false)} className="absolute top-8 right-8 p-2 bg-gray-100 rounded-full hover:bg-black hover:text-white transition-all"><X size={18}/></button>
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-black text-[#D4AF37] rounded-full flex items-center justify-center mx-auto mb-6"><Clock size={32}/></div>
-                                <h3 className="text-3xl font-serif font-bold text-black mb-2">Enter the Waitlist</h3>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Be first to know when it returns.</p>
-                            </div>
-                            
-                            <div className="space-y-8">
-                                <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-6">
-                                    <img src={optimizeImage(product.imageUrl)} className="w-20 h-20 object-contain mix-blend-multiply" alt={product.name}/>
-                                    <div>
-                                        <p className="text-[9px] font-black text-[#D4AF37] uppercase tracking-widest mb-1">{product.brand}</p>
-                                        <p className="font-serif font-bold text-lg leading-tight text-black">{product.name}</p>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={handleJoinWaitlist}
-                                    disabled={isSubmitting}
-                                    className="w-full py-5 bg-black text-[#D4AF37] font-black uppercase tracking-[4px] rounded-2xl text-xs hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl disabled:opacity-50"
-                                >
-                                    {isSubmitting ? "Processing…" : "Confirm Waitlist Entry"}
-                                </button>
-                                <p className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-loose">Secured priority access for your identity.</p>
-                            </div>
                         </motion.div>
                     </div>
                 )}

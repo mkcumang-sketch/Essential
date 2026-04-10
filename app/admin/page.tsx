@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
     const recentOrders = allOrders.slice(0, 5);
 
     return (
-        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 max-w-[100vw] overflow-hidden px-2 sm:px-0">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-4">
                 <div>
                     <h1 className="text-6xl font-serif font-black italic tracking-tighter text-black">Vault Control</h1>
@@ -91,39 +91,39 @@ export default async function AdminDashboard() {
             </div>
 
             {/* VIP SEO DASHBOARD SECTION */}
-            <section className="bg-black rounded-[3.5rem] p-12 text-white overflow-hidden relative group">
-                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-700">
+            <section className="bg-black rounded-[3.5rem] p-8 md:p-12 text-white overflow-hidden relative group w-full">
+                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-700 pointer-events-none">
                     <TrendingUp size={120} className="text-[#D4AF37]" />
                 </div>
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
                     <div className="max-w-xl">
                         <div className="flex items-center gap-3 mb-6">
-                            <span className="px-3 py-1 bg-[#D4AF37] text-black text-[9px] font-black uppercase tracking-widest rounded-full">Elite Feature</span>
-                            <h2 className="text-3xl font-serif font-black italic tracking-tighter">VIP SEO Intelligence</h2>
+                            <span className="px-3 py-1 bg-[#D4AF37] text-black text-[9px] font-black uppercase tracking-widest rounded-full whitespace-nowrap">Elite Feature</span>
+                            <h2 className="text-2xl md:text-3xl font-serif font-black italic tracking-tighter">VIP SEO Intelligence</h2>
                         </div>
                         <p className="text-gray-400 text-sm leading-relaxed mb-8">
                             Our God-Level SEO engine is dynamically generating metadata and JSON-LD structured data for every timepiece in your vault. Google is now indexing your assets with rich snippets.
                         </p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
                             <div className="space-y-1">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Indexing Status</p>
-                                <p className="text-lg font-bold text-[#D4AF37]">98.2% Optimized</p>
+                                <p className="text-base md:text-lg font-bold text-[#D4AF37]">98.2% Optimized</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Schema.org</p>
-                                <p className="text-lg font-bold text-white">Active (JSON-LD)</p>
+                                <p className="text-base md:text-lg font-bold text-white">Active (JSON-LD)</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Sitemap</p>
-                                <p className="text-lg font-bold text-white">Dynamic (v2.0)</p>
+                                <p className="text-base md:text-lg font-bold text-white">Dynamic (v2.0)</p>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-4">
-                        <Link href="/admin/seo" className="bg-white text-black px-8 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-[#D4AF37] transition-all shadow-xl shadow-white/5">
+                    <div className="flex flex-col gap-4 w-full lg:w-auto">
+                        <Link href="/admin/seo" className="bg-white text-black px-6 md:px-8 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-[#D4AF37] transition-all shadow-xl shadow-white/5 whitespace-nowrap">
                             <Search size={18} /> Deep SEO Audit
                         </Link>
-                        <Link href="/sitemap.xml" target="_blank" className="bg-gray-900 text-gray-400 px-8 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:text-white transition-all">
+                        <Link href="/sitemap.xml" target="_blank" className="bg-gray-900 text-gray-400 px-6 md:px-8 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:text-white transition-all whitespace-nowrap">
                             <ExternalLink size={18} /> View XML Sitemap
                         </Link>
                     </div>
@@ -131,47 +131,53 @@ export default async function AdminDashboard() {
             </section>
 
             {/* Recent Orders Section */}
-            <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-2xl shadow-gray-100/50 overflow-hidden mb-12">
-                <div className="p-10 border-b border-gray-50 flex justify-between items-center">
+            <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-2xl shadow-gray-100/50 overflow-hidden mb-12 w-full">
+                <div className="p-8 md:p-10 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h3 className="text-2xl font-serif font-black italic tracking-tighter">Recent Operations</h3>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">Live Transaction Stream</p>
                     </div>
-                    <Link href="/godmode" className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-all">
+                    <Link href="/godmode" className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-all bg-gray-50 px-4 py-2 rounded-xl">
                         View All Operations
                         <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
-                <div className="w-full max-w-[100vw] overflow-x-auto scrollbar-hide">
-                    <div className="p-10 space-y-6 min-w-[520px]">
-                        {recentOrders.map((order: any) => (
-                            <div key={order._id.toString()} className="flex items-center justify-between p-6 bg-gray-50/50 rounded-[2rem] border border-gray-50 hover:border-black hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center font-bold text-gray-400 border border-gray-100 group-hover:bg-black group-hover:text-white group-hover:border-black transition-all duration-500">
-                                        <Package size={24} />
+                
+                {/* STRICT MOBILE SCROLL LOCK */}
+                <div className="w-full max-w-full overflow-x-auto scrollbar-hide pb-4">
+                    <div className="p-4 md:p-10 space-y-4 md:space-y-6 min-w-[320px] md:min-w-[520px]">
+                        {recentOrders.length > 0 ? recentOrders.map((order: any) => (
+                            <div key={order._id.toString()} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-6 bg-gray-50/50 rounded-[2rem] border border-gray-50 hover:border-black hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all duration-500 group gap-4">
+                                <div className="flex items-center gap-4 md:gap-6">
+                                    <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-2xl flex items-center justify-center font-bold text-gray-400 border border-gray-100 group-hover:bg-black group-hover:text-white group-hover:border-black transition-all duration-500 flex-shrink-0">
+                                        <Package size={20} className="md:w-6 md:h-6" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-black text-black tracking-tight">{order.orderId}</p>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                        <p className="text-xs md:text-sm font-black text-black tracking-tight">{order.orderId || order._id.toString().slice(-8)}</p>
+                                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-12">
-                                    <div className="text-right">
-                                        <p className="text-base font-black text-black font-mono tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mt-1">{order.status}</p>
+                                <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-12 w-full sm:w-auto border-t sm:border-t-0 border-gray-100 pt-4 sm:pt-0">
+                                    <div className="text-left sm:text-right">
+                                        <p className="text-sm md:text-base font-black text-black font-mono tracking-tighter">₹{Number(order.totalAmount).toLocaleString()}</p>
+                                        <p className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mt-1">{order.status}</p>
                                     </div>
-                                    <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:border-black transition-colors">
-                                        <ChevronRight size={18} className="text-gray-300 group-hover:text-black transition-all" />
+                                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:border-black transition-colors flex-shrink-0">
+                                        <ChevronRight size={16} className="text-gray-300 group-hover:text-black transition-all" />
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="text-center text-gray-400 text-xs font-black uppercase tracking-widest py-10">No recent operations</div>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Client Management (Client Component) */}
-            <ClientRegistry initialUsers={JSON.parse(JSON.stringify(users))} />
+            <div className="w-full overflow-x-hidden">
+                 <ClientRegistry initialUsers={JSON.parse(JSON.stringify(users))} />
+            </div>
         </div>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, RefreshCw, Search, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,11 @@ export default function AbandonedCartsClient({ initialLeads }: { initialLeads: a
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
+  // 🚀 GHOST KILLER: Hamesha fresh server data ke sath sync rakho
+  useEffect(() => {
+    setLeads(initialLeads);
+  }, [initialLeads]);
+
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -21,29 +26,40 @@ export default function AbandonedCartsClient({ initialLeads }: { initialLeads: a
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return leads;
-    return leads.filter(l => l.name?.toLowerCase().includes(q) || l.email?.toLowerCase().includes(q));
+    return leads.filter(l => 
+      l.name?.toLowerCase().includes(q) || 
+      l.email?.toLowerCase().includes(q) ||
+      l.phone?.toLowerCase().includes(q)
+    );
   }, [leads, query]);
 
   const onDelete = (id: string) => {
+    const previousLeads = [...leads]; // Backup in case of error
     setDeletingId(id);
+    
+    // 🚀 INSTANT FRONTEND FIX: Delete dabate hi turant screen se hata do
+    setLeads(prev => prev.filter(item => item._id !== id));
     
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/abandoned-carts/${id}`, { method: 'DELETE' });
+        // Cache Buster URL to force Next.js to not use cached API
+        const res = await fetch(`/api/admin/abandoned-carts/${id}?t=${Date.now()}`, { 
+          method: 'DELETE',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
         const data = await res.json();
         
         if (data.success) {
-          // 🚀 INSTANT FRONTEND FIX: Turant screen se hata do (No ghost data)
-          setLeads(prev => prev.filter(item => item._id !== id));
-          
           // 🚀 CACHE PURGE: Server ko naya data laane bolo
           router.refresh(); 
-          
           notify("Cart Permanently Purged", "success");
         } else {
+          // Error aane par data wapas le aao
+          setLeads(previousLeads);
           notify(data.message || "Failed to purge cart.", "error");
         }
       } catch (error) {
+        setLeads(previousLeads);
         notify("Network error during deletion", "error");
       } finally {
         setDeletingId(null);
@@ -84,6 +100,7 @@ export default function AbandonedCartsClient({ initialLeads }: { initialLeads: a
                   <div className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">Client Profile</div>
                   <div className="text-xl font-serif font-black tracking-tight leading-tight">{lead.name || "Vault Client"}</div>
                   <div className="text-xs text-gray-500 mt-2 font-bold">{lead.email || "—"}</div>
+                  <div className="text-xs text-gray-500 mt-1">{lead.phone || "—"}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mb-1">Abandoned</div>
