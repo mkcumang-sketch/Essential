@@ -2,80 +2,88 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
 
-export async function POST(req: Request) {
-    try {
-        // 1. Database se connect karo
-        await connectDB();
-        
-        const body = await req.json();
-        const trackingId = body.orderId?.trim();
-        const email = body.email?.trim().toLowerCase();
-        
-        // 2. Agar dono cheezein nahi aayi toh reject karo
-        if (!trackingId || !email) {
-            return NextResponse.json(
-                { success: false, message: "Please provide both Order ID and Billing Email." }, 
-                { status: 400 }
-            );
-        }
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
-        // Order Model load karo
-        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const trackingId = body.orderId?.trim();
+    const email = body.email?.trim().toLowerCase();
 
-        // 3. Pehle custom orderId (jaise ORD-12345) se search karo
-        let foundOrder = await Order.findOne({ orderId: trackingId }).lean() as any;
-        
-        // 4. Fallback: Agar purana order hai aur MongoDB ki _id (24 characters) use hui thi
-        if (!foundOrder && mongoose.Types.ObjectId.isValid(trackingId)) {
-            foundOrder = await Order.findById(trackingId).lean() as any;
-        }
+    if (!trackingId || !email) {
+      return NextResponse.json(
+        { success: false, message: 'Order ID and email are required.' },
+        { status: 400 }
+      );
+    }
 
-        // Agar order nahi mila
-        if (!foundOrder) {
-            return NextResponse.json(
-                { success: false, message: "Order not found. Please check your Order ID." }, 
-                { status: 404 }
-            );
-        }
+    await connectDB();
 
-        // 🔒 5. STRICT SECURITY (IDENTITY GLUE): Verify Billing Email
-        // Yahan hum check kar rahe hain ki jis bande ka email hai, usi ko data dikhe
-        const orderEmail = (foundOrder.customer?.email || foundOrder.shippingData?.email || "").toLowerCase();
-        
-        if (orderEmail !== email) {
-            return NextResponse.json(
-                { success: false, message: "Billing email does not match this order." }, 
-                { status: 403 } // 403 Forbidden
-            );
-        }
+    // Dynamically handle MongoDB model to prevent caching/compile issues
+    const OrderModel = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
 
-        // 6. Frontend Format Matching (The UI Fix)
-        // Frontend ko `firstItemName` aur `trackingId` chahiye
-        const firstItemName = foundOrder.items && foundOrder.items.length > 0 
-            ? foundOrder.items[0].name || foundOrder.items[0].title || "Luxury Asset"
-            : "Luxury Asset";
+    // 1. SMART SEARCH: Find by custom orderId OR MongoDB _id without crashing
+    let query: any = { orderId: trackingId };
+    if (mongoose.Types.ObjectId.isValid(trackingId)) {
+        query = { $or: [{ orderId: trackingId }, { _id: trackingId }] };
+    }
 
-        const safeOrderDetails = {
-            _id: foundOrder._id,
-            orderId: foundOrder.orderId || foundOrder._id.toString().slice(-8).toUpperCase(),
-            status: foundOrder.status || "PENDING",
-            totalAmount: foundOrder.totalAmount,
-            firstItemName: firstItemName,            // UI ke liye item ka naam
-            trackingId: foundOrder.trackingId || "", // Courier ki Tracking ID (e.g. Delhivery)
-            createdAt: foundOrder.createdAt
-        };
+    const order = await OrderModel.findOne(query).lean() as any;
 
-        // 7. Success Response Frontend ko bhej do
-        return NextResponse.json({ 
-            success: true, 
-            order: safeOrderDetails 
-        });
+    if (!order) {
+      return NextResponse.json(
+        { success: false, message: 'No order found. Please check your Order ID.' },
+        { status: 404 }
+      );
+    }
 
-    } catch (error) {
-        console.error("Tracking API Error:", error);
+    // 🔒 2. STRICT SECURITY: Verify Email (Checks multiple possible database structures)
+    const orderEmail = (order.customer?.email || order.shippingData?.email || order.shippingAddress?.email || "").toLowerCase();
+    
+    if (orderEmail !== email) {
         return NextResponse.json(
-            { success: false, message: "Server Error while tracking order." }, 
-            { status: 500 }
+            { success: false, message: "Billing email does not match this order." }, 
+            { status: 403 }
         );
     }
+
+    // 🚀 3. ZERO-TOUCH AUTO TRACKING SYSTEM (Premium Messages)
+    let displayStatus = order.status || "PENDING";
+    let statusMessage = "Tracking details fetched successfully.";
+
+    if (displayStatus === "PENDING" || displayStatus === "CREATED") {
+      displayStatus = "PROCESSING"; // Customer sees it's already working!
+      statusMessage = "Your order has been received and is currently being packed in our warehouse.";
+    } else if (displayStatus === "PROCESSING") {
+      statusMessage = "Your order is being packed and will be handed over to our logistics partner soon.";
+    } else if (displayStatus === "SHIPPED") {
+      statusMessage = "Your order is on the way via our premium logistics partner.";
+    } else if (displayStatus === "DELIVERED") {
+      statusMessage = "Your timepiece has been successfully delivered. Thank you for choosing Essential Rush.";
+    }
+
+    // 4. Send Safe Payload to Frontend
+    return NextResponse.json({
+      success: true,
+      order: {
+        _id: order._id,
+        orderId: order.orderId || order._id.toString().slice(-8).toUpperCase(),
+        status: displayStatus,
+        displayStatus: displayStatus, // Keeping both just in case UI needs it
+        statusMessage: statusMessage,
+        trackingId: order.trackingId || null,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt,
+        itemCount: Array.isArray(order.items) ? order.items.length : 0,
+        firstItemName: order.items?.[0]?.name || order.items?.[0]?.title || 'Luxury Asset',
+      },
+    });
+  } catch (error) {
+    console.error("Tracking API Error:", error);
+    return NextResponse.json(
+      { success: false, message: 'Server Error while tracking order.' },
+      { status: 500 }
+    );
+  }
 }
