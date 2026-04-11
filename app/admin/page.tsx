@@ -53,7 +53,12 @@
 
         // 🌟 BRIGHT THEME - MOBILE OPTIMIZED 🌟
         return (
-            <div className="space-y-8 md:space-y-12 animate-in fade-in w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 md:py-10 bg-[#FAFAFA] min-h-screen text-gray-900">
+            <div className="space-y-8 md:space-y-12 animate-in fade-in w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 md:py-10 bg-[#FAFAFA] min-h-screen text-gray-900"
+                style={{ 
+                    paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)'
+                }}
+            >
                 
                 {/* Header - Mobile Adjusted with Recovery Vault Button */}
                 <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 md:mb-8 border-b border-gray-200 pb-6">
@@ -165,7 +170,7 @@
                             <h3 className="text-xl md:text-2xl font-serif font-black tracking-tight text-gray-900">Operations</h3>
                             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mt-1">Live Stream</p>
                         </div>
-                        <Link href="/godmode" className="group flex items-center gap-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-600 bg-white border border-gray-200 px-3 py-2 md:px-5 md:py-3 rounded-full hover:border-gray-400 transition-all">
+                        <Link href="/godmode" className="group flex items-center gap-1 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-600 bg-white border border-gray-200 px-4 py-3 min-h-[44px] min-w-[44px] md:px-5 md:py-3 rounded-full hover:border-gray-400 transition-all">
                             View All
                             <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
                         </Link>

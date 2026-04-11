@@ -34,11 +34,28 @@ export async function POST(request: Request) {
       );
     }
 
+    // Zero-Touch Auto Tracking System: Auto-process status
+    let displayStatus = order.status;
+    let statusMessage = "";
+    
+    if (order.status === "PENDING" || order.status === "CREATED") {
+      displayStatus = "PROCESSING";
+      statusMessage = "Your order has been received and is currently being packed in our warehouse.";
+    } else if (order.status === "PROCESSING") {
+      statusMessage = "Your order is being packed and will be shipped soon.";
+    } else if (order.status === "SHIPPED") {
+      statusMessage = "Your order has been shipped and is on its way to you.";
+    } else if (order.status === "DELIVERED") {
+      statusMessage = "Your order has been successfully delivered.";
+    }
+
     return NextResponse.json({
       success: true,
       order: {
         orderId: order.orderId,
-        status: order.status,
+        status: displayStatus,
+        displayStatus: displayStatus,
+        statusMessage: statusMessage,
         trackingId: order.trackingId || null,
         totalAmount: order.totalAmount,
         createdAt: order.createdAt,

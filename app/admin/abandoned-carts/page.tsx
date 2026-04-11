@@ -64,23 +64,29 @@ export default function AbandonedCartsAdminPage() {
   const onDelete = (id: string) => {
     setDeletingId(id);
     
+    // Store original state for rollback
+    const originalLeads = [...leads];
+    
+    // Optimistic UI: Immediately remove from UI
+    setLeads((l) => l.filter((x) => x._id !== id));
+    
     startTransition(async () => {
       try {
         const res = await deleteAbandonedCart(id);
         
         if (res?.success) {
           notify("Cart Permanently Purged", "success");
-          // Background me ek baar aur fresh data sync karlo taaki koi discrepancy na rahe
+          // Background sync for consistency
           fetchLeads(); 
         } else {
-          // Fail hua toh wapas purana data manga lo
-          setLeads((l) => l.filter((x) => x._id !== id)); // Rollback optimistic update
+          // Rollback on server failure
+          setLeads(originalLeads);
           fetchLeads();
           notify("Failed to purge cart. Check backend logic.", "error");
         }
       } catch (error) {
-        // Rollback optimistic update on network error
-        setLeads((l) => l.filter((x) => x._id !== id));
+        // Rollback on network error
+        setLeads(originalLeads);
         fetchLeads();
         notify("Network error during deletion", "error");
       } finally {
