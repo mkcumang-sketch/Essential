@@ -64,9 +64,6 @@ export default function AbandonedCartsAdminPage() {
   const onDelete = (id: string) => {
     setDeletingId(id);
     
-    // 🚀 INSTANT FRONTEND FIX: Turant screen se hata do bina wait kiye
-    setLeads((l) => l.filter((x) => x._id !== id));
-    
     startTransition(async () => {
       try {
         const res = await deleteAbandonedCart(id);
@@ -77,10 +74,13 @@ export default function AbandonedCartsAdminPage() {
           fetchLeads(); 
         } else {
           // Fail hua toh wapas purana data manga lo
+          setLeads((l) => l.filter((x) => x._id !== id)); // Rollback optimistic update
           fetchLeads();
           notify("Failed to purge cart. Check backend logic.", "error");
         }
       } catch (error) {
+        // Rollback optimistic update on network error
+        setLeads((l) => l.filter((x) => x._id !== id));
         fetchLeads();
         notify("Network error during deletion", "error");
       } finally {

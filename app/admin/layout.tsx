@@ -35,17 +35,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#F9FAFB] text-[#050505] flex font-sans overflow-x-hidden">
+    <div 
+      className="min-h-[100dvh] w-full bg-[#F9FAFB] text-[#050505] flex font-sans overflow-x-hidden"
+      style={{ 
+        paddingTop: 'calc(env(safe-area-inset-top) + 0px)',
+        paddingLeft: 'calc(env(safe-area-inset-left) + 0px)',
+        paddingRight: 'calc(env(safe-area-inset-right) + 0px)'
+      }}
+    >
       
       {/* =========================================
           📱 MOBILE ONLY: TOP HEADER (Like Account Page)
           ========================================= */}
-      <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between p-4 bg-white z-[60] shadow-sm border-b border-gray-100">
+      <div className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between p-4 bg-white/95 backdrop-blur-xl z-[60] shadow-lg border-b border-gray-100"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+      >
         <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-xl flex items-center justify-center font-bold shadow-lg">♞</div>
         
         <button 
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-black transition-colors border border-gray-100"
+          className="flex items-center gap-2 px-6 py-4 min-h-[44px] bg-gray-50 hover:bg-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-black transition-colors border border-gray-100"
         >
           <LogOut size={14} /> Logout
         </button>
@@ -75,7 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }`}
               >
                 <item.icon size={20} className={isActive ? 'text-[#D4AF37]' : ''} />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">{item.name}</span>
+                <span className="text-xs font-black uppercase tracking-widest">{item.name}</span>
                 {isActive && <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />}
               </Link>
             );
@@ -83,7 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="p-6 border-t border-gray-50">
-          <button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-red-50 text-gray-500 hover:text-red-600 transition-all text-[10px] font-black uppercase tracking-widest border border-gray-100">
+          <button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full flex items-center justify-center gap-3 p-4 min-h-[44px] rounded-2xl bg-gray-50 hover:bg-red-50 text-gray-500 hover:text-red-600 transition-all text-[10px] font-black uppercase tracking-widest border border-gray-100">
             <LogOut size={16} /> Secure Logout
           </button>
         </div>
@@ -102,15 +111,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           📱 MOBILE ONLY: BOTTOM NAVIGATION
           ========================================= */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-2 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
+        className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-4 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] gap-4"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}
       >
         {menuItems.slice(0, 5).map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link key={item.name} href={item.href} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${isActive ? "text-[#D4AF37]" : "text-gray-400 hover:text-black"}`}>
+            <Link key={item.name} href={item.href} className={`flex flex-col items-center gap-2 p-4 min-h-[44px] min-w-[44px] rounded-xl transition-all ${isActive ? "text-[#D4AF37]" : "text-gray-400 hover:text-black"}`}>
               <item.icon size={20} className={isActive ? "fill-[#D4AF37]/20" : ""} />
-              <span className="text-[8px] font-black uppercase tracking-widest">{item.short}</span>
+              <span className="text-xs font-black uppercase tracking-widest">{item.short}</span>
             </Link>
           );
         })}

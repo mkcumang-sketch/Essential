@@ -58,6 +58,10 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
                 })
             });
 
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+
             const data = await res.json();
             if (data.success) {
                 showToast("Client profile updated successfully");

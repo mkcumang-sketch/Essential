@@ -14,7 +14,6 @@ body {
   background-color: #006039;
   color: #ffffff;
 }
-/* app/globals.css - in sb rules ko file ke end mein daal do */
 
 /* 💎 BRIGHT LUXURY VIEWER ENGINE (For White/Light Backgrounds) 💎 */
 .luxury-viewer-engine {
@@ -59,4 +58,43 @@ body {
 .luxury-viewer-engine strong {
   color: #000000;
   font-weight: 700;
+}
+
+
+/* =========================================================
+   🚀 PHASE 1 & 2: CUSTOM ANIMATIONS ENGINE FIX
+   ========================================================= */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-from-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-from-bottom-4 {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-from-bottom-8 {
+  from { opacity: 0; transform: translateY(2rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom Animation Utility Classes */
+.animate-fade-in { 
+    animation: fade-in 0.6s ease-out forwards; 
+}
+.animate-slide-in-from-right { 
+    animation: slide-in-from-right 0.3s ease-out forwards; 
+}
+.animate-slide-in-from-bottom-4 { 
+    animation: slide-in-from-bottom-4 0.5s ease-out forwards; 
+}
+.animate-slide-in-from-bottom-8 { 
+    animation: slide-in-from-bottom-8 0.7s ease-out forwards; 
 }
