@@ -111,8 +111,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           📱 MOBILE ONLY: BOTTOM NAVIGATION
           ========================================= */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-4 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] gap-4"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}
+        className="flex md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-4 justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] gap-4 pb-[env(safe-area-inset-bottom)]"
       >
         {menuItems.slice(0, 5).map((item) => {
           const isActive = pathname === item.href;

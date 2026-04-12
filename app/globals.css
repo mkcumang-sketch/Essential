@@ -8,6 +8,12 @@ body {
   background-color: #ffffff;
   color: #212121;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar {
+  display: none;
 }
 
 ::selection {
