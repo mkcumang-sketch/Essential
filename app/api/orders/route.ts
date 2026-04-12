@@ -1,131 +1,171 @@
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-
-import { NextResponse } from "next/server";
-import mongoose from "mongoose";
-import { getServerSession } from "next-auth";
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongodb';
+import mongoose from 'mongoose';
+import User from '@/models/User';
+import { Product } from '@/models/Product';
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import connectDB from "@/lib/mongodb";
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { z } from "zod";
+import Razorpay from 'razorpay';
+import { userRateLimit } from '@/lib/ratelimit';
 
-// 🌟 GET ORDERS — users: strictly by session user id; admins: all
-export async function GET() {
-  try {
-    await connectDB();
+// 🛡️ BUILD-SAFE RAZORPAY INITIALIZATION
+let razorpay: any = null;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Please sign in to see your orders." },
-        { status: 401 }
-      );
-    }
-
-    const Order =
-      mongoose.models.Order ||
-      mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
-
-    const sessionUser = session.user as { id?: string; role?: string };
-    let orders: unknown[] = [];
-
-    if (sessionUser.role === "SUPER_ADMIN") {
-      orders = await Order.find({}).sort({ createdAt: -1 }).lean();
-    } else {
-      const userId = sessionUser.id;
-      if (!userId) {
-        return NextResponse.json(
-          { success: false, error: "Please sign in." },
-          { status: 401 }
-        );
-      }
-      orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
-    }
-
-    return NextResponse.json({ success: true, data: orders, orders });
-  } catch (error) {
-    console.error("Orders Fetch Error:", error);
-    return NextResponse.json({ success: false, error: "We could not load orders." });
-  }
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
 }
 
-// 🌟 MUTATIONS — SUPER_ADMIN only (no client-supplied user impersonation)
-export async function PUT(req: Request) {
-  try {
-    await connectDB();
-    const session = await getServerSession(authOptions);
-    if ((session?.user as { role?: string })?.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ success: false, error: "You do not have access to do that." }, { status: 403 });
-    }
-
-    const body = await req.json();
-    const orderId = body._id || body.id;
-
-    if (!orderId) {
-      return NextResponse.json(
-        { success: false, error: "Order ID missing." },
-        { status: 400 }
-      );
-    }
-
-    const updateData: any = {};
-    if (body.status !== undefined) updateData.status = body.status;
-    if (body.trackingId !== undefined) updateData.trackingId = body.trackingId;
-
-    const Order =
-      mongoose.models.Order ||
-      mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
-    await Order.findByIdAndUpdate(orderId, updateData);
-
-    revalidatePath('/', 'layout');
-    revalidateTag('orders', 'layout');
-
-    return NextResponse.json({ success: true, message: "Order status updated." });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: "We could not update the order status." },
-      { status: 500 }
-    );
-  }
-}
+// 🛡️ STRICT PAYLOAD VALIDATION SCHEMA
+const checkoutSchema = z.object({
+    items: z.array(z.object({
+        _id: z.string(),
+        qty: z.number().int().positive(),
+    })).min(1),
+    shippingData: z.object({
+        name: z.string().min(2, "Name is too short"),
+        email: z.string().email("Invalid email address"),
+        phone: z.string().min(10, "Phone number must be at least 10 digits"),
+        address: z.string().min(10, "Address is too short"),
+        city: z.string().min(1, "City is required"),
+        state: z.string().optional(),
+        pincode: z.string().length(6, "Pincode must be exactly 6 digits"),
+    }),
+    appliedReferralCode: z.string().nullable().optional(),
+});
 
 export async function POST(req: Request) {
-  return PUT(req);
-}
+    try {
+        // 0. RATE LIMITING (Anti-Bot)
+        const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
+        const { success } = await userRateLimit.limit(ip);
+        if (!success) {
+            return NextResponse.json({ success: false, error: "Too many requests. Please try again in a few seconds." }, { status: 429 });
+        }
 
-export async function PATCH(req: Request) {
-  return PUT(req);
-}
+        // 1. Check if Razorpay is configured
+        const isRazorpayConfigured = !!razorpay;
 
-export async function DELETE(req: Request) {
-  try {
-    await connectDB();
-    const session = await getServerSession(authOptions);
-    if ((session?.user as { role?: string })?.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ success: false, error: "You do not have access to do that." }, { status: 403 });
+        await connectDB();
+        const session = await getServerSession(authOptions);
+        const json = await req.json();
+        
+        // 2. Zod Validation (Anti-Tamper)
+        const validation = checkoutSchema.safeParse(json);
+        if (!validation.success) {
+            const errorDetails = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+            return NextResponse.json({ success: false, error: `Validation failed: ${errorDetails}` }, { status: 400 });
+        }
+        const { items, shippingData, appliedReferralCode } = validation.data;
+
+        // 🌟 IDENTITY GLUE: Link Phone to Google/Email User
+        if (session && session.user && (session.user as any).id) {
+            const dbUser = await User.findById((session.user as any).id);
+            if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
+                dbUser.phone = shippingData.phone;
+                await dbUser.save();
+            }
+        }
+
+        // 3. Server-Side Price & Stock Guard
+        let trueTotal = 0;
+        const validatedItems = [];
+
+        for (const item of items) {
+            const dbProduct = await Product.findById(item._id);
+            if (!dbProduct) {
+                return NextResponse.json({ success: false, error: `Product not found: ${item._id}` }, { status: 404 });
+            }
+
+            // 🚨 INVENTORY GUARD
+            if (dbProduct.stock < item.qty) {
+                return NextResponse.json({ success: false, error: `Insufficient stock for ${dbProduct.name || dbProduct.title}` }, { status: 400 });
+            }
+
+            // 🚨 SECURE PRICE CALCULATION
+            const unitPrice = dbProduct.offerPrice || dbProduct.price;
+            trueTotal += unitPrice * item.qty;
+
+            validatedItems.push({
+                productId: dbProduct._id,
+                name: dbProduct.name || dbProduct.title,
+                price: unitPrice,
+                qty: item.qty,
+                image: dbProduct.images[0]
+            });
+        }
+
+        // 🚀 FIX: Added ': any' to prevent TypeScript 'never' errors
+        let rzpOrder: any = null; 
+        
+        if (isRazorpayConfigured) {
+            // 💳 4. CREATE REAL RAZORPAY ORDER
+            const options = {
+                amount: Math.round(trueTotal * 100), 
+                currency: "INR",
+                receipt: `receipt_${Date.now()}`,
+            };
+            // 🚀 FIX: Corrected typo from rzPOrder to rzpOrder
+            rzpOrder = await razorpay.orders.create(options); 
+        }
+
+        // 📝 5. CREATE PENDING ORDER IN DB
+        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
+        
+        const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const autoTrackingId = `TRK-ER-${Math.floor(10000000 + Math.random() * 90000000)}`;
+        
+        const newOrder = await Order.create({
+            orderId: uniqueId,
+            orderNumber: uniqueId,
+            trackingId: autoTrackingId, 
+            razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
+            userId: session?.user?.id || null,
+            items: validatedItems,
+            totalAmount: trueTotal,
+            shippingData,
+            status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', 
+            appliedReferralCode,
+            createdAt: new Date()
+        });
+
+        // 🚀 ==========================================
+        // 🚀 AUTO-PURGE ABANDONED CART LOGIC
+        // ==========================================
+        try {
+            const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
+            
+            const customerEmail = shippingData.email?.trim().toLowerCase();
+            const customerPhone = shippingData.phone?.trim();
+
+            if (customerEmail || customerPhone) {
+                await AbandonedCart.findOneAndDelete({
+                    $or: [
+                        { email: customerEmail },
+                        { phone: customerPhone }
+                    ]
+                });
+                console.log(`🗑️ Auto-purged abandoned cart for: ${customerEmail || customerPhone}`);
+            }
+        } catch (purgeError) {
+            console.error("⚠️ Failed to auto-purge abandoned cart:", purgeError);
+        }
+        // ==========================================
+
+        return NextResponse.json({ 
+            success: true, 
+            orderId: newOrder.orderId, 
+            razorpayOrderId: rzpOrder?.id,
+            amount: rzpOrder?.amount,
+            currency: rzpOrder?.currency,
+            isMock: !isRazorpayConfigured
+        });
+
+    } catch (error: any) {
+        console.error("Checkout System Error:", error);
+        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
     }
-
-    const url = new URL(req.url);
-    let orderId = url.searchParams.get("id");
-
-    if (!orderId) {
-      const body = await req.json().catch(() => ({}));
-      orderId = body._id || body.id;
-    }
-
-    if (!orderId) {
-      return NextResponse.json({ success: false, error: "Order ID missing." }, { status: 400 });
-    }
-
-    const Order =
-      mongoose.models.Order ||
-      mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
-    await Order.findByIdAndDelete(orderId);
-
-    revalidatePath('/', 'layout');
-    revalidateTag('orders', 'layout');
-
-    return NextResponse.json({ success: true, message: "Order deleted." });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "We could not delete the order." }, { status: 500 });
-  }
 }

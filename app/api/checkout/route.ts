@@ -102,35 +102,55 @@ export async function POST(req: Request) {
         if (isRazorpayConfigured) {
             // 💳 4. CREATE REAL RAZORPAY ORDER
             const options = {
-                amount: Math.round(trueTotal * 100), // amount in paise
+                amount: Math.round(trueTotal * 100), 
                 currency: "INR",
                 receipt: `receipt_${Date.now()}`,
             };
+            // 🚀 FIX: Corrected variable name from rzPOrder to rzpOrder
             rzpOrder = await razorpay.orders.create(options);
         }
 
         // 📝 5. CREATE PENDING ORDER IN DB
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
         
-        // Generate Unique Identifiers
         const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        
-        // 🚀 AUTO-TRACKING ID GENERATOR (e.g., TRK-ER-84729104)
         const autoTrackingId = `TRK-ER-${Math.floor(10000000 + Math.random() * 90000000)}`;
         
         const newOrder = await Order.create({
             orderId: uniqueId,
             orderNumber: uniqueId,
-            trackingId: autoTrackingId, // 👈 YAHAN ADD HUA HAI MAGIC
+            trackingId: autoTrackingId, 
             razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
             userId: session?.user?.id || null,
             items: validatedItems,
             totalAmount: trueTotal,
             shippingData,
-            status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', // Mark as processing if mock
+            status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', 
             appliedReferralCode,
             createdAt: new Date()
         });
+
+        // 🚀 ==========================================
+        // 🚀 AUTO-PURGE ABANDONED CART LOGIC (FIXED)
+        // ==========================================
+        try {
+            const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
+            
+            const customerEmail = shippingData.email?.trim().toLowerCase();
+            const customerPhone = shippingData.phone?.trim();
+
+            const orConditions = [];
+            if (customerEmail) orConditions.push({ email: customerEmail });
+            if (customerPhone) orConditions.push({ phone: customerPhone });
+
+            if (orConditions.length > 0) {
+                await AbandonedCart.findOneAndDelete({ $or: orConditions });
+                console.log(`🗑️ Auto-purged abandoned cart for: ${customerEmail || customerPhone}`);
+            }
+        } catch (purgeError) {
+            console.error("⚠️ Failed to auto-purge abandoned cart:", purgeError);
+        }
+        // ==========================================
 
         return NextResponse.json({ 
             success: true, 
