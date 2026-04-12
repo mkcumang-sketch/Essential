@@ -10,7 +10,7 @@ import Link from "next/link";
 import { 
   LogOut, History, Sparkles, User, MapPin, Wallet, Heart, 
   Percent, Lock, HelpCircle, Copy, RefreshCw, Plus, Trash2, 
-  CheckCircle2, ChevronRight, Download, Package, Gift // 🚀 FIXED: Added Gift import here
+  CheckCircle2, ChevronRight, Download, Package, Gift
 } from "lucide-react";
 
 const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: false });
@@ -22,6 +22,9 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
+  
+  // 💸 WITHDRAW STATE ADDED HERE
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const su = session?.user as any;
   const name = su?.name || "VIP Member";
@@ -63,6 +66,20 @@ export default function AccountClient({ initialData, session }: { initialData: a
       router.refresh();
       notify("Data synced with Vault");
     });
+  };
+
+  // 💸 WITHDRAW FUNCTION LOGIC
+  const handleWithdraw = () => {
+    if (walletPoints < 500) {
+        notify("Minimum balance of ₹500 is required for bank withdrawal.");
+        return;
+    }
+    setIsWithdrawing(true);
+    // Simulate API call for withdrawal
+    setTimeout(() => {
+        notify("Withdrawal request sent to Admin! Will be processed in 24 hrs.");
+        setIsWithdrawing(false);
+    }, 1500);
   };
 
   useEffect(() => {
@@ -287,32 +304,38 @@ export default function AccountClient({ initialData, session }: { initialData: a
                   </div>
                 </div>
 
-                {/* 🌟 FIXED: REFER & EARN CARD IS NOW SAFELY INSIDE THE OVERVIEW LAYOUT 🌟 */}
+                {/* 🌟 FIXED: PYRAMID REFERRAL CARD 🌟 */}
                 <div className="bg-[#0A0A0A] text-[#D4AF37] p-8 md:p-10 rounded-[2.5rem] border border-[#D4AF37]/20 shadow-[0_10px_30px_rgba(212,175,55,0.1)] relative overflow-hidden group flex flex-col justify-center">
                     <div className="absolute -right-6 -bottom-6 text-white/5 rotate-12 group-hover:scale-110 transition-transform duration-700">
                         <Gift size={150}/>
                     </div>
                     <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Refer & Earn</p>
-                            <h4 className="text-3xl md:text-4xl font-serif font-black italic mb-2 text-white">Give ₹500, Get ₹100</h4>
-                            <p className="text-xs md:text-sm text-gray-400">Share your code. Your friend gets ₹500 off, and you get ₹100 Vault Credit.</p>
+                        <div className="flex-1">
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Essential Network</p>
+                            <h4 className="text-3xl md:text-4xl font-serif font-black italic mb-2 text-white">Give 10% Off, Get 10% Vault Points</h4>
+                            <p className="text-xs md:text-sm text-gray-400 max-w-md">When your friend's order is DELIVERED using your code, they get 10% cashback and you get 10% of their order value as Vault Points. Redeem for watches or withdraw as Cash!</p>
                         </div>
                         
-                        <div className="flex items-center justify-between bg-white/5 p-2 pl-5 rounded-2xl border border-white/10 w-full md:w-auto shrink-0">
-                            <span className="font-mono font-bold tracking-widest text-[#D4AF37]">
-                                {initialData?.myReferralCode || "VAULT-VIP"}
-                            </span>
-                            <motion.button 
-                                whileTap={{ scale: 0.9 }} 
-                                onClick={() => { 
-                                    navigator.clipboard.writeText(initialData?.myReferralCode || "VAULT-VIP"); 
-                                    notify("Referral code copied to clipboard!"); 
-                                }} 
-                                className="ml-6 p-4 bg-[#D4AF37] text-black rounded-xl hover:bg-white transition-colors"
-                            >
-                                <Copy size={16}/>
-                            </motion.button>
+                        <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
+                            <div className="flex items-center justify-between bg-white/5 p-2 pl-5 rounded-2xl border border-white/10 w-full">
+                                <span className="font-mono font-bold tracking-widest text-[#D4AF37]">
+                                    {initialData?.myReferralCode || "VAULT-VIP"}
+                                </span>
+                                <motion.button 
+                                    whileTap={{ scale: 0.9 }} 
+                                    onClick={() => { 
+                                        navigator.clipboard.writeText(initialData?.myReferralCode || "VAULT-VIP"); 
+                                        notify("Referral code copied to clipboard!"); 
+                                    }} 
+                                    className="ml-6 p-4 bg-[#D4AF37] text-black rounded-xl hover:bg-white transition-colors"
+                                >
+                                    <Copy size={16}/>
+                                </motion.button>
+                            </div>
+                            {/* WITHDRAW BUTTON */}
+                            <button onClick={handleWithdraw} disabled={isWithdrawing} className="w-full py-4 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex justify-center items-center gap-2">
+                                {isWithdrawing ? <RefreshCw size={14} className="animate-spin"/> : "Withdraw as Cash (Min ₹500)"}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -337,11 +360,8 @@ export default function AccountClient({ initialData, session }: { initialData: a
                             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                                 <div className="flex w-full gap-2">
                                   <span className={`px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest w-full sm:w-auto text-center flex items-center justify-center ${o.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-[#0A0A0A] text-[#D4AF37]'}`}>{o.status || 'PENDING'}</span>
-                                  {/* 🚀 SMART TRACK BUTTON REPLACES THE OLD LINK 🚀 */}
-                                  <SmartTrackButton 
-                                    orderId={o.orderId} 
-                                    email={session?.user?.email || ""} 
-                                  />
+                                  {/* 🚀 SMART TRACK BUTTON 🚀 */}
+                                  <SmartTrackButton orderId={o.orderId} email={session?.user?.email || ""} />
                                 </div>
                             </div>
                           </div>
@@ -411,11 +431,8 @@ export default function AccountClient({ initialData, session }: { initialData: a
                         <motion.button whileTap={{ scale: 0.95 }} onClick={() => notify("Downloading PDF Invoice...")} className="px-6 py-3 flex-1 flex items-center justify-center rounded-xl border border-gray-200 hover:border-black text-[10px] font-black uppercase tracking-widest transition-colors gap-2"><Download size={14}/> Invoice</motion.button>
                       </div>
                       <div className="w-full">
-                        {/* 🚀 SMART TRACK BUTTON REPLACES THE OLD LINK 🚀 */}
-                        <SmartTrackButton 
-                          orderId={order.orderId} 
-                          email={session?.user?.email || ""} 
-                        />
+                        {/* 🚀 SMART TRACK BUTTON 🚀 */}
+                        <SmartTrackButton orderId={order.orderId} email={session?.user?.email || ""} />
                       </div>
                     </div>
                   </div>

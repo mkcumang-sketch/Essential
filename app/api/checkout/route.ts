@@ -84,17 +84,18 @@ export async function POST(req: Request) {
             });
         }
 
-        // 🌟 REFER & EARN LOGIC (THE MAGIC) 🌟
-        let referrerUser = null;
+        // 🌟 PYRAMID SCHEME LOGIC: 10% DISCOUNT AT CHECKOUT 🌟
+        let referrerId = null;
         let referralDiscountAmount = 0;
 
         if (appliedReferralCode) {
             // Find the person whose code is being used
-            referrerUser = await User.findOne({ myReferralCode: appliedReferralCode.trim() });
+            const referrerUser = await User.findOne({ myReferralCode: appliedReferralCode.trim() });
             
             if (referrerUser) {
-                // Give Person B (the buyer) a ₹500 discount (Tune isko change kar sakta hai)
-                referralDiscountAmount = 500;
+                // Give Person B (the buyer) a flat 10% discount
+                referralDiscountAmount = trueTotal * 0.10;
+                referrerId = referrerUser._id;
             } else {
                 return NextResponse.json({ success: false, error: "Invalid Referral Code" }, { status: 400 });
             }
@@ -103,6 +104,9 @@ export async function POST(req: Request) {
         // Apply Discount to Total
         trueTotal = trueTotal - referralDiscountAmount;
         if (trueTotal < 0) trueTotal = 0;
+
+        // 💰 Calculate 10% Points to be credited AFTER delivery
+        const pointsToBeCredited = Math.round(trueTotal * 0.10); 
 
         let rzpOrder = null;
         if (isRazorpayConfigured && trueTotal > 0) {
@@ -129,19 +133,14 @@ export async function POST(req: Request) {
             shippingData,
             status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', 
             appliedReferralCode,
+
+            // 🚨 SECURE REWARD DATA (Awaiting Delivery)
+            referrerId: referrerId,
+            pendingPoints: pointsToBeCredited,
+            pointsCredited: false, // Will turn true when DELIVERED
+
             createdAt: new Date()
         });
-
-        // 💰 REWARD PERSON 1 (The Referrer gets ₹100)
-        if (referrerUser && newOrder) {
-            try {
-                referrerUser.walletPoints = (referrerUser.walletPoints || 0) + 100; // Add ₹100
-                await referrerUser.save();
-                console.log(`💸 ₹100 credited to wallet of ${referrerUser.email} for referral!`);
-            } catch (rewardError) {
-                console.error("⚠️ Failed to reward referrer:", rewardError);
-            }
-        }
 
         // 🗑️ Auto-Purge Abandoned Cart
         try {
