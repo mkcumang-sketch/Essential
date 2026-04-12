@@ -18,13 +18,11 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 export default async function AdminDashboard() {
-    // 1. Auth Guard
     const session = await getServerSession(authOptions);
     if (!session?.user || (session.user as any).role !== "SUPER_ADMIN") {
         redirect("/login");
     }
 
-    // 2. Data Fetching (Bulletproof Engine)
     await connectDB();
 
     const [usersResult, ordersResult] = await Promise.allSettled([
@@ -38,21 +36,13 @@ export default async function AdminDashboard() {
     if (usersResult.status === 'rejected') console.error('Users query failed:', usersResult.reason);
     if (ordersResult.status === 'rejected') console.error('Orders query failed:', ordersResult.reason);
 
-    // 3. Metrics Calculation
     const totalRevenue = ordersData.reduce((acc: number, order: any) => acc + (Number(order.totalAmount) || 0), 0);
     const totalOrders = ordersData.length;
     const activeUsers = usersData.length;
     const recentOrders = ordersData.slice(0, 5);
 
     return (
-        <div 
-            className="space-y-8 md:space-y-12 animate-fade-in w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 md:py-10 bg-[#FAFAFA] min-h-screen text-gray-900"
-            style={{ 
-                paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
-                paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)'
-            }}
-        >
-            {/* Header */}
+        <div className="space-y-8 md:space-y-12 animate-fade-in w-full max-w-[100vw] overflow-x-hidden bg-[#FAFAFA] text-gray-900">
             <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4 md:mb-8 border-b border-gray-200 pb-6">
                 <div>
                     <p className="text-[#D4AF37] text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-1 md:mb-2">Global Monitoring</p>
@@ -80,7 +70,6 @@ export default async function AdminDashboard() {
                 </div>
             </header>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                 <StatCard title="Revenue" value={`₹${(totalRevenue/1000).toFixed(1)}k`} icon={<DollarSign size={20}/>} trend="+12%" color="bg-white text-gray-900 border border-gray-100 shadow-sm" />
                 <StatCard title="Orders" value={totalOrders.toString()} icon={<ShoppingBag size={20}/>} trend="+8%" color="bg-white text-gray-900 border border-gray-100 shadow-sm" />
@@ -88,7 +77,6 @@ export default async function AdminDashboard() {
                 <StatCard title="Top Asset" value="Daytona" icon={<Crown size={20}/>} trend="Hot" color="bg-white text-[#D4AF37] border border-[#D4AF37]/20 bg-gradient-to-br from-white to-[#D4AF37]/5 shadow-sm" />
             </div>
 
-            {/* VIP SEO DASHBOARD SECTION */}
             <section className="bg-white border border-gray-200 rounded-3xl md:rounded-[2.5rem] p-6 md:p-12 text-gray-900 shadow-sm relative overflow-hidden group w-full">
                 <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                     <TrendingUp size={100} className="text-black" />
@@ -128,7 +116,6 @@ export default async function AdminDashboard() {
                 </div>
             </section>
 
-            {/* Recent Orders Section */}
             <div className="bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden mb-8 w-full">
                 <div className="p-5 md:p-10 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div>
@@ -176,7 +163,6 @@ export default async function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Client Management Wrapper */}
             <div className="w-full max-w-[100vw] overflow-x-auto bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm p-3 md:p-4">
                  <div className="min-w-[600px] md:min-w-full">
                      <ClientRegistry initialUsers={JSON.parse(JSON.stringify(usersData))} />

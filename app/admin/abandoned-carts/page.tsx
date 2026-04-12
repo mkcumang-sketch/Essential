@@ -24,13 +24,11 @@ export default function AbandonedCartsAdminPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
-  // Global VIP Notification System
   const notify = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  // 1. 🚀 THE GHOST KILLER: Extracted fetch function with Cache Buster
   const fetchLeads = useCallback(async () => {
     try {
       const r = await fetch(`/api/admin/abandoned-carts?t=${Date.now()}`, { cache: "no-store" });
@@ -62,28 +60,21 @@ export default function AbandonedCartsAdminPage() {
 
   const onDelete = (id: string) => {
     setDeletingId(id);
-    
-    // 🛡️ Store original state for bulletproof rollback
     const originalLeads = [...leads];
     
-    // 🚀 Optimistic UI: Immediately remove from UI for instant feel
     setLeads((l) => l.filter((x) => x._id !== id));
     
     startTransition(async () => {
       try {
         const res = await deleteAbandonedCart(id);
-        
         if (res?.success) {
           notify("Cart Permanently Purged", "success");
-          // Background sync for consistency without blocking UI
           fetchLeads(); 
         } else {
-          // Rollback on server logic failure
           setLeads(originalLeads);
-          notify("Failed to purge cart. Check backend logic.", "error");
+          notify("Failed to purge cart.", "error");
         }
       } catch (error) {
-        // Rollback on network crash
         setLeads(originalLeads);
         notify("Network error during deletion", "error");
       } finally {
@@ -93,10 +84,8 @@ export default function AbandonedCartsAdminPage() {
   };
 
   return (
-    // 📱 ADDED: pt-[env...] and pb-24 for Native App Safe Area + px padding for mobile edges
-    <div className="space-y-6 md:space-y-8 relative max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-[calc(env(safe-area-inset-top)+24px)] pb-[calc(env(safe-area-inset-bottom)+96px)] animate-fade-in bg-[#FAFAFA] min-h-screen text-gray-900">
+    <div className="space-y-6 md:space-y-8 relative max-w-[100vw] overflow-x-hidden animate-fade-in bg-[#FAFAFA] text-gray-900">
       
-      {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
           <motion.div 
@@ -121,7 +110,6 @@ export default function AbandonedCartsAdminPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            // 📱 ADDED: min-h-[44px] for safe touch target on search bar
             className="w-full bg-white border border-gray-200 rounded-2xl pl-10 pr-4 py-3 min-h-[44px] text-xs font-bold outline-none focus:border-[#D4AF37] transition-all shadow-sm"
             placeholder="Search name, email, phone..."
           />
@@ -134,10 +122,8 @@ export default function AbandonedCartsAdminPage() {
             <div key={i} className="p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 bg-white animate-pulse space-y-4 shadow-sm">
               <div className="h-4 w-1/4 bg-gray-100 rounded-full" />
               <div className="h-6 w-1/2 bg-gray-100 rounded" />
-              <div className="h-4 w-1/3 bg-gray-100 rounded" />
               <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-50">
                 <div className="h-6 w-20 bg-gray-100 rounded-full" />
-                {/* 📱 UPDATED: Skeleton button matches 44px touch target */}
                 <div className="min-h-[44px] min-w-[44px] bg-gray-100 rounded-xl" />
               </div>
             </div>
@@ -176,7 +162,6 @@ export default function AbandonedCartsAdminPage() {
                     whileTap={{ scale: 0.9 }}
                     onClick={() => onDelete(lead._id)}
                     disabled={isPending && deletingId === lead._id}
-                    // 📱 ADDED: min-h-[44px] min-w-[44px] for Apple touch standards
                     className="min-h-[44px] min-w-[44px] rounded-xl bg-gray-50 border border-gray-200 hover:bg-black hover:text-[#D4AF37] hover:border-black transition-colors flex items-center justify-center disabled:opacity-50"
                   >
                     {isPending && deletingId === lead._id ? <RefreshCw size={16} className="animate-spin text-gray-400" /> : <Trash2 size={16} />}

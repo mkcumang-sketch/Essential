@@ -16,7 +16,6 @@ import {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // 💎 Unified Menu Items
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin', short: 'Home' },
     { name: 'Products', icon: PackageSearch, href: '/admin/products', short: 'Inventory' },
@@ -29,23 +28,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     menuItems[0],
     menuItems[1],
     menuItems[2],
-    menuItems[4], // Config
+    menuItems[4],
   ];
 
   return (
-    // 🚀 FIX 1: Removed inline safe-area double padding from outer wrapper
     <div className="min-h-[100dvh] w-full bg-[#F9FAFB] text-[#050505] flex font-sans overflow-x-hidden relative">
       
-      {/* =========================================
-          📱 MOBILE ONLY: TOP HEADER (Like Account Page)
-          ========================================= */}
-      {/* 🚀 FIX 2: Increased z-index so scrolling tables don't overlap */}
+      {/* 📱 MOBILE TOP HEADER */}
       <div 
         className="md:hidden fixed top-0 left-0 w-full flex items-center justify-between px-4 pb-4 bg-white/95 backdrop-blur-xl z-[100] shadow-sm border-b border-gray-100"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
       >
         <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-xl flex items-center justify-center font-bold shadow-lg shrink-0">♞</div>
-        
         <button 
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-gray-50 hover:bg-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-black transition-colors border border-gray-200"
@@ -54,9 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* =========================================
-          💻 DESKTOP ONLY: SIDEBAR (Hidden on Mobile)
-          ========================================= */}
+      {/* 💻 DESKTOP SIDEBAR */}
       <aside className="hidden md:flex flex-col w-72 fixed left-0 top-0 h-[100dvh] z-50 bg-white border-r border-gray-100 shadow-[0_0_40px_rgba(0,0,0,0.02)]">
         <div className="flex p-8 items-center gap-4 border-b border-gray-50 h-28 shrink-0">
           <div className="w-12 h-12 bg-black text-[#D4AF37] rounded-2xl flex items-center justify-center font-bold text-xl shadow-xl">♞</div>
@@ -92,14 +84,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* =========================================
-          🔥 MAIN CONTENT AREA
-          ========================================= */}
-      {/* 🚀 FIX 3: Dynamic padding for Mobile safe zones so content doesn't hide behind Header/Footer */}
+      {/* 🔥 MAIN CONTENT AREA */}
       <main 
         className="flex-1 w-full min-w-0 max-w-[100vw] md:ml-72 relative overflow-x-hidden"
         style={{
-          // Mobile gets padding to clear the fixed header and footer. Desktop gets 0.
           paddingTop: 'calc(env(safe-area-inset-top) + 90px)', 
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 110px)'
         }}
@@ -109,9 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </main>
 
-      {/* =========================================
-          📱 MOBILE ONLY: BOTTOM NAVIGATION
-          ========================================= */}
+      {/* 📱 MOBILE BOTTOM NAVIGATION */}
       <nav 
         className="flex md:hidden fixed bottom-0 left-0 w-full justify-around items-center gap-2 border-t border-gray-100 bg-white/95 px-3 pt-3 backdrop-blur-2xl z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
@@ -126,7 +112,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           );
         })}
       </nav>
-
     </div>
   );
 }

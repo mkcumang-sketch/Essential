@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { Order } from '@/models/Order'; // Strictly using your original model
+import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -20,19 +20,17 @@ export async function POST(request: Request) {
 
     await connectDB();
 
-    // 🚀 CRITICAL FIX: Smart Query with Strict Regex
-    // Check if the ID is exactly 24 hex characters (MongoDB default _id)
+    const OrderModel = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
+
     const isMongoId = /^[0-9a-fA-F]{24}$/.test(trackingId); 
     
     let query: any = { orderId: trackingId };
     if (isMongoId) {
-        // Agar MongoDB _id hai, toh dono field mein dhundo
         query = { $or: [{ orderId: trackingId }, { _id: trackingId }] };
     }
 
-    const order = await Order.findOne(query).lean() as any;
+    const order = await OrderModel.findOne(query).lean() as any;
 
-    // Agar Order ID galat hai
     if (!order) {
       return NextResponse.json(
         { success: false, message: 'No order found. Please check your Order ID.' },
@@ -40,7 +38,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🔒 Security: Check Billing Email
     const orderEmail = (order.customer?.email || order.shippingData?.email || order.shippingAddress?.email || "").toLowerCase();
     
     if (orderEmail !== email) {
@@ -50,12 +47,11 @@ export async function POST(request: Request) {
         );
     }
 
-    // ✨ ZERO-TOUCH AUTO TRACKING LOGIC
     let displayStatus = order.status || "PENDING";
     let statusMessage = "Tracking details fetched successfully.";
 
     if (displayStatus === "PENDING" || displayStatus === "CREATED") {
-      displayStatus = "PROCESSING"; // Magic Upgrade
+      displayStatus = "PROCESSING";
       statusMessage = "Your order has been received and is currently being packed in our warehouse.";
     } else if (displayStatus === "PROCESSING") {
       statusMessage = "Your order is being packed and will be handed over to our logistics partner soon.";
@@ -65,7 +61,6 @@ export async function POST(request: Request) {
       statusMessage = "Your timepiece has been successfully delivered. Thank you for choosing Essential Rush.";
     }
 
-    // Safe Response sent to Frontend
     return NextResponse.json({
       success: true,
       order: {

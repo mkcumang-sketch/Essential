@@ -1,11 +1,12 @@
 {
-  "name": "Essential Admin",
-  "short_name": "Essential Admin",
-  "description": "Essential Admin Dashboard",
+  "name": "Essential Rush Admin",
+  "short_name": "Essential",
+  "description": "Luxury Fine Horology Vault",
   "start_url": "/admin",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon.png", 
