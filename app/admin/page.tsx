@@ -148,7 +148,7 @@ export default async function AdminDashboard() {
                                             {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                                         </p>
                                     </div>
-                                </div>
+                                </div>``
                                 <div className="flex items-center gap-4 md:gap-8 text-right">
                                     <div>
                                         <p className="text-sm md:text-base font-black text-gray-900 font-mono tracking-tighter">₹{Number(order.totalAmount).toLocaleString()}</p>
