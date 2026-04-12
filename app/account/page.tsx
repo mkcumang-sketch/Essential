@@ -17,7 +17,21 @@ export default async function PremiumAccountDashboard() {
 
   // 🆔 1. IDENTITY GLUE: Fetching DB User for loyalty data
   const uid = (session.user as any).id;
-  const dbUser = await User.findById(uid).lean() as any;
+  
+  // 🚀 FIXED: Removed .lean() so we can modify and save the user
+  let dbUser = await User.findById(uid); 
+
+  // 🌟 THE FIX: UNIQUE REFERRAL CODE GENERATOR 🌟
+  // Agar user ke paas pehle se code nahi hai, toh turant naya banao!
+  if (dbUser && !dbUser.myReferralCode) {
+      // First name nikal ke uppercase karega (e.g., "Umang Sharma" -> "UMANG")
+      const firstName = (dbUser.name || "VIP").split(" ")[0].toUpperCase().replace(/[^A-Z]/g, '');
+      const randomNum = Math.floor(1000 + Math.random() * 9000); // 4 digit random number
+      
+      dbUser.myReferralCode = `${firstName}-${randomNum}`; // Example: UMANG-4592
+      await dbUser.save(); // Database mein hamesha ke liye save kar diya
+      console.log(`Generated new unique code for ${dbUser.email}: ${dbUser.myReferralCode}`);
+  }
 
   // 🔍 2. ROBUST ORDER QUERY (The Identity Fix)
   // Hum User ID, Email aur Phone teeno se search kar rahe hain taaki Guest checkout orders bhi dikhen
@@ -49,7 +63,10 @@ export default async function PremiumAccountDashboard() {
     walletPoints: dbUser?.walletPoints || 0,
     totalSpent: orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0),
     loyaltyTier: dbUser?.loyaltyTier || "Silver Vault",
-    myReferralCode: dbUser?.myReferralCode || "VAULT-VIP",
+    
+    // 🚀 FIXED: Ab yahan se tera ASLI aur UNIQUE code frontend pe jayega
+    myReferralCode: dbUser?.myReferralCode, 
+    
     // Ensure all MongoDB Objects are converted to strings for the client
     orders: orders.map(o => ({ 
       ...o, 
