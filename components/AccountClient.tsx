@@ -5,12 +5,12 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import SmartTrackButton from './SmartTrackButton'; // 🚀 IMPORTED SMART BUTTON
+import SmartTrackButton from './SmartTrackButton';
 import Link from "next/link";
 import { 
   LogOut, History, Sparkles, User, MapPin, Wallet, Heart, 
   Percent, Lock, HelpCircle, Copy, RefreshCw, Plus, Trash2, 
-  CheckCircle2, ChevronRight, Download, Package,
+  CheckCircle2, ChevronRight, Download, Package, Gift // 🚀 FIXED: Added Gift import here
 } from "lucide-react";
 
 const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: false });
@@ -18,7 +18,7 @@ const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: f
 type TabType = "overview" | "profile" | "orders" | "addresses" | "wallet" | "wishlist" | "offers" | "security" | "support";
 
 export default function AccountClient({ initialData, session }: { initialData: any; session: any }) {
-  const router = useRouter(); // Added router for cache busting
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
@@ -31,7 +31,6 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const orders = Array.isArray(initialData?.orders) ? initialData.orders : [];
   const lastThreeOrders = orders.slice(0, 3);
 
-  // Load Phone from initialData if available, else empty
   const [profile, setProfile] = useState({ 
     name, 
     email, 
@@ -45,7 +44,6 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const [addrLoading, setAddrLoading] = useState(true);
   const [addrForm, setAddrForm] = useState({ line1: "", city: "", state: "", zip: "", isDefault: false });
 
-  // Animation variants for tabs
   const tabVariants: any = {
     hidden: { opacity: 0, y: 15, scale: 0.98 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
@@ -55,13 +53,11 @@ export default function AccountClient({ initialData, session }: { initialData: a
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [wishlistLoading, setWishlistLoading] = useState(true);
 
-  // Global Notification System
   const notify = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Manual Cache Busting Function
   const handleRefresh = () => {
     startTransition(() => {
       router.refresh();
@@ -105,7 +101,6 @@ export default function AccountClient({ initialData, session }: { initialData: a
     return Object.keys(errs).length === 0;
   };
 
-  // UPGRADED: Real API Call to Save Profile & Identity Glue
   const saveProfile = async () => {
     if (!validateProfile()) return;
     setProfileSaving(true);
@@ -119,7 +114,7 @@ export default function AccountClient({ initialData, session }: { initialData: a
       if (res.ok) {
         notify("Profile details updated successfully.");
         startTransition(() => {
-          router.refresh(); // Tell Next.js to update server data on client
+          router.refresh();
         });
       } else {
         notify("Failed to update profile.");
@@ -290,7 +285,36 @@ export default function AccountClient({ initialData, session }: { initialData: a
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Total Acquisitions</p>
                     <h3 className="text-4xl font-serif italic font-black">{orders.length}</h3>
                   </div>
+                </div>
 
+                {/* 🌟 FIXED: REFER & EARN CARD IS NOW SAFELY INSIDE THE OVERVIEW LAYOUT 🌟 */}
+                <div className="bg-[#0A0A0A] text-[#D4AF37] p-8 md:p-10 rounded-[2.5rem] border border-[#D4AF37]/20 shadow-[0_10px_30px_rgba(212,175,55,0.1)] relative overflow-hidden group flex flex-col justify-center">
+                    <div className="absolute -right-6 -bottom-6 text-white/5 rotate-12 group-hover:scale-110 transition-transform duration-700">
+                        <Gift size={150}/>
+                    </div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Refer & Earn</p>
+                            <h4 className="text-3xl md:text-4xl font-serif font-black italic mb-2 text-white">Give ₹500, Get ₹100</h4>
+                            <p className="text-xs md:text-sm text-gray-400">Share your code. Your friend gets ₹500 off, and you get ₹100 Vault Credit.</p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between bg-white/5 p-2 pl-5 rounded-2xl border border-white/10 w-full md:w-auto shrink-0">
+                            <span className="font-mono font-bold tracking-widest text-[#D4AF37]">
+                                {initialData?.myReferralCode || "VAULT-VIP"}
+                            </span>
+                            <motion.button 
+                                whileTap={{ scale: 0.9 }} 
+                                onClick={() => { 
+                                    navigator.clipboard.writeText(initialData?.myReferralCode || "VAULT-VIP"); 
+                                    notify("Referral code copied to clipboard!"); 
+                                }} 
+                                className="ml-6 p-4 bg-[#D4AF37] text-black rounded-xl hover:bg-white transition-colors"
+                            >
+                                <Copy size={16}/>
+                            </motion.button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Recent Orders Section */}

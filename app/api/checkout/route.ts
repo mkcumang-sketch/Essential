@@ -9,7 +9,6 @@ import { z } from "zod";
 import Razorpay from 'razorpay';
 import { userRateLimit } from '@/lib/ratelimit';
 
-// 🛡️ BUILD-SAFE RAZORPAY INITIALIZATION
 let razorpay: any = null;
 
 if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
@@ -19,7 +18,6 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
     });
 }
 
-// 🛡️ STRICT PAYLOAD VALIDATION SCHEMA
 const checkoutSchema = z.object({
     items: z.array(z.object({
         _id: z.string(),
@@ -39,21 +37,18 @@ const checkoutSchema = z.object({
 
 export async function POST(req: Request) {
     try {
-        // 0. RATE LIMITING (Anti-Bot)
         const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
         const { success } = await userRateLimit.limit(ip);
         if (!success) {
-            return NextResponse.json({ success: false, error: "Too many requests. Please try again in a few seconds." }, { status: 429 });
+            return NextResponse.json({ success: false, error: "Too many requests. Please try again." }, { status: 429 });
         }
 
-        // 1. Check if Razorpay is configured
         const isRazorpayConfigured = !!razorpay;
 
         await connectDB();
         const session = await getServerSession(authOptions);
         const json = await req.json();
         
-        // 2. Zod Validation (Anti-Tamper)
         const validation = checkoutSchema.safeParse(json);
         if (!validation.success) {
             const errorDetails = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
@@ -61,7 +56,6 @@ export async function POST(req: Request) {
         }
         const { items, shippingData, appliedReferralCode } = validation.data;
 
-        // 🌟 IDENTITY GLUE: Link Phone to Google/Email User
         if (session && session.user && (session.user as any).id) {
             const dbUser = await User.findById((session.user as any).id);
             if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
@@ -70,22 +64,14 @@ export async function POST(req: Request) {
             }
         }
 
-        // 3. Server-Side Price & Stock Guard
         let trueTotal = 0;
         const validatedItems = [];
 
         for (const item of items) {
             const dbProduct = await Product.findById(item._id);
-            if (!dbProduct) {
-                return NextResponse.json({ success: false, error: `Product not found: ${item._id}` }, { status: 404 });
-            }
+            if (!dbProduct) return NextResponse.json({ success: false, error: `Product not found` }, { status: 404 });
+            if (dbProduct.stock < item.qty) return NextResponse.json({ success: false, error: `Insufficient stock` }, { status: 400 });
 
-            // 🚨 INVENTORY GUARD
-            if (dbProduct.stock < item.qty) {
-                return NextResponse.json({ success: false, error: `Insufficient stock for ${dbProduct.name || dbProduct.title}` }, { status: 400 });
-            }
-
-            // 🚨 SECURE PRICE CALCULATION
             const unitPrice = dbProduct.offerPrice || dbProduct.price;
             trueTotal += unitPrice * item.qty;
 
@@ -98,21 +84,37 @@ export async function POST(req: Request) {
             });
         }
 
+        // 🌟 REFER & EARN LOGIC (THE MAGIC) 🌟
+        let referrerUser = null;
+        let referralDiscountAmount = 0;
+
+        if (appliedReferralCode) {
+            // Find the person whose code is being used
+            referrerUser = await User.findOne({ myReferralCode: appliedReferralCode.trim() });
+            
+            if (referrerUser) {
+                // Give Person B (the buyer) a ₹500 discount (Tune isko change kar sakta hai)
+                referralDiscountAmount = 500;
+            } else {
+                return NextResponse.json({ success: false, error: "Invalid Referral Code" }, { status: 400 });
+            }
+        }
+
+        // Apply Discount to Total
+        trueTotal = trueTotal - referralDiscountAmount;
+        if (trueTotal < 0) trueTotal = 0;
+
         let rzpOrder = null;
-        if (isRazorpayConfigured) {
-            // 💳 4. CREATE REAL RAZORPAY ORDER
+        if (isRazorpayConfigured && trueTotal > 0) {
             const options = {
                 amount: Math.round(trueTotal * 100), 
                 currency: "INR",
                 receipt: `receipt_${Date.now()}`,
             };
-            // 🚀 FIX: Corrected variable name from rzPOrder to rzpOrder
             rzpOrder = await razorpay.orders.create(options);
         }
 
-        // 📝 5. CREATE PENDING ORDER IN DB
         const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        
         const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
         const autoTrackingId = `TRK-ER-${Math.floor(10000000 + Math.random() * 90000000)}`;
         
@@ -130,12 +132,20 @@ export async function POST(req: Request) {
             createdAt: new Date()
         });
 
-        // 🚀 ==========================================
-        // 🚀 AUTO-PURGE ABANDONED CART LOGIC (FIXED)
-        // ==========================================
+        // 💰 REWARD PERSON 1 (The Referrer gets ₹100)
+        if (referrerUser && newOrder) {
+            try {
+                referrerUser.walletPoints = (referrerUser.walletPoints || 0) + 100; // Add ₹100
+                await referrerUser.save();
+                console.log(`💸 ₹100 credited to wallet of ${referrerUser.email} for referral!`);
+            } catch (rewardError) {
+                console.error("⚠️ Failed to reward referrer:", rewardError);
+            }
+        }
+
+        // 🗑️ Auto-Purge Abandoned Cart
         try {
             const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
-            
             const customerEmail = shippingData.email?.trim().toLowerCase();
             const customerPhone = shippingData.phone?.trim();
 
@@ -145,12 +155,8 @@ export async function POST(req: Request) {
 
             if (orConditions.length > 0) {
                 await AbandonedCart.findOneAndDelete({ $or: orConditions });
-                console.log(`🗑️ Auto-purged abandoned cart for: ${customerEmail || customerPhone}`);
             }
-        } catch (purgeError) {
-            console.error("⚠️ Failed to auto-purge abandoned cart:", purgeError);
-        }
-        // ==========================================
+        } catch (purgeError) {}
 
         return NextResponse.json({ 
             success: true, 
