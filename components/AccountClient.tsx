@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
+import SmartTrackButton from './SmartTrackButton'; // 🚀 IMPORTED SMART BUTTON
 import Link from "next/link";
 import { 
   LogOut, History, Sparkles, User, MapPin, Wallet, Heart, 
@@ -309,17 +310,15 @@ export default function AccountClient({ initialData, session }: { initialData: a
                                     <p className="font-serif font-black text-lg">{o.items?.[0]?.name || "Luxury Timepiece"}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 w-full sm:w-auto">
-                                <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest w-full sm:w-auto text-center ${o.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-[#0A0A0A] text-[#D4AF37]'}`}>{o.status}</span>
-                                {o.trackingId ? (
-                                    <Link href={`/track-order?id=${o._id}&email=${encodeURIComponent(o.customer?.email || email)}`} className="px-4 py-2 rounded-xl bg-[#D4AF37] text-black text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-colors whitespace-nowrap text-center shadow-lg">
-                                        Track Order
-                                    </Link>
-                                ) : (
-                                    <button onClick={() => notify("Tracking will be generated upon dispatch.")} className="px-4 py-2 rounded-xl border border-gray-200 text-gray-400 text-[9px] font-black uppercase tracking-widest transition-colors whitespace-nowrap cursor-not-allowed">
-                                        Preparing
-                                    </button>
-                                )}
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                                <div className="flex w-full gap-2">
+                                  <span className={`px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest w-full sm:w-auto text-center flex items-center justify-center ${o.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-[#0A0A0A] text-[#D4AF37]'}`}>{o.status || 'PENDING'}</span>
+                                  {/* 🚀 SMART TRACK BUTTON REPLACES THE OLD LINK 🚀 */}
+                                  <SmartTrackButton 
+                                    orderId={o.orderId} 
+                                    email={session?.user?.email || ""} 
+                                  />
+                                </div>
                             </div>
                           </div>
                         ))}
@@ -382,18 +381,18 @@ export default function AccountClient({ initialData, session }: { initialData: a
                         </div>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                      <span className={`px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-black text-[#D4AF37]'}`}>{order.status || 'PENDING'}</span>
-                      {order.trackingId ? (
-                          <Link href={`/track-order?id=${order._id}&email=${encodeURIComponent(order.customer?.email || email)}`} className="flex-1 xl:flex-none px-6 py-3 rounded-xl bg-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest transition-colors text-center shadow-lg hover:scale-95 duration-200">
-                             Track Order
-                          </Link>
-                      ) : (
-                          <button onClick={() => notify("Awaiting dispatch. Tracking unavailable yet.")} className="flex-1 xl:flex-none px-6 py-3 rounded-xl bg-gray-100/50 text-gray-400 text-[10px] font-black uppercase tracking-widest transition-colors text-center cursor-not-allowed">
-                             Preparing
-                          </button>
-                      )}
-                      <motion.button whileTap={{ scale: 0.95 }} onClick={() => notify("Downloading PDF Invoice...")} className="flex-1 xl:flex-none px-6 py-3 rounded-xl border border-gray-200 hover:border-black text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"><Download size={14}/> Invoice</motion.button>
+                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+                      <div className="flex w-full gap-2">
+                        <span className={`px-4 py-3 flex-1 flex items-center justify-center rounded-xl text-[9px] font-black uppercase tracking-widest ${order.status === 'DELIVERED' ? 'bg-green-50 text-green-700' : 'bg-black text-[#D4AF37]'}`}>{order.status || 'PENDING'}</span>
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => notify("Downloading PDF Invoice...")} className="px-6 py-3 flex-1 flex items-center justify-center rounded-xl border border-gray-200 hover:border-black text-[10px] font-black uppercase tracking-widest transition-colors gap-2"><Download size={14}/> Invoice</motion.button>
+                      </div>
+                      <div className="w-full">
+                        {/* 🚀 SMART TRACK BUTTON REPLACES THE OLD LINK 🚀 */}
+                        <SmartTrackButton 
+                          orderId={order.orderId} 
+                          email={session?.user?.email || ""} 
+                        />
+                      </div>
                     </div>
                   </div>
                 )) : (
