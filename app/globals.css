@@ -8,11 +8,27 @@ body {
   background-color: #ffffff;
   color: #212121;
   overflow-x: hidden;
+  
+  /* 📱 NATIVE APP UX RULES (The Secret Sauce) */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 ::selection {
   background-color: #006039;
   color: #ffffff;
+}
+
+/* 📱 NATIVE SCROLLBAR HIDING */
+/* Safari aur Chrome ke liye */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+/* Firefox ke liye */
+* {
+  scrollbar-width: none;
 }
 
 /* 💎 BRIGHT LUXURY VIEWER ENGINE (For White/Light Backgrounds) 💎 */

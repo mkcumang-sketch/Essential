@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import mongoose from 'mongoose';
+import { Order } from '@/models/Order'; // Strictly using your original model
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -20,17 +20,19 @@ export async function POST(request: Request) {
 
     await connectDB();
 
-    // Dynamically handle MongoDB model to prevent caching/compile issues
-    const OrderModel = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-
-    // 1. SMART SEARCH: Find by custom orderId OR MongoDB _id without crashing
+    // 🚀 CRITICAL FIX: Smart Query with Strict Regex
+    // Check if the ID is exactly 24 hex characters (MongoDB default _id)
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(trackingId); 
+    
     let query: any = { orderId: trackingId };
-    if (mongoose.Types.ObjectId.isValid(trackingId)) {
+    if (isMongoId) {
+        // Agar MongoDB _id hai, toh dono field mein dhundo
         query = { $or: [{ orderId: trackingId }, { _id: trackingId }] };
     }
 
-    const order = await OrderModel.findOne(query).lean() as any;
+    const order = await Order.findOne(query).lean() as any;
 
+    // Agar Order ID galat hai
     if (!order) {
       return NextResponse.json(
         { success: false, message: 'No order found. Please check your Order ID.' },
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🔒 2. STRICT SECURITY: Verify Email (Checks multiple possible database structures)
+    // 🔒 Security: Check Billing Email
     const orderEmail = (order.customer?.email || order.shippingData?.email || order.shippingAddress?.email || "").toLowerCase();
     
     if (orderEmail !== email) {
@@ -48,12 +50,12 @@ export async function POST(request: Request) {
         );
     }
 
-    // 🚀 3. ZERO-TOUCH AUTO TRACKING SYSTEM (Premium Messages)
+    // ✨ ZERO-TOUCH AUTO TRACKING LOGIC
     let displayStatus = order.status || "PENDING";
     let statusMessage = "Tracking details fetched successfully.";
 
     if (displayStatus === "PENDING" || displayStatus === "CREATED") {
-      displayStatus = "PROCESSING"; // Customer sees it's already working!
+      displayStatus = "PROCESSING"; // Magic Upgrade
       statusMessage = "Your order has been received and is currently being packed in our warehouse.";
     } else if (displayStatus === "PROCESSING") {
       statusMessage = "Your order is being packed and will be handed over to our logistics partner soon.";
@@ -63,14 +65,14 @@ export async function POST(request: Request) {
       statusMessage = "Your timepiece has been successfully delivered. Thank you for choosing Essential Rush.";
     }
 
-    // 4. Send Safe Payload to Frontend
+    // Safe Response sent to Frontend
     return NextResponse.json({
       success: true,
       order: {
         _id: order._id,
         orderId: order.orderId || order._id.toString().slice(-8).toUpperCase(),
         status: displayStatus,
-        displayStatus: displayStatus, // Keeping both just in case UI needs it
+        displayStatus: displayStatus, 
         statusMessage: statusMessage,
         trackingId: order.trackingId || null,
         totalAmount: order.totalAmount,
@@ -79,8 +81,8 @@ export async function POST(request: Request) {
         firstItemName: order.items?.[0]?.name || order.items?.[0]?.title || 'Luxury Asset',
       },
     });
-  } catch (error) {
-    console.error("Tracking API Error:", error);
+  } catch (error: any) {
+    console.error("Tracking API Error:", error.message);
     return NextResponse.json(
       { success: false, message: 'Server Error while tracking order.' },
       { status: 500 }

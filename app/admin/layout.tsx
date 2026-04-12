@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { 
   LayoutDashboard, 
   Settings, 
-  ShieldCheck,
   ShoppingBag,
   Users,
   LogOut,
@@ -16,14 +15,6 @@ import {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // 💎 Unified Menu Items
   const menuItems = [
@@ -32,6 +23,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Customers', icon: Users, href: '/admin/users', short: 'Clients' },
     { name: 'Vault Carts', icon: ShoppingBag, href: '/admin/abandoned-carts', short: 'Carts' },
     { name: 'Settings', icon: Settings, href: '/admin/settings', short: 'Config' },
+  ];
+
+  const mobileNavItems = [
+    menuItems[0],
+    menuItems[1],
+    menuItems[2],
+    menuItems[4],
   ];
 
   return (
@@ -111,15 +109,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           📱 MOBILE ONLY: BOTTOM NAVIGATION
           ========================================= */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100 p-4 flex justify-around items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] gap-4"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}
+        className="flex md:hidden fixed bottom-0 left-0 w-full justify-around items-center gap-2 border-t border-gray-100 bg-white/95 px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)] backdrop-blur-2xl z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]"
       >
-        {menuItems.slice(0, 5).map((item) => {
+        {mobileNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link key={item.name} href={item.href} className={`flex flex-col items-center gap-2 p-4 min-h-[44px] min-w-[44px] rounded-xl transition-all ${isActive ? "text-[#D4AF37]" : "text-gray-400 hover:text-black"}`}>
+            <Link key={item.name} href={item.href} className={`flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center gap-1 rounded-xl px-2 py-2 transition-all ${isActive ? "text-[#D4AF37]" : "text-gray-400 hover:text-black"}`}>
               <item.icon size={20} className={isActive ? "fill-[#D4AF37]/20" : ""} />
-              <span className="text-xs font-black uppercase tracking-widest">{item.short}</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">{item.short}</span>
             </Link>
           );
         })}
