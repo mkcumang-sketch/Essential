@@ -1,171 +1,153 @@
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import mongoose from 'mongoose';
-import User from '@/models/User';
-import { Product } from '@/models/Product';
-import { getServerSession } from "next-auth/next";
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
+import { NextResponse } from "next/server";
+import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { z } from "zod";
-import Razorpay from 'razorpay';
-import { userRateLimit } from '@/lib/ratelimit';
+import connectDB from "@/lib/mongodb";
+import { revalidatePath, revalidateTag } from 'next/cache';
 
-// 🛡️ BUILD-SAFE RAZORPAY INITIALIZATION
-let razorpay: any = null;
-
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
+// 🛡️ SUPER_ADMIN VERIFIER: Token drop ho jaye toh DB se check karega
+async function verifySuperAdmin(session: any) {
+    if (!session?.user) return false;
+    if (session.user.role === "SUPER_ADMIN") return true;
+    
+    // Fallback: Check Database directly
+    const User = mongoose.models.User || mongoose.model("User", new mongoose.Schema({}, { strict: false }));
+    const dbUser = await User.findById(session.user.id || session.user._id).lean() as any;
+    return dbUser?.role === "SUPER_ADMIN";
 }
 
-// 🛡️ STRICT PAYLOAD VALIDATION SCHEMA
-const checkoutSchema = z.object({
-    items: z.array(z.object({
-        _id: z.string(),
-        qty: z.number().int().positive(),
-    })).min(1),
-    shippingData: z.object({
-        name: z.string().min(2, "Name is too short"),
-        email: z.string().email("Invalid email address"),
-        phone: z.string().min(10, "Phone number must be at least 10 digits"),
-        address: z.string().min(10, "Address is too short"),
-        city: z.string().min(1, "City is required"),
-        state: z.string().optional(),
-        pincode: z.string().length(6, "Pincode must be exactly 6 digits"),
-    }),
-    appliedReferralCode: z.string().nullable().optional(),
-});
-
-export async function POST(req: Request) {
+// 🌟 GET ORDERS 
+export async function GET(req: Request) {
     try {
-        // 0. RATE LIMITING (Anti-Bot)
-        const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
-        const { success } = await userRateLimit.limit(ip);
-        if (!success) {
-            return NextResponse.json({ success: false, error: "Too many requests. Please try again in a few seconds." }, { status: 429 });
-        }
-
-        // 1. Check if Razorpay is configured
-        const isRazorpayConfigured = !!razorpay;
-
         await connectDB();
         const session = await getServerSession(authOptions);
-        const json = await req.json();
         
-        // 2. Zod Validation (Anti-Tamper)
-        const validation = checkoutSchema.safeParse(json);
-        if (!validation.success) {
-            const errorDetails = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-            return NextResponse.json({ success: false, error: `Validation failed: ${errorDetails}` }, { status: 400 });
+        if (!session?.user) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
-        const { items, shippingData, appliedReferralCode } = validation.data;
 
-        // 🌟 IDENTITY GLUE: Link Phone to Google/Email User
-        if (session && session.user && (session.user as any).id) {
-            const dbUser = await User.findById((session.user as any).id);
-            if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
-                dbUser.phone = shippingData.phone;
-                await dbUser.save();
+        const isSuperAdmin = await verifySuperAdmin(session);
+        const Order = mongoose.models.Order || mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
+
+        let orders = [];
+        if (isSuperAdmin) {
+            // Admin gets EVERYTHING
+            orders = await Order.find({}).sort({ createdAt: -1 }).lean();
+        } else {
+            // Normal user gets only their orders
+            const userId = (session.user as any).id;
+            orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
+        }
+
+        return NextResponse.json({ success: true, data: orders, orders });
+    } catch (error) {
+        console.error("Orders Fetch Error:", error);
+        return NextResponse.json({ success: false, error: "We could not load orders." }, { status: 500 });
+    }
+}
+
+// 🌟 UPDATE ORDERS
+export async function PUT(req: Request) {
+    try {
+        await connectDB();
+        const session = await getServerSession(authOptions);
+        const isSuperAdmin = await verifySuperAdmin(session);
+        
+        if (!isSuperAdmin) {
+            return NextResponse.json({ success: false, error: "Access Denied." }, { status: 403 });
+        }
+
+        const body = await req.json();
+        const orderId = body._id || body.id;
+
+        if (!orderId) {
+            return NextResponse.json({ success: false, error: "Order ID missing." }, { status: 400 });
+        }
+
+        const updateData: any = {};
+        if (body.status !== undefined) updateData.status = body.status;
+        if (body.trackingId !== undefined) updateData.trackingId = body.trackingId;
+
+        const Order = mongoose.models.Order || mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
+        
+        // Smart ID Matcher
+        const isMongoId = mongoose.Types.ObjectId.isValid(orderId);
+        const query = isMongoId ? { $or: [{ _id: orderId }, { orderId: orderId }] } : { orderId: orderId };
+
+        const updatedOrder = await Order.findOneAndUpdate(query, updateData, { new: true });
+
+        // 🚀 AUTO-PURGE ABANDONED CARTS
+        if (updatedOrder && body.status && ['PROCESSING', 'DISPATCHED', 'DELIVERED'].includes(body.status)) {
+            try {
+                const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
+                const email = updatedOrder.customer?.email || updatedOrder.shippingData?.email;
+                const phone = updatedOrder.customer?.phone || updatedOrder.shippingData?.phone;
+                
+                const orConditions = [];
+                if (email) orConditions.push({ email: email.trim().toLowerCase() });
+                if (phone) orConditions.push({ phone: phone.trim() });
+
+                if (orConditions.length > 0) {
+                    await AbandonedCart.findOneAndDelete({ $or: orConditions });
+                }
+            } catch (purgeError) {
+                console.error("Auto-purge error in Orders API:", purgeError);
             }
         }
 
-        // 3. Server-Side Price & Stock Guard
-        let trueTotal = 0;
-        const validatedItems = [];
+        revalidatePath('/', 'layout');
+        revalidatePath('/godmode');
+        revalidatePath('/admin/abandoned-carts');
+        revalidateTag('orders', 'layout');
 
-        for (const item of items) {
-            const dbProduct = await Product.findById(item._id);
-            if (!dbProduct) {
-                return NextResponse.json({ success: false, error: `Product not found: ${item._id}` }, { status: 404 });
-            }
+        return NextResponse.json({ success: true, message: "Order status updated." });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Update failed." }, { status: 500 });
+    }
+}
 
-            // 🚨 INVENTORY GUARD
-            if (dbProduct.stock < item.qty) {
-                return NextResponse.json({ success: false, error: `Insufficient stock for ${dbProduct.name || dbProduct.title}` }, { status: 400 });
-            }
+export async function POST(req: Request) { return PUT(req); }
+export async function PATCH(req: Request) { return PUT(req); }
 
-            // 🚨 SECURE PRICE CALCULATION
-            const unitPrice = dbProduct.offerPrice || dbProduct.price;
-            trueTotal += unitPrice * item.qty;
-
-            validatedItems.push({
-                productId: dbProduct._id,
-                name: dbProduct.name || dbProduct.title,
-                price: unitPrice,
-                qty: item.qty,
-                image: dbProduct.images[0]
-            });
+// 🌟 DELETE ORDERS
+export async function DELETE(req: Request) {
+    try {
+        await connectDB();
+        const session = await getServerSession(authOptions);
+        const isSuperAdmin = await verifySuperAdmin(session);
+        
+        if (!isSuperAdmin) {
+            return NextResponse.json({ success: false, error: "Access Denied." }, { status: 403 });
         }
 
-        // 🚀 FIX: Added ': any' to prevent TypeScript 'never' errors
-        let rzpOrder: any = null; 
-        
-        if (isRazorpayConfigured) {
-            // 💳 4. CREATE REAL RAZORPAY ORDER
-            const options = {
-                amount: Math.round(trueTotal * 100), 
-                currency: "INR",
-                receipt: `receipt_${Date.now()}`,
-            };
-            // 🚀 FIX: Corrected typo from rzPOrder to rzpOrder
-            rzpOrder = await razorpay.orders.create(options); 
+        const url = new URL(req.url);
+        let orderId = url.searchParams.get("id");
+
+        if (!orderId) {
+            const body = await req.json().catch(() => ({}));
+            orderId = body._id || body.id;
         }
 
-        // 📝 5. CREATE PENDING ORDER IN DB
-        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
-        
-        const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const autoTrackingId = `TRK-ER-${Math.floor(10000000 + Math.random() * 90000000)}`;
-        
-        const newOrder = await Order.create({
-            orderId: uniqueId,
-            orderNumber: uniqueId,
-            trackingId: autoTrackingId, 
-            razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
-            userId: session?.user?.id || null,
-            items: validatedItems,
-            totalAmount: trueTotal,
-            shippingData,
-            status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', 
-            appliedReferralCode,
-            createdAt: new Date()
-        });
-
-        // 🚀 ==========================================
-        // 🚀 AUTO-PURGE ABANDONED CART LOGIC
-        // ==========================================
-        try {
-            const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
-            
-            const customerEmail = shippingData.email?.trim().toLowerCase();
-            const customerPhone = shippingData.phone?.trim();
-
-            if (customerEmail || customerPhone) {
-                await AbandonedCart.findOneAndDelete({
-                    $or: [
-                        { email: customerEmail },
-                        { phone: customerPhone }
-                    ]
-                });
-                console.log(`🗑️ Auto-purged abandoned cart for: ${customerEmail || customerPhone}`);
-            }
-        } catch (purgeError) {
-            console.error("⚠️ Failed to auto-purge abandoned cart:", purgeError);
+        if (!orderId) {
+            return NextResponse.json({ success: false, error: "Order ID missing." }, { status: 400 });
         }
-        // ==========================================
 
-        return NextResponse.json({ 
-            success: true, 
-            orderId: newOrder.orderId, 
-            razorpayOrderId: rzpOrder?.id,
-            amount: rzpOrder?.amount,
-            currency: rzpOrder?.currency,
-            isMock: !isRazorpayConfigured
-        });
+        const Order = mongoose.models.Order || mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
+        const isMongoId = mongoose.Types.ObjectId.isValid(orderId);
+        const query = isMongoId ? { $or: [{ _id: orderId }, { orderId: orderId }] } : { orderId: orderId };
 
-    } catch (error: any) {
-        console.error("Checkout System Error:", error);
-        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+        await Order.findOneAndDelete(query);
+
+        revalidatePath('/', 'layout');
+        revalidatePath('/godmode');
+        revalidatePath('/admin/orders');
+        revalidateTag('orders', 'layout');
+
+        return NextResponse.json({ success: true, message: "Order deleted." });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Deletion failed." }, { status: 500 });
     }
 }
