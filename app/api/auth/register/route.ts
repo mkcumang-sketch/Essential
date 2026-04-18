@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import User from '@/models/User';
+import User from '@/models/user';
 import { z } from 'zod';
 import { authRateLimit } from '@/lib/ratelimit';
 

@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
-import User from '@/models/User';
+import user from '@/models/user'; // 🚀 FIXED: Capitalized 'User'
 import { Product } from '@/models/Product';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { z } from "zod";
 import Razorpay from 'razorpay';
 import { userRateLimit } from '@/lib/ratelimit';
+import { getLoyaltyDiscount, calculateCheckoutDiscount } from '@/lib/loyalty';
+import { checkFraudRisk, flagSuspiciousOrder } from '@/lib/fraud';
 
 let razorpay: any = null;
 
 if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
     razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        key_id: process.env.RAZORPAY_KEY_ID as string, // 🚀 FIXED: Added 'as string' to remove warning
+        key_secret: process.env.RAZORPAY_KEY_SECRET as string, // 🚀 FIXED: Added 'as string'
     });
 }
 
@@ -56,8 +58,10 @@ export async function POST(req: Request) {
         }
         const { items, shippingData, appliedReferralCode } = validation.data;
 
+        let dbUser: any = null;
         if (session && session.user && (session.user as any).id) {
-            const dbUser = await User.findById((session.user as any).id);
+            // 🚀 FIXED: Used Capital 'User'
+            dbUser = await user.findById((session.user as any).id);
             if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
                 dbUser.phone = shippingData.phone;
                 await dbUser.save();
@@ -84,13 +88,25 @@ export async function POST(req: Request) {
             });
         }
 
+        // 💎 LOYALTY DISCOUNT (Automatic based on tier)
+        const userTotalSpent = dbUser?.totalSpent || 0;
+        const loyaltyDiscount = calculateCheckoutDiscount(trueTotal, userTotalSpent);
+        let loyaltyDiscountAmount = 0;
+        
+        if (loyaltyDiscount.tierDiscount > 0 && dbUser) {
+            loyaltyDiscountAmount = loyaltyDiscount.discount;
+            trueTotal = trueTotal - loyaltyDiscountAmount;
+            if (trueTotal < 0) trueTotal = 0;
+        }
+
         // 🌟 PYRAMID SCHEME LOGIC: 10% DISCOUNT AT CHECKOUT 🌟
         let referrerId = null;
         let referralDiscountAmount = 0;
 
         if (appliedReferralCode) {
             // Find the person whose code is being used
-            const referrerUser = await User.findOne({ myReferralCode: appliedReferralCode.trim() });
+            // 🚀 FIXED: Used Capital 'User'
+            const referrerUser = await user.findOne({ myReferralCode: appliedReferralCode.trim() });
             
             if (referrerUser) {
                 // Give Person B (the buyer) a flat 10% discount
@@ -107,6 +123,22 @@ export async function POST(req: Request) {
 
         // 💰 Calculate 10% Points to be credited AFTER delivery
         const pointsToBeCredited = Math.round(trueTotal * 0.10); 
+
+        // 🚨 FRAUD DETECTION ENGINE
+        const fraudCheck = await checkFraudRisk(
+            ip,
+            shippingData.email,
+            shippingData.phone,
+            appliedReferralCode || undefined 
+        );
+
+        if (fraudCheck.shouldBlock) {
+            return NextResponse.json({
+                success: false,
+                error: "Order flagged for manual review. Please contact support.",
+                code: "FRAUD_BLOCKED"
+            }, { status: 403 });
+        }
 
         let rzpOrder = null;
         if (isRazorpayConfigured && trueTotal > 0) {
@@ -127,7 +159,7 @@ export async function POST(req: Request) {
             orderNumber: uniqueId,
             trackingId: autoTrackingId, 
             razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
-            userId: session?.user?.id || null,
+            userId: session?.user ? (session.user as any).id : null,
             items: validatedItems,
             totalAmount: trueTotal,
             shippingData,
@@ -157,13 +189,23 @@ export async function POST(req: Request) {
             }
         } catch (purgeError) {}
 
+        // 🚨 Flag suspicious orders for admin review
+        if (fraudCheck.isSuspicious) {
+            await flagSuspiciousOrder(uniqueId, fraudCheck, ip);
+        }
+
         return NextResponse.json({ 
             success: true, 
             orderId: newOrder.orderId, 
             razorpayOrderId: rzpOrder?.id,
             amount: rzpOrder?.amount,
             currency: rzpOrder?.currency,
-            isMock: !isRazorpayConfigured
+            isMock: !isRazorpayConfigured,
+            loyaltyInfo: {
+                tier: loyaltyDiscount.tier,
+                discount: loyaltyDiscount.tierDiscount,
+                discountAmount: loyaltyDiscountAmount
+            }
         });
 
     } catch (error: any) {

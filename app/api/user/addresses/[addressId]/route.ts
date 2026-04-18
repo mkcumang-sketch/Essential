@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import User from '@/models/User';
+import User from '@/models/user';
 import connectDB from '@/lib/mongodb';
 
 // DELETE: Remove specific address

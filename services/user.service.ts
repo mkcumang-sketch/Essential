@@ -1,4 +1,4 @@
-import User from '@/models/User';
+import User from '@/models/user';
 import type { ApiResponse, IUser } from '@/types';
 
 function leanUser(raw: unknown): IUser | null {

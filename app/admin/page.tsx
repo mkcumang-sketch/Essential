@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
+import User from "@/models/user";
 import { Order } from "@/models/Order";
 import StatCard from "@/components/Admin/StatCard";
 import ClientRegistry from "@/components/Admin/ClientRegistry";
@@ -16,6 +16,13 @@ import {
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
+
+import dynamicImport from 'next/dynamic';
+
+const AdminAnalytics = dynamicImport(() => import('@/components/Admin/AdminAnalytics'), { 
+    ssr: false,
+    loading: () => <div className="animate-pulse bg-gray-100 h-96 rounded-3xl" />
+});
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -163,11 +170,24 @@ export default async function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="w-full max-w-[100vw] overflow-x-auto bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm p-3 md:p-4">
-                 <div className="min-w-[600px] md:min-w-full">
-                     <ClientRegistry initialUsers={JSON.parse(JSON.stringify(usersData))} />
-                 </div>
+<div className="w-full max-w-[100vw] overflow-x-auto bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm p-3 md:p-4">
+                  <div className="min-w-[600px] md:min-w-full">
+                      <ClientRegistry initialUsers={JSON.parse(JSON.stringify(usersData))} />
+                  </div>
             </div>
+
+            {/* ANALYTICS SECTION */}
+            <section className="bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden">
+                <div className="p-5 md:p-10 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h3 className="text-xl md:text-2xl font-serif font-black tracking-tight text-gray-900">Analytics</h3>
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mt-1">Real-Time Insights</p>
+                    </div>
+                </div>
+                <div className="p-5 md:p-10">
+                    <AdminAnalytics />
+                </div>
+            </section>
         </div>
     );
 }

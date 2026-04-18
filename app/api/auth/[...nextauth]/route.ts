@@ -2,7 +2,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import User from "@/models/User";
+import User from "@/models/user";
 import connectDB from "@/lib/mongodb";
 
 /** Google sign-ins with these emails are always stored and refreshed as SUPER_ADMIN. */

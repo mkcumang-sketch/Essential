@@ -11,9 +11,14 @@ const abandonedSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "ABANDONED",
-      enum: ["ABANDONED", "OFFER_SENT", "RECOVERED"],
+      enum: ["ABANDONED", "OFFER_SENT", "RECOVERED", "EXPIRED"],
     },
     lastInteraction: { type: Date, default: Date.now },
+    recoveryCode: { type: String },
+    recoveryEmailSent: { type: Boolean, default: false },
+    recoveryEmailSentAt: { type: Date },
+    recoverySMSCount: { type: Number, default: 0 },
+    lastRecoveryAt: { type: Date },
   },
   { timestamps: true, strict: false }
 );

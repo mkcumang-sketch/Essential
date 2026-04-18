@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import User from '@/models/User';
+import User from '@/models/user';
 
 // 🌟 BULLETPROOF DATABASE CONNECTION 🌟
 let isConnected = false;

@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
+import User from "@/models/user";
 
 const Order =
   mongoose.models.Order ||

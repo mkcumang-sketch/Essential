@@ -97,6 +97,24 @@ export async function PUT(req: Request) {
             }
         }
 
+        // 📧 3. AUTO-INVOICE ON DISPATCH/DELIVER
+        if (updatedOrder && body.status && ['DISPATCHED', 'DELIVERED'].includes(body.status) && !updatedOrder.invoiceSentAt) {
+            try {
+                const userEmail = updatedOrder.shippingData?.email || updatedOrder.customer?.email;
+                if (userEmail) {
+                    const invoiceRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/invoice`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId: updatedOrder.orderId, forceRegenerate: true })
+                    });
+                    const invoiceData = await invoiceRes.json();
+                    console.log(`📧 Invoice sent for ${updatedOrder.orderId}:`, invoiceData.success ? 'SUCCESS' : invoiceData.error);
+                }
+            } catch (invoiceError) {
+                console.error("Auto-invoice error:", invoiceError);
+            }
+        }
+
         revalidatePath('/', 'layout'); revalidatePath('/godmode'); revalidatePath('/admin/abandoned-carts'); revalidateTag('orders', 'layout');
         return NextResponse.json({ success: true, message: "Order status updated." });
     } catch (error) { return NextResponse.json({ success: false, error: "Update failed." }, { status: 500 }); }

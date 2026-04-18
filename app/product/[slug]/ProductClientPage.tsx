@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
     ShoppingBag, ArrowLeft, Star, Box, Video as VideoIcon, CheckCircle, User, X, Camera, UploadCloud, RefreshCcw, 
-    ShieldCheck, Truck, Clock, ChevronDown, Lock
+    ShieldCheck, Truck, Clock, ChevronDown, Lock, Maximize2
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useToast } from '@/context/ToastContext'; 
-import { optimizeImage } from '@/utils/optimizeimage'; 
+import { optimizeImage } from '@/utils/optimizeimage';
+import Product3DViewer from '@/components/Product3D'; 
 
 // 🌟 GUEST LEAD CAPTURE MODAL 🌟
 const GuestLeadModal = ({ isOpen, onClose, onSubmit, productPrice }: any) => {
@@ -104,6 +105,20 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
     const [reviewMedia, setReviewMedia] = useState<string[]>([]);
     const [isUploadingMedia, setIsUploadingMedia] = useState(false);
     const [reviewStatus, setReviewStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+
+    // 3D Viewer State
+    const [show3DViewer, setShow3DViewer] = useState(false);
+    
+    // Multi-Currency State
+    const [currency, setCurrency] = useState<'INR' | 'USD' | 'EUR' | 'GBP'>('INR');
+    
+    const currencyRates = { INR: 1, USD: 0.012, EUR: 0.011, GBP: 0.0095 };
+    const currencySymbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+    
+    const formatPrice = (priceINR: number) => {
+        const converted = priceINR * currencyRates[currency];
+        return `${currencySymbols[currency]}${converted.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    };
 
     useEffect(() => {
         setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
@@ -293,8 +308,8 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                             </button>
                         )}
                         {product.model3DUrl && (
-                            <button onClick={()=>setActiveMedia({type:'3d', url:product.model3DUrl})} className={`w-24 h-28 shrink-0 border-2 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-300 ${activeMedia.type === '3d' ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37] shadow-md scale-105' : 'border-transparent bg-[#D4AF37]/5 text-[#D4AF37]/60 hover:border-[#D4AF37]/30 hover:text-[#D4AF37]'}`}>
-                                <Box size={24}/><span className="text-[9px] font-black uppercase tracking-widest">3D View</span>
+                            <button onClick={()=>setShow3DViewer(true)} className={`w-24 h-28 shrink-0 border-2 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-300 ${activeMedia.type === '3d' ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37] shadow-md scale-105' : 'border-transparent bg-[#D4AF37]/5 text-[#D4AF37]/60 hover:border-[#D4AF37]/30 hover:text-[#D4AF37]'}`}>
+                                <Maximize2 size={24}/><span className="text-[9px] font-black uppercase tracking-widest">3D View</span>
                             </button>
                         )}
                     </div>
@@ -308,11 +323,24 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                     <h2 className="text-xl font-bold text-gray-400 uppercase tracking-widest mb-1">{product.brand}</h2>
                     <h1 className="text-4xl md:text-5xl font-serif text-black leading-[1.1] mb-6 tracking-tighter">{product.name}</h1>
                     
-                    <div className="flex items-end gap-4 mb-8 pb-8 border-b border-gray-200">
-                        <p className="text-4xl font-serif font-black text-black">₹{Number(product.offerPrice || product.price).toLocaleString('en-IN')}</p>
-                        {(product.offerPrice && product.price > product.offerPrice) && (
-                            <p className="text-gray-400 line-through text-lg font-serif mb-1">₹{Number(product.price).toLocaleString()}</p>
-                        )}
+                    <div className="flex items-end justify-between mb-8 pb-8 border-b border-gray-200">
+                        <div className="flex items-end gap-4">
+                            <p className="text-4xl font-serif font-black text-black">{formatPrice(product.offerPrice || product.price)}</p>
+                            {(product.offerPrice && product.price > product.offerPrice) && (
+                                <p className="text-gray-400 line-through text-lg font-serif mb-1">{formatPrice(product.price)}</p>
+                            )}
+                        </div>
+                        <select 
+                            value={currency} 
+                            onChange={(e) => setCurrency(e.target.value as any)}
+                            className="bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs font-black uppercase tracking-widest cursor-pointer hover:border-black transition-colors"
+                        >
+                            <option value="INR">₹ INR</option>
+                            <option value="USD">$ USD</option>
+                            <option value="EUR">€ EUR</option>
+                            <option value="GBP">£ GBP</option>
+                        </select>
+                        )
                     </div>
 
                     <div className="space-y-4 mb-10">
@@ -540,6 +568,35 @@ export default function ProductClientPage({ initialProduct, slug }: { initialPro
                             </form>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* 3D VIEWER MODAL */}
+            <AnimatePresence>
+                {show3DViewer && product.model3DUrl && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[7000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.9 }} 
+                            animate={{ scale: 1 }} 
+                            exit={{ scale: 0.9 }}
+                            className="relative w-full h-full max-w-6xl max-h-[90vh]"
+                        >
+                            <button 
+                                onClick={() => setShow3DViewer(false)} 
+                                className="absolute top-4 right-4 z-[100] p-3 bg-white/90 backdrop-blur-md rounded-full hover:bg-white transition-colors shadow-lg"
+                            >
+                                <X size={24} className="text-black" />
+                            </button>
+                            <Product3DViewer 
+                                modelGlbUrl={product.model3DUrl} 
+                            />
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 

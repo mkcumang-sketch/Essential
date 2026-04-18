@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/db"; // Aapka standard db connection import
-import User from "@/models/User";
+import User from "@/models/user";
 import { Order } from "@/models/Order";
 import AccountClient from "@/components/AccountClient";
 
