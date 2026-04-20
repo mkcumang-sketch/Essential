@@ -1,5 +1,5 @@
 import connectDB from "@/lib/mongodb";
-import User from "@/models/user";
+import User from "@/models/usertemp";
 import UsersClient from "./UserClient";
 
 export const dynamic = 'force-dynamic';

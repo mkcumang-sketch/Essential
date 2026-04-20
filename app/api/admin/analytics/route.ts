@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/mongodb';
-import User from '@/models/user';
+import User from '@/models/usertemp';
 
 export async function GET() {
     try {

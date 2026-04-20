@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
-import User from '@/models/user'; // 🚀 FIXED: Capital 'User', lowercase path
+import User from '@/models/usertemp'; // 🚀 FIXED: Capital 'User', lowercase path
 import { Product } from '@/models/Product';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";

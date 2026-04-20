@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
 import { Product } from '@/models/Product';
-import User from '@/models/user';
+import User from '@/models/usertemp';
 import { sendOrderConfirmationEmail } from '@/lib/mail';
 
 export async function POST(req: Request) {

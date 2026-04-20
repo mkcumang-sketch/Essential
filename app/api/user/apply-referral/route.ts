@@ -1,5 +1,5 @@
 import  connectDB from "@/lib/mongodb";
-import User from "@/models/user";
+import User from "@/models/usertemp";
 
 export async function POST(req: Request) {
     try {

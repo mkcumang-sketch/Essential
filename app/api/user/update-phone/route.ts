@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import User from "@/models/user";
+import User from "@/models/usertemp";
 import mongoose from "mongoose";
 
 export async function POST(req: Request) {

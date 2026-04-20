@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import user, { LOYALTY_TIERS, getLoyaltyTier, getLoyaltyDiscount } from '@/models/user';
+import user, { LOYALTY_TIERS, getLoyaltyTier, getLoyaltyDiscount } from '@/models/usertemp';
 import connectDB from './mongodb';
 
 export { LOYALTY_TIERS, getLoyaltyTier, getLoyaltyDiscount };

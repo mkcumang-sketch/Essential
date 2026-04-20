@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import connectDB from "@/lib/mongodb";
-import User from "@/models/user";
+import User from "@/models/usertemp";
 import { Order } from "@/models/Order";
 import StatCard from "@/components/Admin/StatCard";
 import ClientRegistry from "@/components/Admin/ClientRegistry";

@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import User from '@/models/user'; 
+import User from '@/models/usertemp'; 
 
 // 🚀 THE GHOST KILLER: Next.js 15 Data Cache Bypass
 export const dynamic = 'force-dynamic';

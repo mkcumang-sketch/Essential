@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/mongodb';
-import user from '@/models/user';
+import user from '@/models/usertemp';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
