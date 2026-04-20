@@ -34,21 +34,21 @@ export const authOptions: NextAuthOptions = {
             credentials: { phone: { type: "text" }, password: { type: "password" } },
             async authorize(credentials) {
                 await connectDB();
-                const user = await User.findOne({ phone: credentials?.phone }).select('+password').lean() as any;
+                const existing = await User.findOne({ phone: credentials?.phone }).select('+password').lean() as any;
                 
-                if (!user || !user.password) throw new Error("User not found");
-                const isValid = await bcrypt.compare(credentials!.password, user.password);
+                if (!User || !User.password) throw new Error("User not found");
+                const isValid = await bcrypt.compare(credentials!.password, User.password);
                 if (!isValid) throw new Error("Wrong password");
 
                 // ✅ PERFECT: Database ID is mapped to `id`
                 return { 
-                    id: user._id.toString(), 
-                    name: user.name, 
-                    email: user.email, 
-                    phone: user.phone, 
-                    role: user.role,
-                    walletPoints: user.walletPoints || 0,
-                    loyaltyTier: user.loyaltyTier || 'Silver Vault'
+                    id: User._id.toString(), 
+                    name: User.name, 
+                    email: User.email, 
+                    phone: User.phone, 
+                    role: User.role,
+                    walletPoints: User.walletPoints || 0,
+                    loyaltyTier: User.loyaltyTier || 'Silver Vault'
                 };
             }
         })

@@ -27,14 +27,14 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
         }
 
         // 🚨 FIREWALL: Find and validate user
-        const user = await User.findById(session.user.id).select('-password -__v');
+        const User = await User.findById(session.user.id).select('-password -__v');
         
-        if (!user) {
+        if (!User) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
         // 🚨 FIREWALL: Check if address exists and belongs to user (IDOR FIX)
-        const addressExists = user.addresses?.some((addr: any) => 
+        const addressExists = User.addresses?.some((addr: any) => 
             addr._id?.toString() === addressId && addr._id?.toString() === addressId
         );
 

@@ -14,12 +14,11 @@ import {
     TrendingUp, Search, ExternalLink, Truck, Ghost 
 } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
-import dynamicImport from 'next/dynamic';
+import NextDynamic from 'next/dynamic';
 
-const AdminAnalytics = dynamicImport(() => import('@/components/Admin/AdminAnalytics'), { 
+const AdminAnalytics = NextDynamic(() => import('@/components/Admin/AdminAnalytics'), { 
     ssr: false,
     loading: () => <div className="animate-pulse bg-gray-100 h-96 rounded-3xl" />
 });
@@ -146,7 +145,7 @@ export default async function AdminDashboard() {
                                     <div>
                                         <p className="text-xs md:text-sm font-black text-gray-900 tracking-tight">{order.orderId || order._id.toString().slice(-8)}</p>
                                         {order.trackingId && (
-                                            <div className="flex items-center gap-1 mt-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded inline-flex border border-blue-100">
+                                            <div className="flex items-center gap-1 mt-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100">
                                                 <Truck size={10} />
                                                 <p className="text-[8px] md:text-[9px] font-bold tracking-widest uppercase">{order.trackingId}</p>
                                             </div>
@@ -170,13 +169,12 @@ export default async function AdminDashboard() {
                 </div>
             </div>
 
-<div className="w-full max-w-[100vw] overflow-x-auto bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm p-3 md:p-4">
+            <div className="w-full max-w-[100vw] overflow-x-auto bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm p-3 md:p-4">
                   <div className="min-w-[600px] md:min-w-full">
                       <ClientRegistry initialUsers={JSON.parse(JSON.stringify(usersData))} />
                   </div>
             </div>
 
-            {/* ANALYTICS SECTION */}
             <section className="bg-white rounded-3xl md:rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden">
                 <div className="p-5 md:p-10 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div>

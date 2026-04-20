@@ -1,38 +1,36 @@
 import mongoose from 'mongoose';
-// 🚀 FIXED 1: Capitalized 'User' so Vercel doesn't crash
-import { LOYALTY_TIERS, getLoyaltyTier, getLoyaltyDiscount } from '@/models/user';
+import user, { LOYALTY_TIERS, getLoyaltyTier, getLoyaltyDiscount } from '@/models/user';
 import connectDB from './mongodb';
 
-// 🚀 FIXED 2: Exported getLoyaltyDiscount so your checkout API can use it
-export { getLoyaltyDiscount };
+export { LOYALTY_TIERS, getLoyaltyTier, getLoyaltyDiscount };
 
 export async function updateUserLoyalty(userId: string | mongoose.Types.ObjectId) {
     await connectDB();
     const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
     
-    const user = await User.findById(userId);
-    if (!user) return null;
+    const userDoc = await User.findById(userId);
+    if (!userDoc) return null;
 
-    const currentTier = user.loyaltyTier;
-    const newTier = getLoyaltyTier(user.totalSpent);
+    const currentTier = userDoc.loyaltyTier;
+    const newTier = getLoyaltyTier(userDoc.totalSpent);
     
     if (newTier !== currentTier) {
         const oldTierInfo = LOYALTY_TIERS.find(t => t.name === currentTier);
         const newTierInfo = LOYALTY_TIERS.find(t => t.name === newTier);
         
-        user.loyaltyTier = newTier;
-        user.tierUpgradedAt = new Date();
-        user.loyaltyPoints = user.loyaltyPoints + (newTierInfo?.discount || 0) * 100;
+        userDoc.loyaltyTier = newTier;
+        userDoc.tierUpgradedAt = new Date();
+        userDoc.loyaltyPoints = userDoc.loyaltyPoints + (newTierInfo?.discount || 0) * 100;
         
-        user.notifications = user.notifications || [];
-        user.notifications.unshift({
+        userDoc.notifications = userDoc.notifications || [];
+        userDoc.notifications.unshift({
             title: `🎉 Upgraded to ${newTier}!`,
             desc: `You've been upgraded from ${currentTier} to ${newTier}. Enjoy ${newTierInfo?.discount}% extra discount on all orders!`,
             unread: true,
             time: new Date()
         });
         
-        await user.save();
+        await userDoc.save();
         
         return { 
             oldTier: currentTier, 
@@ -52,12 +50,12 @@ export async function syncAllUserLoyalties() {
     const users = await User.find({ totalSpent: { $gt: 0 } });
     let upgraded = 0;
     
-    for (const user of users) {
-        const newTier = getLoyaltyTier(user.totalSpent);
-        if (newTier !== user.loyaltyTier) {
-            user.loyaltyTier = newTier;
-            user.tierUpgradedAt = new Date();
-            await user.save();
+    for (const u of users) {
+        const newTier = getLoyaltyTier(u.totalSpent);
+        if (newTier !== u.loyaltyTier) {
+            u.loyaltyTier = newTier;
+            u.tierUpgradedAt = new Date();
+            await u.save();
             upgraded++;
         }
     }

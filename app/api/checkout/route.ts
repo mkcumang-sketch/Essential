@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
-import user from '@/models/user'; // 🚀 FIXED: Capitalized 'User'
+import User from '@/models/user'; // 🚀 FIXED: Capital 'User', lowercase path
 import { Product } from '@/models/Product';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -15,8 +15,8 @@ let razorpay: any = null;
 
 if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
     razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID as string, // 🚀 FIXED: Added 'as string' to remove warning
-        key_secret: process.env.RAZORPAY_KEY_SECRET as string, // 🚀 FIXED: Added 'as string'
+        key_id: process.env.RAZORPAY_KEY_ID as string,
+        key_secret: process.env.RAZORPAY_KEY_SECRET as string,
     });
 }
 
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
         let dbUser: any = null;
         if (session && session.user && (session.user as any).id) {
             // 🚀 FIXED: Used Capital 'User'
-            dbUser = await user.findById((session.user as any).id);
+            dbUser = await User.findById((session.user as any).id);
             if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
                 dbUser.phone = shippingData.phone;
                 await dbUser.save();
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
         if (appliedReferralCode) {
             // Find the person whose code is being used
             // 🚀 FIXED: Used Capital 'User'
-            const referrerUser = await user.findOne({ myReferralCode: appliedReferralCode.trim() });
+            const referrerUser = await User.findOne({ myReferralCode: appliedReferralCode.trim() });
             
             if (referrerUser) {
                 // Give Person B (the buyer) a flat 10% discount

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { Order } from '@/models/Order';
-import user from '@/models/user';
+import User from '@/models/user';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
 
@@ -10,7 +10,13 @@ const invoiceSchema = z.object({
   forceRegenerate: z.boolean().optional(),
 });
 
-async function generateInvoiceHTML(order: any, user: any) {
+interface UserData {
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
+async function generateInvoiceHTML(order: any, userData: UserData) {
   const itemsHTML = order.items?.map((item: any, idx: number) => `
     <tr>
       <td style="padding: 16px 0; border-bottom: 1px solid #e5e5e5;">
@@ -64,9 +70,9 @@ async function generateInvoiceHTML(order: any, user: any) {
                   <tr>
                     <td width="50%" valign="top">
                       <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #999; letter-spacing: 2px; text-transform: uppercase;">Bill To</p>
-                      <p style="margin: 0; font-size: 16px; font-weight: 600; color: #000;">${user?.name || shipping.name || 'Valued Customer'}</p>
-                      <p style="margin: 4px 0 0 0; font-size: 14px; color: #666;">${user?.email || shipping.email || ''}</p>
-                      ${user?.phone || shipping.phone ? `<p style="margin: 4px 0 0 0; font-size: 14px; color: #666;">${user.phone || shipping.phone}</p>` : ''}
+                      <p style="margin: 0; font-size: 16px; font-weight: 600; color: #000;">${userData?.name || shipping.name || 'Valued Customer'}</p>
+                      <p style="margin: 4px 0 0 0; font-size: 14px; color: #666;">${userData?.email || shipping.email || ''}</p>
+                      ${userData?.phone || shipping.phone ? `<p style="margin: 4px 0 0 0; font-size: 14px; color: #666;">${userData.phone || shipping.phone}</p>` : ''}
                     </td>
                     <td width="50%" valign="top" style="text-align: right;">
                       <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: #999; letter-spacing: 2px; text-transform: uppercase;">Invoice Details</p>
@@ -166,7 +172,8 @@ async function sendInvoiceEmail(order: any, userEmail: string, userName: string)
     },
   });
 
-  const invoiceHTML = await generateInvoiceHTML(order, { name: userName, email: userEmail });
+  const userData = { name: userName, email: userEmail };
+  const invoiceHTML = await generateInvoiceHTML(order, userData);
 
   const mailOptions = {
     from: `"Essential Rush" <${process.env.SMTP_USER}>`,
@@ -208,15 +215,15 @@ export async function POST(req: Request) {
       );
     }
 
-    let user: any = null;
+    let dbUser: any = null;
     let userEmail = order.shippingData?.email;
     let userName = order.shippingData?.name || 'Valued Customer';
 
     if (order.userId) {
-      user = await user.findById(order.userId);
-      if (user) {
-        userEmail = user.email || userEmail;
-        userName = user.name || userName;
+      dbUser = await User.findById(order.userId);
+      if (dbUser) {
+        userEmail = dbUser.email || userEmail;
+        userName = dbUser.name || userName;
       }
     }
 

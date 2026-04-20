@@ -107,7 +107,7 @@ class UserService {
     try {
       const newTier = this.calculateLoyaltyTier(totalSpent);
       
-      const user = await User.findByIdAndUpdate(
+      const updatedUser = await User.findByIdAndUpdate(
         userId,
         { 
           $set: { 
@@ -118,14 +118,14 @@ class UserService {
         { new: true }
       ).select('-password -__v');
 
-      if (!user) {
+      if (!updatedUser) {
         return { success: false, error: "User not found" };
       }
 
       return { 
         success: true, 
         message: "Loyalty status updated",
-        data: { user, tier: newTier }
+        data: { user: updatedUser, tier: newTier }
       };
 
     } catch (error) {
@@ -137,27 +137,30 @@ class UserService {
   // 🏆 WALLET OPERATIONS
   static async updateWalletPoints(userId: string, points: number, operation: 'credit' | 'debit'): Promise<ApiResponse> {
     try {
-      const updateField = operation === 'credit' ? '$inc' : '$inc';
+      const updateField = '$inc';
       const updateValue = operation === 'credit' ? points : -points;
 
-      const user = await User.findByIdAndUpdate(
+      const updatedUser = await User.findByIdAndUpdate(
         userId,
         { [updateField]: { walletPoints: updateValue } },
         { new: true }
       ).select('-password -__v');
 
-      if (!user) {
+      if (!updatedUser) {
         return { success: false, error: "User not found" };
       }
 
-      if (operation === 'debit' && user.walletPoints < points) {
+      // Check if wallet went negative after debit
+      if (operation === 'debit' && updatedUser.walletPoints < 0) {
+        // Reverse the debit if insufficient funds (basic rollback)
+        await User.findByIdAndUpdate(userId, { $inc: { walletPoints: points } });
         return { success: false, error: "Insufficient wallet points" };
       }
 
       return { 
         success: true, 
         message: `Wallet ${operation === 'credit' ? 'credited' : 'debited'} successfully`,
-        data: { newBalance: user.walletPoints }
+        data: { newBalance: updatedUser.walletPoints }
       };
 
     } catch (error) {
@@ -169,25 +172,27 @@ class UserService {
   // 🏆 ADDRESS MANAGEMENT
   static async addAddress(userId: string, addressData: any): Promise<ApiResponse> {
     try {
-      // 🛡️ SET AS DEFAULT IF FIRST ADDRESS
-      const user = await this.findUserById(userId);
-      if (!user) {
+      const existingUser = await this.findUserById(userId);
+      if (!existingUser) {
         return { success: false, error: "User not found" };
       }
 
-      if (user.addresses.length === 0) {
+      // 🛡️ SET AS DEFAULT IF FIRST ADDRESS
+      if (!existingUser.addresses || existingUser.addresses.length === 0) {
         addressData.isDefault = true;
       }
 
       // 🛡️ UNSET OTHER DEFAULTS IF NEW DEFAULT
       if (addressData.isDefault) {
-        await User.updateOne(
+        // 🚀 FIXED: Use the Mongoose Model (User) instead of the local variable (existingUser)
+        await User.updateMany(
           { _id: userId },
           { $set: { 'addresses.$[elem].isDefault': false } },
           { arrayFilters: [{ 'elem.isDefault': true }] }
         );
       }
 
+      // 🚀 FIXED: Used 'User' model
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $push: { addresses: addressData } },
@@ -209,14 +214,16 @@ class UserService {
   // 🏆 WISHLIST OPERATIONS
   static async toggleWishlist(userId: string, productId: string): Promise<ApiResponse> {
     try {
-      const user = await this.findUserById(userId);
-      if (!user) {
+      const existingUser = await this.findUserById(userId);
+      if (!existingUser) {
         return { success: false, error: "User not found" };
       }
 
-      const isInWishlist = user.wishlist.includes(productId);
+      // Safely check if wishlist exists
+      const isInWishlist = existingUser.wishlist && existingUser.wishlist.includes(productId);
       const updateOperation = isInWishlist ? '$pull' : '$push';
 
+      // 🚀 FIXED: Used 'User' model
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         { [updateOperation]: { wishlist: productId } },
