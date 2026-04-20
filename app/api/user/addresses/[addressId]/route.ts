@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import User from '@/models/usertemp';
+import User from '@/models/usertemp'; // 🚀 FIXED: Wapas asli naam par set kar diya
 import connectDB from '@/lib/mongodb';
 
 // DELETE: Remove specific address
@@ -27,20 +27,20 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ addre
         }
 
         // 🚨 FIREWALL: Find and validate user
-        const User = await User.findById(session.user.id).select('-password -__v');
+        const dbUser = await User.findById(session.user.id).select('-password -__v');
         
-        if (!User) {
+        if (!dbUser) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
         // 🚨 FIREWALL: Check if address exists and belongs to user (IDOR FIX)
-        const addressExists = User.addresses?.some((addr: any) => 
-            addr._id?.toString() === addressId && addr._id?.toString() === addressId
+        const addressExists = dbUser.addresses?.some((addr: any) => 
+            addr._id?.toString() === addressId 
         );
 
         if (!addressExists) {
             return NextResponse.json({ success: false, error: "Address not found" }, { status: 404 });
-        }
+        } // 🚀 FIXED: Ye raha wo missing bracket!
 
         // 🚨 FIREWALL: Remove the address
         const updatedUser = await User.findByIdAndUpdate(
@@ -107,15 +107,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ addressI
         }
 
         // 🚨 FIREWALL: Find and validate user
-        const user = await User.findById(session.user.id).select('-password -__v');
+        // 🚀 FIXED: 'user' ko 'dbUser' kar diya taaki model ke naam se clash na ho
+        const dbUser = await User.findById(session.user.id).select('-password -__v');
         
-        if (!user) {
+        if (!dbUser) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
         // 🚨 FIREWALL: Check if address exists and belongs to user (IDOR FIX)
-        const addressExists = user.addresses?.some((addr: any) => 
-            addr._id?.toString() === addressId && addr._id?.toString() === addressId
+        const addressExists = dbUser.addresses?.some((addr: any) => 
+            addr._id?.toString() === addressId
         );
 
         if (!addressExists) {

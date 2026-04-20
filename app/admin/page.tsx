@@ -16,12 +16,7 @@ import {
 
 export const fetchCache = 'force-no-store';
 
-import NextDynamic from 'next/dynamic';
-
-const AdminAnalytics = NextDynamic(() => import('@/components/Admin/AdminAnalytics'), { 
-    ssr: false,
-    loading: () => <div className="animate-pulse bg-gray-100 h-96 rounded-3xl" />
-});
+import AdminAnalyticsWrapper from '@/components/Admin/AdminAnalyticsWrapper';
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -183,7 +178,7 @@ export default async function AdminDashboard() {
                     </div>
                 </div>
                 <div className="p-5 md:p-10">
-                    <AdminAnalytics />
+                    <AdminAnalyticsWrapper />
                 </div>
             </section>
         </div>
