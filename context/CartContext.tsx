@@ -59,9 +59,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (status === "authenticated" && isInitialized) {
       const fetchDBCart = async () => {
         try {
-          const res = await fetch("/api/cart/sync");
+          // 🚀 FIX: Add cache bypass headers
+          const res = await fetch("/api/cart/sync", {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+          });
           
-          // 🚀 FIX: Read as text first to prevent JSON parse crash on empty response
           const textContent = await res.text();
           
           if (!textContent) {
@@ -156,8 +159,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeFromCart = useCallback((id: string) => {
-    setCartItems((prev) => prev.filter((item) => item._id !== id));
-  }, []);
+    setCartItems((prev) => {
+      const newCart = prev.filter((item) => item._id !== id);
+      
+      // 🚀 FIX: Instant Delete Sync - Don't wait for debounce if removing!
+      if (status === "authenticated") {
+        const total = newCart.reduce((acc, item) => acc + (item.offerPrice || item.price) * item.qty, 0);
+        fetch("/api/cart/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: newCart, totalAmount: total }),
+          keepalive: true // Force browser to complete request even if user logs out or closes tab
+        }).catch(e => console.error("Instant sync failed", e));
+      }
+      
+      return newCart;
+    });
+  }, [status]);
 
   const cartTotal = cartItems.reduce((total, item) => total + (item.offerPrice || item.price) * item.qty, 0);
 

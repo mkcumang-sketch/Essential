@@ -1,67 +1,67 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Apne authOptions ka path check kar lena
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'; 
 import connectDB from '@/lib/mongodb';
-import { AbandonedCart } from '@/models/AbandonedCart';
+import { UserBehavior } from '@/models/UserBehavior'; // 🚀 Naya model import kiya
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store'; 
 
-// 🚀 GET: Frontend ko purani cart wapas dene ke liye
+// GET: Frontend ko purani cart wapas dene ke liye
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
-            return NextResponse.json({ success: false, items: [] });
+        if (!session?.user?.id) {
+            return NextResponse.json({ success: false, items: [] }, {
+                headers: { 'Cache-Control': 'no-store, max-age=0' }
+            });
         }
 
         await connectDB();
-        const userCart:any = await AbandonedCart.findOne({ email: session.user.email }).lean();
+        // 🚀 FETCH FROM USER BEHAVIOR
+        const behavior: any = await UserBehavior.findOne({ userId: session.user.id }).lean();
 
-        if (!userCart) {
-            return NextResponse.json({ success: true, items: [] });
+        if (!behavior) {
+            return NextResponse.json({ success: true, items: [] }, {
+                headers: { 'Cache-Control': 'no-store, max-age=0' }
+            });
         }
 
-        return NextResponse.json({ success: true, items: userCart.cartItems || [] });
+        // Return cartAbandons array
+        return NextResponse.json({ success: true, items: behavior.cartAbandons || [] }, {
+            headers: { 'Cache-Control': 'no-store, max-age=0' } 
+        });
     } catch (error) {
         console.error("GET Cart Error:", error);
         return NextResponse.json({ success: false, items: [] }, { status: 500 });
     }
 }
 
-// 🚀 POST: Frontend se naya data DB mein save (Abandoned Cart banane) ke liye
+// POST: Frontend se naya data DB mein save karne ke liye
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
-            return NextResponse.json({ success: false, message: "Login required to save cart" }, { status: 401 });
+        if (!session?.user?.id) {
+            return NextResponse.json({ success: false, message: "Login required" }, { status: 401 });
         }
 
         await connectDB();
-        const { items, totalAmount } = await req.json();
+        const { items } = await req.json();
+        const userId = session.user.id;
 
-        const userEmail = session.user.email;
-        const userName = session.user.name || "Vault VIP";
+        // 🚀 SMART FIX: Agar behavior pehli baar ban raha hai toh sessionId dena zaroori hai
+        const fallbackSessionId = `user_${userId}`; 
 
-        // Agar cart khaali kardi user ne, toh DB se Abandoned Cart uda do
-        if (!items || items.length === 0) {
-            await AbandonedCart.findOneAndDelete({ email: userEmail });
-            return NextResponse.json({ success: true, message: "Cart cleared" });
-        }
-
-        // 🚀 THE MAGIC: Upsert (Agar cart nahi hai toh banayega, agar hai toh update karega)
-        await AbandonedCart.findOneAndUpdate(
-            { email: userEmail },
+        await UserBehavior.findOneAndUpdate(
+            { userId: userId },
             { 
-                name: userName,
-                email: userEmail,
-                cartItems: items,
-                cartTotal: totalAmount || 0,
-                updatedAt: new Date()
+                $set: { cartAbandons: items || [] }, // Cart items update karo
+                $setOnInsert: { sessionId: fallbackSessionId } // Agar document nahi hai, toh ye session ID daal do
             },
-            { new: true, upsert: true } // Upsert = Create if not exists!
+            { new: true, upsert: true } 
         );
 
-        return NextResponse.json({ success: true, message: "Abandoned Cart Saved!" });
+        return NextResponse.json({ success: true, message: "Cart synced to UserBehavior!" });
 
     } catch (error: any) {
         console.error("POST Cart Error:", error.message);

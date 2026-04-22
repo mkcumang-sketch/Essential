@@ -11,7 +11,12 @@ const UserBehaviorSchema = new mongoose.Schema({
   categoryScores: { type: Map, of: Number, default: {} },
   
   recentlyViewed: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
-  cartAbandons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
+  
+  // 🚀 FIX: Isko 'Array' kiya taaki Quantity aur Price bhi save ho sake
+  cartAbandons: { type: Array, default: [] },
+  
+  // 🚀 ADDED: Agent Tracking (Kis agent ka link click karke cart banaya)
+  agentRef: { type: String, default: null } 
 }, { timestamps: true });
 
 const UserBehavior = mongoose.models.UserBehavior || mongoose.model('UserBehavior', UserBehaviorSchema);

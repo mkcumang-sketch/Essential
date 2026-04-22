@@ -3,6 +3,8 @@ import './globals.css'
 import { Analytics } from '@vercel/analytics/react';
 import { GlobalProvider } from './GlobalProvider';
 import { ToastProvider } from '@/context/ToastContext';
+import { Suspense } from 'react';
+import AgentTracker from '@/components/AgentTracker'; // 🚀 Imported Tracker
 
 // 🚀 THE APP-MODE VIEWPORT: Locks zoom and sets the native status bar color
 export const viewport: Viewport = {
@@ -78,6 +80,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased overflow-x-hidden">
+        {/* 🚀 THE TRACKER: Wrapped in Suspense so Next.js build doesn't crash */}
+        <Suspense fallback={null}>
+            <AgentTracker />
+        </Suspense>
+
         <GlobalProvider>
           <ToastProvider>
             <main> 

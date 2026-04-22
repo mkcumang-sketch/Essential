@@ -11,6 +11,9 @@ export interface IOrder extends Document {
   razorpayPaymentId?: string;
   razorpaySignature?: string;
   paidAt?: Date;
+  // 🚀 ADDED: Affiliate Agent Tracking
+  agentRef?: string;
+  agentCommission?: number;
 }
 
 const OrderSchema = new Schema<IOrder>({
@@ -24,6 +27,10 @@ const OrderSchema = new Schema<IOrder>({
   razorpayPaymentId: { type: String },
   razorpaySignature: { type: String },
   paidAt: { type: Date },
+  
+  // 🚀 ADDED: Agent data for Admin Dashboard calculations
+  agentRef: { type: String, default: null },
+  agentCommission: { type: Number, default: 0 }
 }, { timestamps: true, strict: false });
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
