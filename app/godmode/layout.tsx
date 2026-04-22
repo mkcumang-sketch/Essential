@@ -17,11 +17,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/admin', short: 'Home' },
-    { name: 'Products', icon: PackageSearch, href: '/admin/products', short: 'Inventory' },
-    { name: 'Customers', icon: Users, href: '/admin/users', short: 'Clients' },
-    { name: 'Vault Carts', icon: ShoppingBag, href: '/admin/abandoned-carts', short: 'Carts' },
-    { name: 'Settings', icon: Settings, href: '/admin/settings', short: 'Config' },
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/Godmode', short: 'Home' },
+    { name: 'Products', icon: PackageSearch, href: '/Godmode/products', short: 'Inventory' },
+    { name: 'Customers', icon: Users, href: '/Godmode/users', short: 'Clients' },
+    { name: 'Vault Carts', icon: ShoppingBag, href: '/Godmode/abandoned-carts', short: 'Carts' },
+    { name: 'Settings', icon: Settings, href: '/Godmode/settings', short: 'Config' },
   ];
 
   const mobileNavItems = [

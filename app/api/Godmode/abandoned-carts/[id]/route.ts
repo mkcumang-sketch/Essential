@@ -25,8 +25,8 @@ export async function DELETE(
             return NextResponse.json({ success: false, message: 'Cart not found' }, { status: 404 });
         }
 
-        revalidatePath('/admin/abandoned-carts');
-        revalidatePath('/admin', 'layout');
+        revalidatePath('/Godmode/abandoned-carts');
+        revalidatePath('/Godmode', 'layout');
 
         return NextResponse.json(
             { success: true, message: 'Cart Purged' },

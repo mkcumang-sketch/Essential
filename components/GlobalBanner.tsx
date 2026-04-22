@@ -9,7 +9,7 @@ export default function GlobalBanner() {
   useEffect(() => {
     const fetchSystemConfig = async () => {
       try {
-        const res = await fetch('/api/admin/system');
+        const res = await fetch('/api/Godmode/system');
         if (res.ok) {
           const data = await res.json();
           if (data && data.theme) setThemeConfig(data.theme);

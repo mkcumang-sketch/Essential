@@ -115,7 +115,7 @@ export async function PUT(req: Request) {
             }
         }
 
-        revalidatePath('/', 'layout'); revalidatePath('/godmode'); revalidatePath('/admin/abandoned-carts'); revalidateTag('orders', 'layout');
+        revalidatePath('/', 'layout'); revalidatePath('/Godmode'); revalidatePath('/Godmode/abandoned-carts'); revalidateTag('orders', 'layout');
         return NextResponse.json({ success: true, message: "Order status updated." });
     } catch (error) { return NextResponse.json({ success: false, error: "Update failed." }, { status: 500 }); }
 }
@@ -140,7 +140,7 @@ export async function DELETE(req: Request) {
         const query = isMongoId ? { $or: [{ _id: orderId }, { orderId: orderId }] } : { orderId: orderId };
         await Order.findOneAndDelete(query);
 
-        revalidatePath('/', 'layout'); revalidatePath('/godmode'); revalidatePath('/admin/orders'); revalidateTag('orders', 'layout');
+        revalidatePath('/', 'layout'); revalidatePath('/godmode'); revalidatePath('/Godmode/orders'); revalidateTag('orders', 'layout');
         return NextResponse.json({ success: true, message: "Order deleted." });
     } catch (error) { return NextResponse.json({ success: false, error: "Deletion failed." }, { status: 500 }); }
 }

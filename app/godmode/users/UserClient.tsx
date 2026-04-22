@@ -19,7 +19,7 @@ export default function UsersClient({ initialUsers }: { initialUsers: any[] }) {
 
   const fetchUsers = async () => {
     try {
-      const r = await fetch(`/api/admin/users?t=${Date.now()}`, { 
+      const r = await fetch(`/api/Godmode/users?t=${Date.now()}`, { 
           cache: "no-store",
           headers: { 'Cache-Control': 'no-cache' }
       });
@@ -40,7 +40,7 @@ export default function UsersClient({ initialUsers }: { initialUsers: any[] }) {
     setDeletingId(id);
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/Godmode/users/${id}`, { method: 'DELETE' });
         const data = await res.json();
         
         if (data.success) {

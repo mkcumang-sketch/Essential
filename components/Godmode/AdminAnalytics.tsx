@@ -43,7 +43,7 @@ export default function AdminAnalytics() {
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
-                const res = await fetch('/api/admin/analytics', { cache: 'no-store' });
+                const res = await fetch('/api/Godmode/analytics', { cache: 'no-store' });
                 const json = await res.json();
                 if (json.success) {
                     setData(json.data);

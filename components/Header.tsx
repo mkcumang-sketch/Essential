@@ -68,7 +68,7 @@ export default function Header() {
         <div className="hidden md:flex gap-8 text-[10px] font-black uppercase tracking-[3px] text-white/70 items-center">
           <Link href="/" className="hover:text-[#D4AF37] transition-colors">Home</Link>
           <Link href="/shop" className="hover:text-[#D4AF37] transition-colors">Collection</Link>
-          {isAdmin && <Link href="/admin" className="text-[#D4AF37] hover:text-white border-b border-[#D4AF37] pb-1">Admin Panel</Link>}
+          {isAdmin && <Link href="/Godmode" className="text-[#D4AF37] hover:text-white border-b border-[#D4AF37] pb-1">Admin Panel</Link>}
           {session && !isAdmin && <Link href="/sales" className="text-white/70 hover:text-[#D4AF37]">Sales Dashboard</Link>}
           <button onClick={() => setIsSearchOpen(true)} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2 group">
             <Search size={18} />
@@ -117,7 +117,7 @@ export default function Header() {
               <Link href="/shop" onClick={() => setIsMobileMenuOpen(false)} className="text-4xl font-serif italic text-white hover:text-[#D4AF37]">Collection</Link>
               <Link href="/cart" onClick={() => setIsMobileMenuOpen(false)} className="text-4xl font-serif italic text-white hover:text-[#D4AF37]">Cart</Link>
               <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-4xl font-serif italic text-white hover:text-[#D4AF37]">Account</Link>
-              {isAdmin && <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif italic text-[#D4AF37]">Admin Panel</Link>}
+              {isAdmin && <Link href="/Godmode" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-serif italic text-[#D4AF37]">Admin Panel</Link>}
             </div>
 
             <div className="mt-auto pb-12 border-t border-white/10 pt-8">

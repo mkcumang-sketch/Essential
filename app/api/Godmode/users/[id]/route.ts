@@ -27,8 +27,8 @@ export async function DELETE(
             return NextResponse.json({ success: false, message: 'VIP Member not found' }, { status: 404, headers: noCacheHeaders });
         }
 
-        revalidatePath('/admin/users');
-        revalidatePath('/admin', 'layout');
+        revalidatePath('/Godmode/users');
+        revalidatePath('/Godmode', 'layout');
 
         return NextResponse.json({ success: true, message: 'Client Records Purged' }, { headers: noCacheHeaders });
     } catch (error) {

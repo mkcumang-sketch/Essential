@@ -21,8 +21,8 @@ export async function deleteAbandonedCart(id: string) {
     }
 
     // Cache clear karo taaki UI turant update ho
-    revalidatePath("/admin/abandoned-carts");
-    revalidatePath("/godmode"); // Godmode ka cache bhi clear karo
+    revalidatePath("/Godmode/abandoned-carts");
+    revalidatePath("/Godmode"); // Godmode ka cache bhi clear karo
 
     return { 
         success: true, 

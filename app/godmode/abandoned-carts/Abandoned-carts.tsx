@@ -43,7 +43,7 @@ export default function AbandonedCartsClient({ initialLeads }: { initialLeads: a
     startTransition(async () => {
       try {
         // Cache Buster URL to force Next.js to not use cached API
-        const res = await fetch(`/api/admin/abandoned-carts/${id}?t=${Date.now()}`, { 
+        const res = await fetch(`/api/Godmode/abandoned-carts/${id}?t=${Date.now()}`, { 
           method: 'DELETE',
           headers: { 'Cache-Control': 'no-cache' }
         });

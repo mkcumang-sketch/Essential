@@ -31,7 +31,7 @@ export default function AbandonedCartsAdminPage() {
 
   const fetchLeads = useCallback(async () => {
     try {
-      const r = await fetch(`/api/admin/abandoned-carts?t=${Date.now()}`, { cache: "no-store" });
+      const r = await fetch(`/api/Godmode/abandoned-carts?t=${Date.now()}`, { cache: "no-store" });
       const j = await r.json();
       if (j?.success && Array.isArray(j.leads)) {
         setLeads(j.leads);

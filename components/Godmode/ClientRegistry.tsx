@@ -48,7 +48,7 @@ export default function ClientRegistry({ initialUsers }: ClientRegistryProps) {
     const saveEdit = async (userId: string) => {
         setIsSaving(true);
         try {
-            const res = await fetch("/api/admin/users", {
+            const res = await fetch("/api/Godmode/users", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -19,7 +19,7 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
 
   const fetchProducts = async () => {
     try {
-      const r = await fetch(`/api/admin/products?t=${Date.now()}`, { 
+      const r = await fetch(`/api/Godmode/products?t=${Date.now()}`, { 
           cache: "no-store",
           headers: { 'Cache-Control': 'no-cache' }
       });
@@ -40,7 +40,7 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
     setDeletingId(id);
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/Godmode/products/${id}`, { method: 'DELETE' });
         const data = await res.json();
         
         if (data.success) {

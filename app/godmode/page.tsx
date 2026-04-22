@@ -14,13 +14,13 @@ import {
 } from 'lucide-react';
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import RedirectManager from '@/components/Admin/RedirectManager';
+import RedirectManager from '@/components/Godmode/RedirectManager';
 import dynamic from 'next/dynamic';
 
 // 🌟 SEO COMPONENTS IMPORTED 🌟
-import SeoPanel from '@/components/Admin/SeoPanel';
-import ImageSeoPanel from '@/components/Admin/ImageSeoPanel';
-import SeoAnalyticsDashboard from '@/components/Admin/SeoAnalyticsDashboard';
+import SeoPanel from '@/components/Godmode/SeoPanel';
+import ImageSeoPanel from '@/components/Godmode/ImageSeoPanel';
+import SeoAnalyticsDashboard from '@/components/Godmode/SeoAnalyticsDashboard';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
@@ -133,7 +133,10 @@ function AdminDashboard() {
 
   const [couponForm, setCouponForm] = useState({ code: '', discountValue: '', minOrder: '', validUntil: '' });
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
-  const [agentForm, setAgentForm] = useState({ name: '', email: '', code: '', tier: 'Sales Partner', commissionRate: 5 });
+  
+  // 🚀 AFFILIATE FORM STATE (Adjusted keys to match backend)
+  const [agentForm, setAgentForm] = useState({ name: '', email: '', code: '', tier: 'Partner', commissionRate: 5 });
+  
   const [pricingRules, setPricingRules] = useState({ isAiPricingActive: true, maxMarkupPercent: 15, maxDiscountPercent: 10, lowStockThreshold: 3, trendingThreshold: 10 });
 
   const addLog = (msg: string) => {
@@ -158,10 +161,10 @@ function AdminDashboard() {
 
     const endpoint =
       channel === "email"
-        ? "/api/admin/abandoned-carts/dispatch/email"
+        ? "/api/Godmode/abandoned-carts/dispatch/email"
         : channel === "sms"
-          ? "/api/admin/abandoned-carts/dispatch/sms"
-          : "/api/admin/abandoned-carts/dispatch/whatsapp";
+          ? "/api/Godmode/abandoned-carts/dispatch/sms"
+          : "/api/Godmode/abandoned-carts/dispatch/whatsapp";
 
     try {
       const res = await fetch(endpoint, {
@@ -196,7 +199,7 @@ function AdminDashboard() {
     try {
       const ts = new Date().getTime();
       const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust, resCelebs] = await Promise.all([
-        fetch(`/api/admin/abandoned-carts?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
+        fetch(`/api/Godmode/abandoned-carts?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
         fetch(`/api/cms?t=${ts}`).then(r => r.ok ? r.json() : {data: null}),
         fetch(`/api/products?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
         fetch(`/api/agents?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
@@ -204,8 +207,8 @@ function AdminDashboard() {
         fetch(`/api/ai/rules?t=${ts}`).then(r => r.ok ? r.json() : {data: null}),
         fetch(`/api/dashboard/full-analytics?t=${ts}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/reviews?admin=true&t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
-        fetch(`/api/admin/marketing?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
-        fetch(`/api/admin/users?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]})),
+        fetch(`/api/Godmode/marketing?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
+        fetch(`/api/Godmode/users?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]})),
         fetch(`/api/celebrity?t=${ts}`).then(r => r.ok ? r.json() : {data: []})
       ]);
       
@@ -333,7 +336,7 @@ function AdminDashboard() {
       if(!confirm("Delete this coupon code?")) return;
       setCoupons(prev => prev.filter(c => c._id !== id)); 
       try { 
-        await fetch(`/api/admin/marketing/${id}`, { method: 'DELETE' }); 
+        await fetch(`/api/Godmode/marketing/${id}`, { method: 'DELETE' }); 
         router.refresh();
       } catch(e) {}
   };
@@ -369,7 +372,7 @@ function AdminDashboard() {
       if(!confirm("Permanently erase this client record?")) return;
       setLeads(prev => prev.filter(l => l._id !== id)); 
       try { 
-        await fetch(`/api/admin/users/${id}`, { method: 'DELETE' }); 
+        await fetch(`/api/Godmode/users/${id}`, { method: 'DELETE' }); 
         router.refresh();
       } catch(e) {}
   };
@@ -398,15 +401,30 @@ function AdminDashboard() {
       } catch (e) { alert("Failed to update review."); } finally { setIsSyncing(false); }
   };
 
+  // 🚀 FIXED: Function to submit Agent to the backend API we created
   const handleAddAffiliate = async () => {
-    if (!agentForm.name || !agentForm.email) return alert("Name and Email are required.");
+    if (!agentForm.name || !agentForm.email || !agentForm.code) return alert("Name, Email, and Code are required.");
     setIsSyncing(true); addLog("Creating secure affiliate profile...");
     try {
-      const res = await fetch('/api/agents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(agentForm) });
+      const res = await fetch('/api/Godmode/agents', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({
+            name: agentForm.name,
+            email: agentForm.email,
+            code: agentForm.code,
+            commission: agentForm.commissionRate,
+            role: agentForm.tier
+        }) 
+      });
       const data = await res.json();
       if (res.ok && data.success) {
-        alert(`Affiliate Partner Added Successfully!`); setAgentForm({ name: '', email: '', code: '', tier: 'Partner', commissionRate: 5 });
-        setIsAgentModalOpen(false); fetchDashboardData();
+        alert(`Affiliate Partner Added Successfully!`); 
+        setAgentForm({ name: '', email: '', code: '', tier: 'Partner', commissionRate: 5 });
+        setIsAgentModalOpen(false); 
+        fetchDashboardData();
+      } else {
+        alert(data.message || "Failed to add partner");
       }
     } catch (error) { alert("Network Error."); } finally { setIsSyncing(false); }
   };
@@ -415,7 +433,7 @@ function AdminDashboard() {
       if(!couponForm.code || !couponForm.discountValue) return alert("Code and Discount Value are required.");
       setIsSyncing(true); addLog(`Saving marketing rule...`);
       try {
-          await fetch('/api/admin/marketing', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(couponForm)});
+          await fetch('/api/Godmode/marketing', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(couponForm)});
           setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchDashboardData();
       } catch (e) { alert("Failed to save coupon."); } finally { setIsSyncing(false); }
   };

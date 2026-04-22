@@ -12,11 +12,11 @@ export default function AdminSidebar() {
   const router = useRouter();
 
   const MENU_ITEMS = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-    { name: "Timepieces", icon: ShoppingBag, href: "/admin/products" },
-    { name: "VIP Clients", icon: Users, href: "/admin/users" },
-    { name: "Vault Carts", icon: ShoppingCart, href: "/admin/abandoned-carts" },
-    { name: "Settings", icon: Settings, href: "/admin/settings" },
+    { name: "Dashboard", icon: LayoutDashboard, href: "/Godmode" },
+    { name: "Timepieces", icon: ShoppingBag, href: "/Godmode/products" },
+    { name: "VIP Clients", icon: Users, href: "/Godmode/users" },
+    { name: "Vault Carts", icon: ShoppingCart, href: "/Godmode/abandoned-carts" },
+    { name: "Settings", icon: Settings, href: "/Godmode/settings" },
   ];
 
   return (
@@ -25,7 +25,7 @@ export default function AdminSidebar() {
       <div>
         {/* Luxury Brand Logo Area */}
         <div className="h-28 flex items-center px-8 border-b border-gray-50 bg-gradient-to-b from-gray-50/50 to-white">
-          <Link href="/admin" className="flex items-center gap-3 group">
+          <Link href="/Godmode" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-[#0A0A0A] text-[#D4AF37] rounded-xl flex items-center justify-center font-black group-hover:bg-[#D4AF37] group-hover:text-black transition-colors duration-500 shadow-md">
               ♞
             </div>

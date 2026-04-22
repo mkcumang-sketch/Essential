@@ -3,7 +3,7 @@
 
 User-agent: *
 Disallow: /api/
-Disallow: /admin/
+Disallow: /Godmode/
 Disallow: /godmode/
 Disallow: /account/
 Disallow: /checkout/

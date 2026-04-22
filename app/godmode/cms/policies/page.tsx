@@ -39,7 +39,7 @@ export default function PoliciesCMS() {
 
   const fetchPolicies = async () => {
     try {
-      const res = await fetch('/api/admin/policies');
+      const res = await fetch('/api/Godmode/policies');
       const data = await res.json();
       if (data.success) {
         setPolicies(data.data);
@@ -89,7 +89,7 @@ export default function PoliciesCMS() {
     const content = editorRef.current?.innerHTML || '';
     
     try {
-      const res = await fetch('/api/admin/policies', {
+      const res = await fetch('/api/Godmode/policies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, content })
@@ -115,7 +115,7 @@ export default function PoliciesCMS() {
     setPolicies(policies.filter(p => p._id !== id));
 
     try {
-      const res = await fetch(`/api/admin/policies?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/Godmode/policies?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         toast.success("Policy deleted");

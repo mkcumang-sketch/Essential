@@ -21,7 +21,7 @@ export async function DELETE(
         }
 
         // 💥 CACHE NUKE: Iske bina bhoot wapas aayega
-        revalidatePath('/admin/products');
+        revalidatePath('/Godmode/products');
         revalidatePath('/shop');
         revalidatePath('/collection');
         revalidatePath('/', 'layout'); 

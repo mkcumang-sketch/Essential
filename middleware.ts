@@ -47,7 +47,7 @@ export async function middleware(req: NextRequest) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
     // 👑 GODMODE / ADMIN PROTECTION
-    if (pathname.startsWith('/godmode') || pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/godmode') || pathname.startsWith('/godmode')) {
         if (!token) return NextResponse.redirect(new URL('/login', req.url));
         if ((token as any).role !== 'SUPER_ADMIN') return NextResponse.redirect(new URL('/account', req.url)); 
     }
