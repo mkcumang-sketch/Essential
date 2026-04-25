@@ -20,12 +20,6 @@ import { useRouter } from "next/navigation";
 import DashboardTab from '../../components/godmode/tabs/DashboardTab';
 import InventoryTab from '../../components/godmode/tabs/InventoryTab';
 import OrderTrackerTab from '../../components/godmode/tabs/OrderTrackerTab';
-import SeoEngineTab from '../../components/godmode/tabs/SeoEngineTab';
-import LegalPagesTab from '../../components/godmode/tabs/LegalPagesTab';
-import ReviewsTab from '../../components/godmode/tabs/ReviewsTab';
-import SalesForceTab from '../../components/godmode/tabs/SalesForceTab';
-import AiEngineTab from '../../components/godmode/tabs/AiEngineTab';
-import SecurityTab from '../../components/godmode/tabs/SecurityTab';
 
 import RedirectManager from '../../components/godmode/RedirectManager';
 import SeoPanel from '../../components/godmode/SeoPanel';
