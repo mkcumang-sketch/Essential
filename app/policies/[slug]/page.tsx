@@ -1,14 +1,23 @@
 import { ShieldCheck, ArrowLeft, Clock, Scale } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { connectDB } from '@/lib/db';
-import { Policy } from '@/models/Policy';
+import  connectDB from '@/lib/db';
+import mongoose from 'mongoose';
+
+// 🚀 CMS Schema for Legal Pages
+const CmsSchema = new mongoose.Schema({
+    legalPages: [{ id: String, title: String, slug: String, content: String }], 
+});
+const CMS = mongoose.models.CMS || mongoose.model('CMS', CmsSchema);
 
 export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
     
     await connectDB();
-    const policy = await Policy.findOne({ slug });
+    
+    // 🚀 Fetch from CMS collection where Admin saves data
+    const cmsData = await CMS.findOne();
+    const policy = cmsData?.legalPages?.find((p: any) => p.slug === slug);
 
     if (!policy) {
         return (
@@ -82,7 +91,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ slug: s
                     <div className="flex flex-wrap gap-8">
                         <div className="flex items-center gap-3">
                             <Clock size={16} className="text-[#D4AF37]"/>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Updated: {new Date(policy.lastUpdated).toLocaleDateString()}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Status: Active</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <Scale size={16} className="text-[#D4AF37]"/>
@@ -99,17 +108,6 @@ export default async function PolicyPage({ params }: { params: Promise<{ slug: s
                         className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:font-black prose-headings:italic prose-headings:tracking-tighter prose-p:text-gray-600 prose-p:leading-relaxed prose-strong:text-black prose-strong:font-black prose-li:text-gray-600"
                         dangerouslySetInnerHTML={{ __html: policy.content }}
                     />
-                    
-                    <div className="mt-20 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-black text-[#D4AF37] rounded-full flex items-center justify-center font-bold">♞</div>
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest">Essential Rush</p>
-                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest italic">Vault Integrity Verified</p>
-                            </div>
-                        </div>
-                        <p className="text-[9px] font-black uppercase tracking-[4px] text-gray-300">© 2026 Fine Horology Vault</p>
-                    </div>
                 </div>
             </div>
         </div>

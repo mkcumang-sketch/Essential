@@ -76,6 +76,7 @@ export async function POST(req: Request) {
         await connectDB();
         const body = await req.json();
         const newProduct = await Product.create(body);
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true, data: newProduct });
     } catch (error) {
         console.error("Add Product Error:", error);
@@ -96,6 +97,7 @@ export async function PUT(req: Request) {
         if (!_id) return NextResponse.json({ success: false, error: "Product ID is required" }, { status: 400 });
 
         const updatedProduct = await Product.findByIdAndUpdate(_id, updateData, { new: true });
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true, data: updatedProduct });
     } catch (error) {
         console.error("Update Product Error:", error);

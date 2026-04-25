@@ -5,8 +5,10 @@ export interface IUser extends Document {
     email?: string;
     phone?: string;
     password?: string;
+    wishlist?: any[];
     role: string;
-    walletPoints: number;
+    walletBalance: number;
+    pendingWalletBalance: number;
     totalEarned: number;
     totalSpent: number;
     loyaltyTier: string;
@@ -28,7 +30,8 @@ const userSchema = new Schema<IUser>({
     phone: { type: String, index: true },
     password: { type: String, select: false },
     role: { type: String, default: 'USER' },
-    walletPoints: { type: Number, default: 0 },
+    walletBalance: { type: Number, default: 0 },
+    pendingWalletBalance: { type: Number, default: 0 },
     totalEarned: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
     loyaltyTier: { type: String, default: 'Silver Vault' },
@@ -36,6 +39,8 @@ const userSchema = new Schema<IUser>({
     tierUpgradedAt: { type: Date, default: Date.now },
     myReferralCode: { type: String, index: true },
     totalReferrals: { type: Number, default: 0 },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' 
+}],
     notifications:{
     type: [{
       title: { type: String },

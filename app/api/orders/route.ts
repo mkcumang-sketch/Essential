@@ -1,146 +1,193 @@
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/mongodb';
+import { Order } from '@/models/Order';
+import User from '@/models/usertemp';
+import mongoose from 'mongoose';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { revalidatePath } from 'next/cache'; // 🚀 CACHE KILLER
 
-import { NextResponse } from "next/server";
-import mongoose from "mongoose";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import connectDB from "@/lib/mongodb";
-import { revalidatePath, revalidateTag } from 'next/cache';
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
-async function verifySuperAdmin(session: any) {
-    if (!session?.user) return false;
-    if (session.user.role === "SUPER_ADMIN") return true;
-    const User = mongoose.models.User || mongoose.model("User", new mongoose.Schema({}, { strict: false }));
-    const dbUser = await User.findById(session.user.id || session.user._id).lean() as any;
-    return dbUser?.role === "SUPER_ADMIN";
-}
-
+// ==========================================
+// 1. GET ALL ORDERS (User or Admin)
+// ==========================================
 export async function GET(req: Request) {
     try {
         await connectDB();
         const session = await getServerSession(authOptions);
-        if (!session?.user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-        const isSuperAdmin = await verifySuperAdmin(session);
-        const Order = mongoose.models.Order || mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
+
+        if (!session || !session.user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+
+        const userId = (session.user as any).id;
+        const userRole = (session.user as any).role;
 
         let orders = [];
-        if (isSuperAdmin) {
+        if (userRole === 'SUPER_ADMIN') {
             orders = await Order.find({}).sort({ createdAt: -1 }).lean();
         } else {
-            const userId = (session.user as any).id;
-            orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
+            orders = await Order.find({ userId: userId }).sort({ createdAt: -1 }).lean();
         }
-        return NextResponse.json({ success: true, data: orders, orders });
-    } catch (error) { return NextResponse.json({ success: false, error: "We could not load orders." }, { status: 500 }); }
+
+        const dbUser = await User.findById(userId).lean();
+
+        return NextResponse.json({
+            success: true,
+            data: orders,
+            totalSpent: orders.reduce((acc: number, o: any) => acc + (Number(o.totalAmount) || 0), 0),
+            loyaltyTier: (dbUser as any)?.loyaltyTier || "Silver Vault"
+        }, { headers: { 'Cache-Control': 'no-store, no-cache' } });
+
+    } catch (error) {
+        return NextResponse.json({ success: false, message: 'Server Error' }, { status: 500 });
+    }
 }
 
-export async function PUT(req: Request) {
+// ==========================================
+// 2. CREATE ORDER & INSTANT AGENT PAYOUT
+// ==========================================
+export async function POST(req: Request) {
     try {
         await connectDB();
-        const session = await getServerSession(authOptions);
-        const isSuperAdmin = await verifySuperAdmin(session);
-        if (!isSuperAdmin) return NextResponse.json({ success: false, error: "Access Denied." }, { status: 403 });
-
         const body = await req.json();
-        const orderId = body._id || body.id;
-        if (!orderId) return NextResponse.json({ success: false, error: "Order ID missing." }, { status: 400 });
+        
+        // Order create karo
+        const newOrder = await Order.create(body);
 
-        const updateData: any = {};
-        if (body.status !== undefined) updateData.status = body.status;
-        if (body.trackingId !== undefined) updateData.trackingId = body.trackingId;
+        // 🚀 STEP 1: Pending Reward for User Referrals
+        if (newOrder.referralCode) {
+            const AgentModel = mongoose.models.Agent || mongoose.model('Agent', new mongoose.Schema({}, { strict: false }));
+            
+            // Check if code belongs to an Agent
+            const agent = await AgentModel.findOne({
+                code: { $regex: new RegExp(`^${newOrder.referralCode.trim()}$`, 'i') }
+            });
 
-        const Order = mongoose.models.Order || mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
-        const isMongoId = mongoose.Types.ObjectId.isValid(orderId);
-        const query = isMongoId ? { $or: [{ _id: orderId }, { orderId: orderId }] } : { orderId: orderId };
-
-        const updatedOrder = await Order.findOneAndUpdate(query, updateData, { new: true });
-
-        // 🌟 1. THE PYRAMID REWARD TRIGGER (Anti-Fraud) 🌟
-        if (updatedOrder && body.status === 'DELIVERED' && updatedOrder.pointsCredited === false) {
-            const User = mongoose.models.User || mongoose.model("User", new mongoose.Schema({}, { strict: false }));
-            const reward = Number(updatedOrder.pendingPoints || 0);
-
-            if (reward > 0) {
-                // Give 10% Points to BUYER (Cashback)
-                if (updatedOrder.userId) {
-                    await User.findByIdAndUpdate(updatedOrder.userId, { $inc: { walletPoints: reward } });
-                }
-                // Give 10% Points to REFERRER (The Pyramid Maker)
-                if (updatedOrder.referrerId) {
-                    await User.findByIdAndUpdate(updatedOrder.referrerId, { $inc: { walletPoints: reward } });
-                }
+            if (agent) {
+                // Calculate commission
+                const commissionAmount = (Number(newOrder.totalAmount) * Number(agent.commission || 0)) / 100;
                 
-                // Mark as paid so they can't be given twice
-                updatedOrder.pointsCredited = true;
-                await updatedOrder.save();
-                console.log(`🤑 PYRAMID SCHEME ACTIVATED: ${reward} points sent to users for order ${updatedOrder.orderId}`);
-            }
-        }
+                // Add Sale and Revenue to Agent
+                await AgentModel.findByIdAndUpdate(agent._id, {
+                    $inc: { sales: 1, revenue: commissionAmount }
+                });
 
-        // 🚀 2. AUTO-PURGE ABANDONED CARTS 🚀
-        if (updatedOrder && body.status && ['PROCESSING', 'DISPATCHED', 'DELIVERED'].includes(body.status)) {
-            try {
-                const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
-                const email = updatedOrder.customer?.email || updatedOrder.shippingData?.email;
-                const phone = updatedOrder.customer?.phone || updatedOrder.shippingData?.phone;
-                
-                const orConditions = [];
-                if (email) orConditions.push({ email: email.trim().toLowerCase() });
-                if (phone) orConditions.push({ phone: phone.trim() });
+                // Mark order as credited so normal Users don't get reward logic later
+                await Order.findByIdAndUpdate(newOrder._id, { isRewardCredited: true });
+            } else {
+                // If not an agent, check if it's a User's referral code
+                const referringUser = await User.findOne({ 
+                    myReferralCode: { $regex: new RegExp(`^${newOrder.referralCode.trim()}$`, 'i') } 
+                });
 
-                if (orConditions.length > 0) {
-                    await AbandonedCart.findOneAndDelete({ $or: orConditions });
-                }
-            } catch (purgeError) {
-                console.error("Auto-purge error in Orders API:", purgeError);
-            }
-        }
-
-        // 📧 3. AUTO-INVOICE ON DISPATCH/DELIVER
-        if (updatedOrder && body.status && ['DISPATCHED', 'DELIVERED'].includes(body.status) && !updatedOrder.invoiceSentAt) {
-            try {
-                const userEmail = updatedOrder.shippingData?.email || updatedOrder.customer?.email;
-                if (userEmail) {
-                    const invoiceRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/email/invoice`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderId: updatedOrder.orderId, forceRegenerate: true })
+                if (referringUser) {
+                    // Add to PENDING wallet balance
+                    await User.findByIdAndUpdate(referringUser._id, {
+                        $inc: { pendingWalletBalance: 500 }
                     });
-                    const invoiceData = await invoiceRes.json();
-                    console.log(`📧 Invoice sent for ${updatedOrder.orderId}:`, invoiceData.success ? 'SUCCESS' : invoiceData.error);
                 }
-            } catch (invoiceError) {
-                console.error("Auto-invoice error:", invoiceError);
             }
         }
 
-        revalidatePath('/', 'layout'); revalidatePath('/Godmode'); revalidatePath('/Godmode/abandoned-carts'); revalidateTag('orders', 'layout');
-        return NextResponse.json({ success: true, message: "Order status updated." });
-    } catch (error) { return NextResponse.json({ success: false, error: "Update failed." }, { status: 500 }); }
+        // 🚀 STEP 4: Deduct Wallet Balance if used
+        if (body.useWallet && body.userId) {
+            const dbUser = await User.findById(body.userId);
+            if (dbUser && dbUser.walletBalance > 0) {
+                const deduction = Math.min(dbUser.walletBalance, body.totalAmount);
+                await User.findByIdAndUpdate(body.userId, {
+                    $inc: { walletBalance: -deduction }
+                });
+                
+                // Update order if fully paid by wallet
+                if (deduction >= body.totalAmount) {
+                    await Order.findByIdAndUpdate(newOrder._id, {
+                        paymentMethod: 'WALLET',
+                        paymentStatus: 'PAID',
+                        status: 'PROCESSING'
+                    });
+                }
+            }
+        }
+
+        return NextResponse.json({ success: true, data: newOrder });
+    } catch (error) {
+        console.error("Order Creation Error:", error);
+        return NextResponse.json({ success: false, error: "Failed to create order" }, { status: 500 });
+    }
 }
 
-export async function POST(req: Request) { return PUT(req); }
-export async function PATCH(req: Request) { return PUT(req); }
+// ==========================================
+// 3. UPDATE ORDER & DELAYED USER REWARD
+// ==========================================
+export async function PATCH(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any)?.role !== 'SUPER_ADMIN') {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
 
+        await connectDB();
+        const body = await req.json();
+        const { id, status, trackingId } = body;
+        
+        const updateData: any = {};
+        if (status) updateData.status = status;
+        if (trackingId !== undefined) updateData.trackingId = trackingId;
+
+        // Order dhoondho
+        const order = await Order.findById(id);
+        if (!order) return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+
+        // 🚀 STEP 2: Delayed Referral Payout (Only for Users on DELIVERY)
+        if (status === 'DELIVERED' && order.referralCode && !order.isRewardCredited) {
+            
+            // Check if the code belongs to a normal User
+            const referringUser = await User.findOne({ 
+                myReferralCode: { $regex: new RegExp(`^${order.referralCode.trim()}$`, 'i') } 
+            });
+
+            if (referringUser) {
+                // Move from pending to available wallet balance
+                await User.findByIdAndUpdate(referringUser._id, {
+                    $inc: { walletBalance: 500, pendingWalletBalance: -500 }
+                });
+
+                // Mark kar do taaki dobara paise na milen
+                updateData.isRewardCredited = true;
+            }
+        }
+
+        // Final Update and Cache Clear
+        const updatedOrder = await Order.findByIdAndUpdate(id, updateData, { new: true });
+        revalidatePath('/godmode'); 
+        
+        return NextResponse.json({ success: true, data: updatedOrder });
+
+    } catch (error) {
+        console.error("Order Update Error:", error);
+        return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 });
+    }
+}
+
+// ==========================================
+// 4. DELETE ORDER (Admin Only)
+// ==========================================
 export async function DELETE(req: Request) {
     try {
-        await connectDB();
         const session = await getServerSession(authOptions);
-        const isSuperAdmin = await verifySuperAdmin(session);
-        if (!isSuperAdmin) return NextResponse.json({ success: false, error: "Access Denied." }, { status: 403 });
+        if (!session || (session.user as any)?.role !== 'SUPER_ADMIN') {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
 
-        const url = new URL(req.url);
-        let orderId = url.searchParams.get("id");
-        if (!orderId) { const body = await req.json().catch(() => ({})); orderId = body._id || body.id; }
-        if (!orderId) return NextResponse.json({ success: false, error: "Order ID missing." }, { status: 400 });
-
-        const Order = mongoose.models.Order || mongoose.model("Order", new mongoose.Schema({}, { strict: false }));
-        const isMongoId = mongoose.Types.ObjectId.isValid(orderId);
-        const query = isMongoId ? { $or: [{ _id: orderId }, { orderId: orderId }] } : { orderId: orderId };
-        await Order.findOneAndDelete(query);
-
-        revalidatePath('/', 'layout'); revalidatePath('/godmode'); revalidatePath('/Godmode/orders'); revalidateTag('orders', 'layout');
-        return NextResponse.json({ success: true, message: "Order deleted." });
-    } catch (error) { return NextResponse.json({ success: false, error: "Deletion failed." }, { status: 500 }); }
+        await connectDB();
+        const { id } = await req.json();
+        
+        await Order.findByIdAndDelete(id);
+        revalidatePath('/godmode');
+        
+        return NextResponse.json({ success: true, message: "Order Deleted" });
+    } catch (error) {
+        return NextResponse.json({ success: false, error: "Delete failed" }, { status: 500 });
+    }
 }

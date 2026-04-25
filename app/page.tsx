@@ -28,8 +28,24 @@ const DEFAULT_PROMO_VIDEOS = [
     ""  
 ];
 
+interface LuxuryToastProps {
+    show: boolean;
+    message: string;
+    type?: string; // 🚀 FIX: 'success' | 'error' ki jagah normal string kar diya
+}
+
+interface HeroSlide {
+    type: string; // 🚀 FIX: 'video' | 'image' ki jagah normal string kar diya
+    url: string;
+    heading?: string;
+}
+
+interface HeroConfig {
+    heroSlides?: HeroSlide[];
+}
+
 // 🌟 PREMIUM TOAST COMPONENT
-const LuxuryToast = ({ show, message, type = "success" }: any) => (
+const LuxuryToast = ({ show, message, type = "success" }: LuxuryToastProps) => (
     <AnimatePresence>
         {show && (
             <motion.div 
@@ -91,8 +107,14 @@ const CinematicBreak = ({ videoUrl, title }: { videoUrl?: string, title?: string
     );
 };
 
+
+
+interface HeroConfig {
+  heroSlides?: HeroSlide[];
+}
+
 // 🚨 HERO SECTION (VIDEO POSTER OPTIMIZATION)
-const Isolated4DHero = ({ config }: { config: any }) => {
+const Isolated4DHero = ({ config }: { config: HeroConfig }) => {
   const heroRef = useRef(null);
   const router = useRouter();
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -184,7 +206,7 @@ const Isolated4DHero = ({ config }: { config: any }) => {
 
         {slides.length > 1 && (
             <div className="absolute bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 z-40 flex gap-4 bg-white/10 px-6 py-3 rounded-full backdrop-blur-md" onClick={(e)=>e.stopPropagation()}>
-                {slides.map((_: any, i: number) => (
+                {slides.map((_: HeroSlide, i: number) => (
                     <button 
                         key={i} 
                         onClick={() => setCurrentSlideIndex(i)} 

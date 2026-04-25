@@ -26,9 +26,7 @@ export default function Footer() {
           <h3 className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-8">Shop</h3>
           <ul className="space-y-6 text-xs font-medium text-gray-300 uppercase tracking-widest">
             <li><Link href="/collection" className="hover:text-gold-400 transition-colors flex items-center gap-2 group">Collection <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity"/></Link></li>
-            <li><Link href="/about" className="hover:text-gold-400 transition-colors">Heritage</Link></li>
-            <li><Link href="/brands" className="hover:text-gold-400 transition-colors">Brands</Link></li>
-            <li><Link href="/Godmode" className="hover:text-gold-400 transition-colors">Admin</Link></li>
+            <li><Link href="/godmode" className="hover:text-gold-400 transition-colors">Admin</Link></li>
           </ul>
         </div>
 

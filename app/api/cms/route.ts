@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { revalidatePath } from 'next/cache'; // 🚀 Import cache revalidator
 
-// 🌟 DATABASE CONNECTION 🌟
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(process.env.MONGODB_URI as string);
-    } catch (error) {
-        console.error("DB Connection Error:", error);
-    }
+    await mongoose.connect(process.env.MONGODB_URI as string);
 };
 
-// 🌟 CMS SCHEMA (Make sure legalPages is included!) 🌟
 const CmsSchema = new mongoose.Schema({
     heroSlides: Array,
     aboutConfig: Object,
@@ -22,54 +19,50 @@ const CmsSchema = new mongoose.Schema({
     faqs: Array,
     socialLinks: Object,
     corporateInfo: Object,
-    legalPages: [{
-        id: String,
-        title: String,
-        slug: String,
-        content: String
-    }], // Yeh missing hone ki wajah se error aata hai
+    legalPages: [{ id: String, title: String, slug: String, content: String }], 
     updatedAt: { type: Date, default: Date.now }
 });
 
 const CMS = mongoose.models.CMS || mongoose.model('CMS', CmsSchema);
 
+// 🚀 STRICT CACHE KILLER FOR REAL-TIME
 export const dynamic = 'force-dynamic';
-export const revalidate = 300; // 5 minute cache for CMS
+export const fetchCache = 'force-no-store';
 
-// 🌟 GET METHOD: Frontend aur Admin ko data bhejne ke liye 🌟
 export async function GET() {
     try {
         await connectDB();
         const cmsData = await CMS.findOne();
+        if (!cmsData) return NextResponse.json({ success: true, data: {} });
         
-        if (!cmsData) {
-            return NextResponse.json({ success: true, data: {} });
-        }
-        
-        const response = NextResponse.json({ success: true, data: cmsData });
-        response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
-        return response;
+        // 🚀 Remove all 5-min caching headers
+        return NextResponse.json({ success: true, data: cmsData }, {
+            headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+        });
     } catch (error) {
-        return NextResponse.json({ success: false, error: "Failed to fetch CMS data" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Failed to fetch CMS" }, { status: 500 });
     }
 }
 
-// 🌟 POST METHOD: Admin panel se data save karne ke liye 🌟
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || (session.user as any)?.role !== 'SUPER_ADMIN') {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
+
         await connectDB();
         const body = await req.json();
         
-        // Pehle check karo agar koi document already hai
         const existingCms = await CMS.findOne();
-        
         if (existingCms) {
-            // Update existing
             await CMS.updateOne({}, { $set: { ...body, updatedAt: Date.now() } });
         } else {
-            // Create new
             await CMS.create(body);
         }
+        
+        // 🚀 TAAKI POORI SITE PAR REAL-TIME CMS UPDATE HO JAYE
+        revalidatePath('/', 'layout'); 
         
         return NextResponse.json({ success: true, message: "CMS Updated Successfully" });
     } catch (error) {

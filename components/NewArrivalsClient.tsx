@@ -6,7 +6,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, ArrowLeft, Plus, Sparkles } from 'lucide-react';
 
-export default function NewArrivalsClient({ initialLiveWatches }: { initialLiveWatches: any[] }) {
+interface Watch {
+  _id: string;
+  slug?: string;
+  name?: string;
+  title?: string;
+  imageUrl?: string;
+  images?: string[];
+  offerPrice?: number;
+  price?: number;
+}
+
+export default function NewArrivalsClient({ initialLiveWatches }: { initialLiveWatches: Watch[] }) {
       const router = useRouter();
       const [cart, setCart] = useState<any[]>([]);
 
@@ -14,7 +25,7 @@ export default function NewArrivalsClient({ initialLiveWatches }: { initialLiveW
             setCart(JSON.parse(localStorage.getItem('luxury_cart') || '[]'));
       }, []);
 
-      const addToCart = (product: any) => {
+      const addToCart = (product: Watch) => {
             const exists = cart.find(item => item._id === product._id);
             const newCart = exists ? cart.map(i => i._id === product._id ? { ...i, qty: i.qty + 1 } : i) : [...cart, { ...product, qty: 1 }];
             setCart(newCart);
@@ -40,7 +51,7 @@ export default function NewArrivalsClient({ initialLiveWatches }: { initialLiveW
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                              {initialLiveWatches.map((watch: any, i: number) => (
+                              {initialLiveWatches.map((watch: Watch, i: number) => (
                                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} key={watch._id || i} className="group bg-white p-8 rounded-[40px] border border-gray-100 hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative">
                                           <Link href={`/product/${watch.slug || watch._id}`} className="flex aspect-[4/5] bg-gray-50 rounded-[30px] overflow-hidden mb-8 items-center justify-center p-8 cursor-pointer">
                                                 <img src={watch.imageUrl || (watch.images && watch.images[0])} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt={watch.name || watch.title} />

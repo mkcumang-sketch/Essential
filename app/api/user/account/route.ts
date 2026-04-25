@@ -22,6 +22,8 @@ export async function GET() {
   try {
     await connectDB();
     const session = await getServerSession(authOptions);
+    
+    // 🚀 FIRST DECLARATION (Correct)
     const userId = session?.user?.id;
 
     if (!userId) {
@@ -42,7 +44,9 @@ export async function GET() {
     }
     const profile = profileRaw as Record<string, unknown>;
 
-    const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
+    // 🚀 DATA LEAK FIX: Sirf current user ke orders lao
+    // (Duplicate 'const userId = ...' removed from here)
+    const orders = await Order.find({ userId: userId }).sort({ createdAt: -1 }).lean();
 
     const successfulStatuses = ["PROCESSING", "DISPATCHED", "DELIVERED"];
     const successfulOrders = (orders as { status?: string; totalAmount?: number }[]).filter(

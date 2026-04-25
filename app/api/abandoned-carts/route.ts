@@ -1,0 +1,100 @@
+import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
+import connectDB from "@/lib/mongodb";
+import { getToken } from "next-auth/jwt";
+import { revalidatePath, revalidateTag } from 'next/cache';
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
+const AbandonedCartSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "Vault Client" },
+    email: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    cartTotal: { type: Number, default: 0 },
+    status: { type: String, default: "ABANDONED" },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { strict: false }
+);
+
+const AbandonedCart =
+  mongoose.models.AbandonedCart ||
+  mongoose.model("AbandonedCart", AbandonedCartSchema);
+
+async function isSuperAdminRequest(req: NextRequest) {
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+  return token && (token as any).role === "SUPER_ADMIN";
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    if (!(await isSuperAdminRequest(req))) {
+      return NextResponse.json(
+        { success: false, error: "You do not have access to do that." },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+
+    const leads = await AbandonedCart.find({
+      status: { $in: ["ABANDONED", "PENDING", "pending", "abandoned"] },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const appUrl = process.env.NEXTAUTH_URL || "https://essential-ivory.vercel.app";
+    const recoveryLink = `${appUrl}/cart`;
+
+    return NextResponse.json({
+      success: true,
+      leads: leads.map((l: any) => ({
+        ...l,
+        cartTotal: Number(l?.cartTotal ?? l?.totalAmount ?? 0) || 0,
+        name: l?.name || l?.customer?.name || "Vault Client",
+        email: l?.email || l?.customer?.email || "",
+        phone: l?.phone || l?.customer?.phone || "",
+        recoveryLink,
+      })),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: "We could not load abandoned carts." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    if (!(await isSuperAdminRequest(req))) {
+      return NextResponse.json(
+        { success: false, error: "You do not have access to do that." },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+    const url = new URL(req.url);
+    const id = url.searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "ID missing." }, { status: 400 });
+    }
+
+    await AbandonedCart.findByIdAndDelete(id);
+
+    revalidatePath('/', 'layout');
+    revalidateTag('abandoned-carts', 'layout');
+
+    return NextResponse.json({ success: true, message: "Abandoned cart removed." });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Delete failed." }, { status: 500 });
+  }
+}

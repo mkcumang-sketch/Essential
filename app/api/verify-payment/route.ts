@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { Order } from '@/models/Order';
+import User from '@/models/usertemp';
+import { Agent } from '@/models/Agent';
 import Razorpay from 'razorpay';
 import { z } from 'zod';
 import crypto from 'crypto';
@@ -70,10 +72,9 @@ export async function POST(req: Request) {
                   return NextResponse.json({ success: false, error: "Order not found for status update." }, { status: 404 });
             }
 
-            return NextResponse.json({ success: true, message: "Payment verified and order updated.", order: updatedOrder });
-
+            return NextResponse.json({ success: true, message: "Payment verified successfully", order: updatedOrder });
       } catch (error: any) {
-            console.error("Payment Verification System Error:", error);
-            return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+            console.error("Payment Verification Error:", error);
+            return NextResponse.json({ success: false, error: "Internal Server Error during verification." }, { status: 500 });
       }
 }

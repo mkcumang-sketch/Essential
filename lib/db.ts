@@ -1,39 +1,34 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
-  throw new Error("❌ Error: MONGODB_URI is missing in .env file.");
+  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
+// 🚀 NEXT.JS GLOBAL CACHE (Prevents multiple connections in development)
 let cached = (global as any).mongoose;
 
 if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
-export async function connectDB() {
-  if (cached.conn) return cached.conn;
+async function connectDB() {
+  if (cached.conn) {
+    return cached.conn;
+  }
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
-      family: 4, // Bypasses Windows/Jio DNS blocks
-      serverSelectionTimeoutMS: 5000, 
+      bufferCommands: true,
+      maxPoolSize: 10, // Enterprise-level connection pooling
     };
 
-    console.log("⏳ Connecting to MongoDB vault...");
-
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log("✅ BOOM! DATABASE CONNECTED SUCCESSFULLY!");
       return mongoose;
-    }).catch((err) => {
-      console.error("❌ MONGODB CONNECTION CRASHED:", err.message);
-      cached.promise = null;
-      throw err;
     });
   }
-
+  
   try {
     cached.conn = await cached.promise;
   } catch (e) {
@@ -43,3 +38,5 @@ export async function connectDB() {
 
   return cached.conn;
 }
+
+export default connectDB;

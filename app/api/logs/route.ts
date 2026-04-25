@@ -1,4 +1,4 @@
-import { connectDB } from "@/lib/db";
+import  connectDB  from "@/lib/mongodb"; // Aapka standard db connection import
 import { ActivityLog } from "@/models/Enterprise";
 import { NextResponse } from "next/server";
 

@@ -16,7 +16,7 @@ export async function GET() {
     const agents = await Agent.find().sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: agents });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed to fetch agents" });
+    return NextResponse.json({ success: false, error: "Failed to fetch agents" }, { status: 500 });
   }
 }
 
@@ -25,32 +25,44 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
     
-    // Agar custom code nahi dala, toh auto-generate karo
-    if (!body.code) {
-        body.code = 'REF-' + body.name.substring(0, 3).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
-    } else {
-        body.code = body.code.toUpperCase();
+    if (body.code) {
+      body.code = body.code.toUpperCase();
     }
 
-    const newAgent = await Agent.create(body);
+    const agentData = {
+        name: body.name,
+        email: body.email,
+        code: body.code,
+        tier: body.role || body.tier || 'Partner',
+        commissionRate: body.commission || body.commissionRate || 5,
+        clicks: body.clicks || 0,
+        sales: body.sales || 0,
+        revenue: body.revenue || 0
+    };
+
+    const newAgent = await Agent.create(agentData);
+    revalidatePath('/godmode');
     return NextResponse.json({ success: true, data: newAgent });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed to create agent" });
+  } catch (error: any) {
+    if (error.code === 11000) {
+      return NextResponse.json({ success: false, error: "Duplicate referral code detected." }, { status: 400 });
+    }
+    return NextResponse.json({ success: false, error: "Failed to create agent" }, { status: 500 });
   }
 }
-// Add this at the bottom of the file
+
 export async function DELETE(req: Request) {
-    try {
-        const body = await req.json();
-        const { id } = body;
-        if (!id) return NextResponse.json({ success: false, error: "ID missing" });
+  try {
+    await connectDB();
+    const body = await req.json();
+    const { id } = body;
+    if (!id) return NextResponse.json({ success: false, error: "ID missing" }, { status: 400 });
 
-        const Agent = mongoose.models.Agent || mongoose.model('Agent', new mongoose.Schema({}, { strict: false }));
-        await Agent.findByIdAndDelete(id);
-        revalidatePath('/', 'layout');
+    await Agent.findByIdAndDelete(id);
+    revalidatePath('/godmode');
 
-        return NextResponse.json({ success: true, message: "Affiliate Deleted from Database" });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
-    }
+    return NextResponse.json({ success: true, message: "Agent Deleted" });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
+  }
 }

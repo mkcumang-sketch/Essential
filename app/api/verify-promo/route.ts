@@ -6,7 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
     try {
-        await connectDB(); 
+        await connectDB();
         const session = await getServerSession(authOptions);
         const body = await req.json();
         const code = body.code?.toUpperCase().trim();
@@ -23,20 +23,21 @@ export async function POST(req: Request) {
         };
 
         if (globalCodes[code]) {
-            return NextResponse.json({ 
-                success: true, 
-                type: 'global', 
+            return NextResponse.json({
+                success: true,
+                type: 'global',
                 discountValue: globalCodes[code],
-                isReferral: false 
+                isReferral: false
             });
         }
 
         // 🌟 2. SECURE REFERRAL SYSTEM (REAL DB CHECK)
-        // Ensure query is case-insensitive (already handled by regex)
-        const referrer = await User.findOne({ 
-            myReferralCode: { $regex: new RegExp(`^${code}$`, 'i') } 
+        // Ensure query is case-insensitive and sanitized
+        const sanitizedCode = code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const referrer = await User.findOne({
+            myReferralCode: { $regex: new RegExp(`^${sanitizedCode}$`, 'i') }
         }).select('_id name');
-        
+
         if (!referrer) {
             return NextResponse.json({ success: false, error: "This referral/promo code does not exist." }, { status: 404 });
         }
@@ -46,11 +47,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "You cannot use your own referral code." }, { status: 400 });
         }
 
-        return NextResponse.json({ 
-            success: true, 
-            type: 'referral', 
-            discountValue: 10, 
-            isReferral: true 
+        return NextResponse.json({
+            success: true,
+            type: 'referral',
+            discountValue: 10,
+            isReferral: true
         });
 
     } catch (error) {

@@ -14,6 +14,7 @@ export interface IOrder extends Document {
   // 🚀 ADDED: Affiliate Agent Tracking
   agentRef?: string;
   agentCommission?: number;
+  isRewardCredited?: boolean;
 }
 
 const OrderSchema = new Schema<IOrder>({
@@ -30,7 +31,8 @@ const OrderSchema = new Schema<IOrder>({
   
   // 🚀 ADDED: Agent data for Admin Dashboard calculations
   agentRef: { type: String, default: null },
-  agentCommission: { type: Number, default: 0 }
+  agentCommission: { type: Number, default: 0 },
+  isRewardCredited: { type: Boolean, default: false }
 }, { timestamps: true, strict: false });
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);

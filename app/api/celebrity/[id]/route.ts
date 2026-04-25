@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import connectDB from '@/lib/mongoose';
+import connectDB from '@/lib/mongodb';
 import Celebrity from '@/models/Celebrity';
 import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';

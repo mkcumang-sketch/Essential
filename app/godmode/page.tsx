@@ -12,15 +12,25 @@ import {
   Instagram, Facebook, Twitter, Youtube, Phone, Mail, Linkedin, AlignJustify,
   Terminal, Radar, Fingerprint, Cpu, Network
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import RedirectManager from '@/components/Godmode/RedirectManager';
-import dynamic from 'next/dynamic';
 
-// 🌟 SEO COMPONENTS IMPORTED 🌟
-import SeoPanel from '@/components/Godmode/SeoPanel';
-import ImageSeoPanel from '@/components/Godmode/ImageSeoPanel';
-import SeoAnalyticsDashboard from '@/components/Godmode/SeoAnalyticsDashboard';
+// 🚀 BATCH 1 MODULAR COMPONENTS 
+import DashboardTab from '@/components/godmode/tabs/DashboardTab';
+import InventoryTab from '@/components/godmode/tabs/InventoryTab';
+import OrderTrackerTab from '@/components/godmode/tabs/OrderTrackerTab';
+import SeoEngineTab from '@/components/godmode/tabs/SeoEngineTab';
+import LegalPagesTab from '@/components/godmode/tabs/LegalPagesTab';
+import ReviewsTab from '@/components/godmode/tabs/ReviewsTab';
+import SalesForceTab from '@/components/godmode/tabs/SalesForceTab';
+import AiEngineTab from '@/components/godmode/tabs/AiEngineTab';
+import SecurityTab from '@/components/godmode/tabs/SecurityTab';
+
+import RedirectManager from '@/components/godmode/RedirectManager';
+import SeoPanel from '@/components/godmode/SeoPanel';
+import ImageSeoPanel from '@/components/godmode/ImageSeoPanel';
+import SeoAnalyticsDashboard from '@/components/godmode/SeoAnalyticsDashboard';
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },
@@ -104,10 +114,9 @@ function AdminDashboard() {
 
   const [celebs, setCelebs] = useState<any[]>([]);
   const [newCeleb, setNewCeleb] = useState({ name: '', title: '', imageUrl: '' });
-
   const [heroSlides, setHeroSlides] = useState([{ id: 1, type: 'video', url: '', heading: 'Welcome to Essential' }]);
   const [aboutConfig, setAboutConfig] = useState({ content: '', alignment: 'center', style: 'luxury', boldWords: '' });
-  const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY); 
+  const [galleryImages, setGalleryImages] = useState<string[]>(DEFAULT_GALLERY);
   const [promoVideos, setPromoVideos] = useState<string[]>(["", "", "", "", ""]); 
 
   const [uiConfig, setUiConfig] = useState({ primaryColor: '#D4AF37', bgColor: '#050505', fontFamily: 'serif', buttonRadius: 'full' });
@@ -115,13 +124,10 @@ function AdminDashboard() {
   const [newCategory, setNewCategory] = useState("");
   const [faqs, setFaqs] = useState([{ q: 'Are these authentic?', a: 'Yes, 100% verified.' }]);
   const [socialLinks, setSocialLinks] = useState({ instagram: '', facebook: '', twitter: '', youtube: '', linkedin: '' });
-  
   const [corporateInfo, setCorporateInfo] = useState({ companyName: 'Essential Rush Pvt Ltd', address: '', phone1: '', phone2: '', email: '' });
   const [legalPages, setLegalPages] = useState([{ id: '1', title: 'Privacy Policy', slug: 'privacy-policy', content: '' }]);
   const [activeLegalPageId, setActiveLegalPageId] = useState('1');
-
   const [manualReview, setManualReview] = useState<{userName: string, comment: string, rating: number, product: string, visibility: string, isAdminGenerated: boolean, media: string[]}>({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
-  
   const [watchForm, setWatchForm] = useState({ 
       name: '', brand: '', category: categories[0] || '', price: '', offerPrice: '', stock: '', 
       imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', 
@@ -130,24 +136,17 @@ function AdminDashboard() {
       vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
       seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
   });
-
   const [couponForm, setCouponForm] = useState({ code: '', discountValue: '', minOrder: '', validUntil: '' });
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
-  
-  // 🚀 AFFILIATE FORM STATE (Adjusted keys to match backend)
   const [agentForm, setAgentForm] = useState({ name: '', email: '', code: '', tier: 'Partner', commissionRate: 5 });
-  
   const [pricingRules, setPricingRules] = useState({ isAiPricingActive: true, maxMarkupPercent: 15, maxDiscountPercent: 10, lowStockThreshold: 3, trendingThreshold: 10 });
-
+  
   const addLog = (msg: string) => {
       setSystemLogs(prev => [msg, ...prev].slice(0, 8)); 
   };
 
   const handleAdminLogout = async () => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch (e) {}
+    try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
     await signOut();
     window.location.reload();
   };
@@ -155,51 +154,30 @@ function AdminDashboard() {
   const dispatchVIPRecovery = async (channel: "email" | "sms" | "whatsapp", lead: any) => {
     const leadId = lead?._id;
     if (!leadId) return;
-
     const key = `${channel}:${leadId}`;
     setVipDispatchingKey(key);
 
-    const endpoint =
-      channel === "email"
-        ? "/api/Godmode/abandoned-carts/dispatch/email"
-        : channel === "sms"
-          ? "/api/Godmode/abandoned-carts/dispatch/sms"
-          : "/api/Godmode/abandoned-carts/dispatch/whatsapp";
-
+    const endpoint = channel === "email" ? "/api/abandoned-carts/dispatch/email" : channel === "sms" ? "/api/abandoned-carts/dispatch/sms" : "/api/abandoned-carts/dispatch/whatsapp";
     try {
       const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId }),
       });
-
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Dispatch failed");
-      }
-
-      if (channel === "whatsapp" && data.url) {
-        window.open(data.url, "_blank", "noopener,noreferrer");
-      }
-
+      if (!res.ok || !data.success) throw new Error(data.error || "Dispatch failed");
+      if (channel === "whatsapp" && data.url) window.open(data.url, "_blank", "noopener,noreferrer");
       addLog(`VIP ${channel.toUpperCase()} sent for ${lead.name || "Client"}.`);
     } catch (e: any) {
       addLog(`VIP ${channel.toUpperCase()} dispatch failed: ${e?.message || "Unknown error"}`);
       alert(`VIP ${channel.toUpperCase()} failed. Please try again.`);
-    } finally {
-      setVipDispatchingKey(null);
-    }
+    } finally { setVipDispatchingKey(null); }
   };
 
   const fetchDashboardData = async (silent = false) => {
-    if (!silent) {
-        setIsSyncing(true);
-        if(systemLogs.length === 1) addLog("Syncing real-time database modules...");
-    }
+    if (!silent) { setIsSyncing(true); if(systemLogs.length === 1) addLog("Syncing real-time database modules..."); }
     try {
       const ts = new Date().getTime();
       const [resLeads, resCms, resProducts, resAgents, resOrders, resRules, resAnalytics, resReviews, resMarketing, resCust, resCelebs] = await Promise.all([
-        fetch(`/api/Godmode/abandoned-carts?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
+        fetch(`/api/abandoned-carts?t=${ts}`).then(r => r.ok ? r.json() : {leads: []}),
         fetch(`/api/cms?t=${ts}`).then(r => r.ok ? r.json() : {data: null}),
         fetch(`/api/products?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
         fetch(`/api/agents?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
@@ -207,8 +185,8 @@ function AdminDashboard() {
         fetch(`/api/ai/rules?t=${ts}`).then(r => r.ok ? r.json() : {data: null}),
         fetch(`/api/dashboard/full-analytics?t=${ts}`).then(r => r.ok ? r.json() : null),
         fetch(`/api/reviews?admin=true&t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
-        fetch(`/api/Godmode/marketing?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
-        fetch(`/api/Godmode/users?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]})),
+        fetch(`/api/coupons?t=${ts}`).then(r => r.ok ? r.json() : {data: []}),
+        fetch(`/api/customers?t=${ts}`).then(r => r.ok ? r.json() : {data: []}).catch(()=>({data:[]})),
         fetch(`/api/celebrity?t=${ts}`).then(r => r.ok ? r.json() : {data: []})
       ]);
       
@@ -219,7 +197,6 @@ function AdminDashboard() {
       if (resRules.data) setPricingRules(resRules.data);
       if (resAnalytics && resAnalytics.success) setFullAnalytics(resAnalytics);
       if (resCelebs.data) setCelebs(resCelebs.data);
-      
       if (resReviews.data) {
           const sortedRevs = resReviews.data.sort((a:any, b:any) => {
               if (a.visibility === 'pending' && b.visibility !== 'pending') return -1;
@@ -231,29 +208,26 @@ function AdminDashboard() {
 
       if (resMarketing.data) setCoupons(resMarketing.data);
       if (resCust.data) setCustomers(resCust.data);
-      
       if (resCms.data && !silent) {
         if(resCms.data.heroSlides) setHeroSlides(resCms.data.heroSlides);
         if(resCms.data.aboutConfig) setAboutConfig(resCms.data.aboutConfig);
         if(resCms.data.galleryImages) setGalleryImages(resCms.data.galleryImages);
-        if(resCms.data.promotionalVideos) setPromoVideos(resCms.data.promotionalVideos); 
+        if(resCms.data.promotionalVideos) setPromoVideos(resCms.data.promotionalVideos);
         if(resCms.data.uiConfig) setUiConfig(resCms.data.uiConfig);
         if(resCms.data.categories) setCategories(resCms.data.categories);
         if(resCms.data.faqs) setFaqs(resCms.data.faqs);
         if(resCms.data.socialLinks) setSocialLinks(resCms.data.socialLinks);
         if(resCms.data.corporateInfo) setCorporateInfo(resCms.data.corporateInfo); 
-        if(resCms.data.legalPages) setLegalPages(resCms.data.legalPages); 
+        if(resCms.data.legalPages) setLegalPages(resCms.data.legalPages);
       }
     } catch (e) { 
-        if (!silent) addLog("Error: Database connection disrupted."); 
+        if (!silent) addLog("Error: Database connection disrupted.");
     } finally { 
         if (!silent) setIsSyncing(false); 
     }
   };
 
-  useEffect(() => { 
-      if (session?.user?.role === 'SUPER_ADMIN') fetchDashboardData(); 
-  }, [session]);
+  useEffect(() => { if (session?.user?.role === 'SUPER_ADMIN') fetchDashboardData(); }, [session]);
 
   const handleAddHeroSlide = () => setHeroSlides([...heroSlides, { id: Date.now(), type: 'video', url: '', heading: 'New Banner' }]);
   const handleRemoveHeroSlide = (id: number) => setHeroSlides(heroSlides.filter(s => s.id !== id));
@@ -280,7 +254,7 @@ function AdminDashboard() {
     try {
       await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(manualReview) });
       setManualReview({ userName: '', comment: '', rating: 5, product: 'GLOBAL', visibility: 'public', isAdminGenerated: true, media: [] });
-      fetchDashboardData();
+      fetchDashboardData(true);
       alert("Review Added Successfully!");
     } catch (e) { alert("Failed to add review."); } finally { setIsSyncing(false); }
   };
@@ -294,10 +268,8 @@ function AdminDashboard() {
       const validAmazonDetails = watchForm.amazonDetails.filter(d => d.key.trim() !== '' && d.value.trim() !== '');
       const tagsArray = watchForm.seoTags.split(',').map(s=>s.trim()).filter(s=>s);
       const additionalImages = watchForm.images.filter(img => typeof img === 'string' && img.trim() !== "");
-
       const generatedSlug = watchForm.seo.slug || watchForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
       const generatedSku = `PRD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
-
       const finalProduct = { 
           name: watchForm.name, slug: generatedSlug, sku: generatedSku, brand: watchForm.brand, category: watchForm.category,
           price: Number(watchForm.price) || 0, offerPrice: Number(watchForm.offerPrice) || Number(watchForm.price) || 0, stock: Number(watchForm.stock) || 0,
@@ -306,18 +278,18 @@ function AdminDashboard() {
           vipVaultKey: watchForm.vipVaultKey.toUpperCase(), vipDiscount: Number(watchForm.vipDiscount) || 0, transitFee: Number(watchForm.transitFee) || 0, taxPercentage: Number(watchForm.taxPercentage) || 18, taxInclusive: watchForm.taxInclusive,
           seo: watchForm.seo
       };
-
       const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalProduct) });
       const data = await res.json();
 
       if (res.ok && data.success) { 
-          alert("Product Saved Successfully!"); addLog("Product live.");
+          alert("Product Saved Successfully!");
+          addLog("Product live.");
           setWatchForm({ 
               name: '', brand: '', category: categories[0] || '', price: '', offerPrice: '', stock: '', imageUrl: '', images: ['', '', '', '', '', '', ''], videoUrl: '', model3DUrl: '', description: '', specifications: '', seoTags: '', priority: 0, badge: 'New Arrival', amazonDetails: [{ key: 'Dial Color', value: 'Black' }],
               vipVaultKey: '', vipDiscount: '', transitFee: '0', taxPercentage: '18', taxInclusive: true,
               seo: { metaTitle: '', metaDescription: '', focusKeyword: '', slug: '', noindex: false, imageAltTexts: {} }
           });
-          fetchDashboardData(); 
+          fetchDashboardData(true); 
       } else { alert(`Error saving product: ${data.error || 'Check fields and try again'}`); }
     } catch (e) { alert("Network Error!"); } 
     finally { setIsSyncing(false); }
@@ -327,8 +299,8 @@ function AdminDashboard() {
     if(!confirm("Delete this product from vault?")) return;
     setLiveWatches(prevWatches => prevWatches.filter(watch => watch._id !== id));
     try { 
-      await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
-      router.refresh();
+      await fetch(`/api/products`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+      fetchDashboardData(true);
     } catch(e) {}
   };
 
@@ -336,8 +308,8 @@ function AdminDashboard() {
       if(!confirm("Delete this coupon code?")) return;
       setCoupons(prev => prev.filter(c => c._id !== id)); 
       try { 
-        await fetch(`/api/Godmode/marketing/${id}`, { method: 'DELETE' }); 
-        router.refresh();
+        await fetch(`/api/coupons`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        fetchDashboardData(true);
       } catch(e) {}
   };
 
@@ -345,8 +317,8 @@ function AdminDashboard() {
       if(!confirm("Remove this affiliate partner?")) return;
       setAgents(prev => prev.filter(a => a._id !== id)); 
       try { 
-        await fetch(`/api/agents`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
-        router.refresh();
+        await fetch(`/api/agents`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        fetchDashboardData(true);
       } catch(e) {}
   };
 
@@ -354,8 +326,8 @@ function AdminDashboard() {
       if(!confirm("Permanently delete this review?")) return;
       setAllReviews(prev => prev.filter(r => r._id !== id)); 
       try { 
-        await fetch(`/api/reviews`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
-        router.refresh();
+        await fetch(`/api/reviews`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        fetchDashboardData(true);
       } catch(e) {}
   };
 
@@ -363,8 +335,8 @@ function AdminDashboard() {
       if(!confirm("Permanently delete this order?")) return;
       setOrders(prev => prev.filter(o => o._id !== id)); 
       try { 
-        await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
-        router.refresh();
+        await fetch(`/api/orders`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        fetchDashboardData(true);
       } catch(e) {}
   };
 
@@ -372,8 +344,17 @@ function AdminDashboard() {
       if(!confirm("Permanently erase this client record?")) return;
       setLeads(prev => prev.filter(l => l._id !== id)); 
       try { 
-        await fetch(`/api/Godmode/users/${id}`, { method: 'DELETE' }); 
-        router.refresh();
+        await fetch(`/api/customers`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        fetchDashboardData(true);
+      } catch(e) {}
+  };
+
+  const handleDeleteCeleb = async (id: string) => {
+      if(!confirm("Remove this ambassador?")) return;
+      setCelebs(prev => prev.filter(c => c._id !== id)); 
+      try { 
+        await fetch(`/api/celebrity`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
+        fetchDashboardData(true);
       } catch(e) {}
   };
 
@@ -381,7 +362,7 @@ function AdminDashboard() {
     setIsSyncing(true); addLog(`Order ${id.slice(-4)} updated to ${newStatus}`);
     try {
         const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: newStatus }) });
-        if(res.ok) fetchDashboardData();
+        if(res.ok) fetchDashboardData(true);
     } catch(e) { alert("Failed to update order status."); } finally { setIsSyncing(false); }
   };
 
@@ -389,7 +370,7 @@ function AdminDashboard() {
     setIsSyncing(true); addLog(`Order ${id.slice(-4)} tracking updated`);
     try {
         const res = await fetch('/api/orders', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, trackingId }) });
-        if(res.ok) { fetchDashboardData(); alert("Tracking ID Saved!"); }
+        if(res.ok) { fetchDashboardData(true); alert("Tracking ID Saved!"); }
     } catch(e) { alert("Failed to update tracking."); } finally { setIsSyncing(false); }
   };
 
@@ -397,35 +378,25 @@ function AdminDashboard() {
       setIsSyncing(true); addLog(`Updating review visibility...`);
       try {
           await fetch('/api/reviews', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reviewId, visibility }) });
-          fetchDashboardData();
+          fetchDashboardData(true);
       } catch (e) { alert("Failed to update review."); } finally { setIsSyncing(false); }
   };
 
-  // 🚀 FIXED: Function to submit Agent to the backend API we created
   const handleAddAffiliate = async () => {
     if (!agentForm.name || !agentForm.email || !agentForm.code) return alert("Name, Email, and Code are required.");
     setIsSyncing(true); addLog("Creating secure affiliate profile...");
     try {
-      const res = await fetch('/api/Godmode/agents', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({
-            name: agentForm.name,
-            email: agentForm.email,
-            code: agentForm.code,
-            commission: agentForm.commissionRate,
-            role: agentForm.tier
-        }) 
+      const res = await fetch('/api/agents', { 
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ name: agentForm.name, email: agentForm.email, code: agentForm.code, commission: agentForm.commissionRate, role: agentForm.tier }) 
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        alert(`Affiliate Partner Added Successfully!`); 
+        alert(`Affiliate Partner Added Successfully!`);
         setAgentForm({ name: '', email: '', code: '', tier: 'Partner', commissionRate: 5 });
         setIsAgentModalOpen(false); 
-        fetchDashboardData();
-      } else {
-        alert(data.message || "Failed to add partner");
-      }
+        fetchDashboardData(true);
+      } else { alert(data.error || "Failed to add partner"); }
     } catch (error) { alert("Network Error."); } finally { setIsSyncing(false); }
   };
 
@@ -433,8 +404,8 @@ function AdminDashboard() {
       if(!couponForm.code || !couponForm.discountValue) return alert("Code and Discount Value are required.");
       setIsSyncing(true); addLog(`Saving marketing rule...`);
       try {
-          await fetch('/api/Godmode/marketing', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(couponForm)});
-          setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchDashboardData();
+          await fetch('/api/coupons', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(couponForm)});
+          setCouponForm({code: '', discountValue: '', minOrder: '', validUntil: ''}); fetchDashboardData(true);
       } catch (e) { alert("Failed to save coupon."); } finally { setIsSyncing(false); }
   };
 
@@ -447,18 +418,9 @@ function AdminDashboard() {
               const data = await res.json();
               setCelebs([data.data, ...celebs]);
               setNewCeleb({ name: '', title: '', imageUrl: '' }); 
-              alert("Ambassador Added Successfully!"); 
+              alert("Ambassador Added Successfully!");
           }
       } catch(e) { alert("Failed to add Ambassador"); } finally { setIsSyncing(false); }
-  };
-
-  const handleDeleteCeleb = async (id: string) => {
-      if(!confirm("Remove this ambassador?")) return;
-      setCelebs(prev => prev.filter(c => c._id !== id)); 
-      try { 
-        await fetch(`/api/celebrity`, { method: 'DELETE', headers: { 'Content-Type': 'application/json'}, body: JSON.stringify({id}) }); 
-        router.refresh();
-      } catch(e) {}
   };
 
   const exportToCSV = () => {
@@ -476,10 +438,9 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
-
   if (status === "loading") return <div className="h-screen bg-[#050505] flex items-center justify-center"><div className="text-[#D4AF37] animate-pulse font-mono flex flex-col items-center gap-4"><Activity size={40}/><p className="tracking-[5px] text-xs font-bold">AUTHENTICATING...</p></div></div>;
   if (!session || session.user?.role !== 'SUPER_ADMIN') return <div className="h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div><Lock size={60} className="text-red-500 mb-8 animate-pulse relative z-10"/><button onClick={() => signIn("google")} className="relative z-10 bg-[#D4AF37] text-black px-12 py-5 rounded-full font-bold tracking-widest uppercase shadow-[0_0_40px_rgba(212,175,55,0.4)] hover:bg-white hover:shadow-[#D4AF37] transition-all hover:scale-105">Admin sign in</button></div>;
-
+  
   return (
     <div className="flex h-screen bg-[#050505] text-white overflow-hidden selection:bg-[#D4AF37] selection:text-black relative font-sans w-full max-w-[100vw]">
       
@@ -580,7 +541,7 @@ function AdminDashboard() {
                    <input value={agentForm.commissionRate} onChange={(e) => setAgentForm({...agentForm, commissionRate: Number(e.target.value)})} type="number" className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-sm outline-none focus:border-[#D4AF37] text-green-400" placeholder="Commission %"/>
                  </div>
                  <select value={agentForm.tier} onChange={(e) => setAgentForm({...agentForm, tier: e.target.value})} className="w-full bg-black/50 border border-white/20 p-4 rounded-xl text-xs font-bold uppercase tracking-widest text-gray-400 outline-none focus:border-[#D4AF37] appearance-none">
-                    <option className="bg-black">Partner</option><option className="bg-black">Premium Agent</option><option className="bg-black">Brand Ambassador</option>
+                     <option className="bg-black">Partner</option><option className="bg-black">Premium Agent</option><option className="bg-black">Brand Ambassador</option>
                  </select>
                  <button onClick={handleAddAffiliate} className="w-full py-5 min-h-[44px] bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl text-xs hover:bg-white transition-all mt-4 flex justify-center items-center gap-2"><Zap size={16}/> Provision Partner</button>
                </div>
@@ -589,11 +550,10 @@ function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* 🚀 FIXED SIDEBAR: hidden lg:flex se mobile pe gayab ho jayega */}
       <aside className="hidden lg:flex w-[300px] bg-black/60 backdrop-blur-2xl border-r border-white/10 flex-col z-50 relative">
         <div className="p-8 border-b border-white/10 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37]">
-             <ShieldCheck size={20}/>
+              <ShieldCheck size={20}/>
           </div>
           <div className="overflow-hidden">
              <p className="text-[9px] text-[#00F0FF] font-bold uppercase tracking-widest mb-1 flex items-center gap-1"><Activity size={10} className="animate-pulse"/> System Secured</p>
@@ -614,14 +574,12 @@ function AdminDashboard() {
         </nav>
 
         <div className="p-6 border-t border-white/10 bg-black/40">
-            <button onClick={() => handleAdminLogout()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Sign out</button>
+             <button onClick={() => handleAdminLogout()} className="w-full py-4 text-red-500 text-[10px] font-bold uppercase tracking-widest border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all flex justify-center items-center gap-2"><Lock size={14}/> Sign out</button>
         </div>
       </aside>
 
-      {/* 🚀 FIXED MAIN CONTENT: max-w-[100vw] added for mobile scroll lock */}
       <main className="flex-1 w-full max-w-[100vw] overflow-x-hidden overflow-y-auto p-4 md:p-8 lg:p-12 relative custom-scrollbar z-10 pt-[calc(env(safe-area-inset-top)+16px)]">
 
-        {/* 📱 MOBILE HORIZONTAL MENU (Swipeable tabs for all 13 modules) */}
         <div className="lg:hidden flex overflow-x-auto gap-2 pb-4 mb-6 border-b border-white/10 scrollbar-hide snap-x w-full pt-2">
             {MODULES.map(m => (
                 <button
@@ -637,7 +595,6 @@ function AdminDashboard() {
             ))}
         </div>
 
-        {/* 🚀 FIXED HEADER: Responsive Buttons */}
         <header className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 lg:mb-10 border-b border-white/10 pb-6 gap-4">
           <div>
              <h2 className="text-2xl md:text-3xl lg:text-4xl font-serif text-white">
@@ -659,482 +616,45 @@ function AdminDashboard() {
           
           {/* ================= 1. COMMAND CENTER (DASHBOARD) ================= */}
           {activeTab === 'FULL_DASHBOARD' && (
-             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="dash" className="space-y-8">
-               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
-                 <div className="lg:col-span-2 bg-[#111] border border-white/10 p-6 md:p-8 rounded-[20px] md:rounded-[30px] relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
-                   <div className="absolute -right-10 -top-10 text-[#D4AF37] opacity-5 group-hover:opacity-10 transition-opacity"><BarChart3 size={200}/></div>
-                   <p className="text-gray-400 text-[10px] md:text-xs font-bold uppercase mb-4 flex items-center gap-2"><Wallet size={16}/> Total sales</p>
-                   <p className="text-3xl md:text-5xl font-bold text-white">₹{(fullAnalytics?.metrics?.totalRevenue || 0).toLocaleString('en-IN')}</p>
-                 </div>
-
-                 <div onClick={() => setDashboardView('orders')} className={`bg-[#111] border p-6 md:p-8 rounded-[20px] md:rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'orders' ? 'border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
-                   <p className="text-gray-400 text-[10px] md:text-xs font-bold uppercase flex items-center gap-2"><Package size={16}/> Total Orders</p>
-                   <div className="mt-4 md:mt-0">
-                     <p className="text-3xl md:text-4xl font-bold text-[#00F0FF]">{fullAnalytics?.metrics?.totalOrders || 0}</p>
-                     <p className="text-[9px] md:text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
-                   </div>
-                 </div>
-                 
-                 <div onClick={() => setDashboardView('abandoned')} className={`bg-[#111] border p-6 md:p-8 rounded-[20px] md:rounded-[30px] cursor-pointer transition-all flex flex-col justify-between hover:scale-[1.02] ${dashboardView === 'abandoned' ? 'border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-white/10 hover:border-white/30'}`}>
-                   <p className="text-gray-400 text-[10px] md:text-xs font-bold uppercase flex items-center gap-2"><AlertTriangle size={16} className={leads.length > 0 ? "text-red-500 animate-pulse" : ""}/> Abandoned Carts</p>
-                   <div className="mt-4 md:mt-0">
-                     <p className="text-3xl md:text-4xl font-bold text-red-500">{leads.length}</p>
-                     <p className="text-[9px] md:text-[10px] text-gray-500 uppercase mt-2 flex items-center gap-1">View Details <ChevronRight size={12}/></p>
-                   </div>
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                 <div className="lg:col-span-2 bg-[#111] border border-white/10 rounded-[20px] md:rounded-[30px] p-6 md:p-8 min-h-[400px] w-full max-w-[100vw] overflow-x-hidden">
-                    <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
-                       <h3 className="text-lg md:text-xl font-bold text-white">
-                          {dashboardView === 'orders' ? 'Recent orders' : 'Abandoned carts'}
-                       </h3>
-                    </div>
-
-                    <div className="space-y-4">
-                       {dashboardView === 'orders' && (
-                          orders.length === 0 ? <p className="text-gray-600 text-[10px] md:text-sm uppercase tracking-widest text-center py-10 font-bold">No Records Found</p> :
-                          orders.slice(0, 8).map((o: any, i: number) => (
-                             <div key={i} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-black border border-white/10 rounded-xl hover:border-[#D4AF37]/50 transition-colors gap-4">
-                                <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
-                                   <div className="w-10 h-10 bg-[#00F0FF]/10 text-[#00F0FF] rounded-lg flex items-center justify-center text-[10px] md:text-xs font-bold shrink-0">
-                                      #{o.orderId?.slice(-4) || 'UKN'}
-                                   </div>
-                                   <div className="overflow-hidden">
-                                      <p className="font-bold text-white text-xs md:text-sm truncate">{o.customer?.name || 'Guest User'}</p>
-                                      <p className="text-[10px] md:text-xs text-gray-500 truncate">{o.customer?.email || o.customer?.phone}</p>
-                                   </div>
-                                </div>
-                                <div className="text-left md:text-right w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end">
-                                   <p className="text-base md:text-lg font-bold text-green-400">₹{(o.totalAmount || 0).toLocaleString()}</p>
-                                   <span className="text-[8px] md:text-[10px] uppercase text-gray-400">{o.status}</span>
-                                </div>
-                             </div>
-                          ))
-                       )}
-
-                       {/* Recovery Vault (Omnichannel VIP) */}
-                       {dashboardView === 'abandoned' && (
-                          leads.length === 0 ? (
-                            <p className="text-gray-600 text-[10px] md:text-sm uppercase tracking-widest text-center py-10 font-bold">
-                              No cart reminders pending
-                            </p>
-                          ) : (
-                            leads.map((lead: any, i: number) => {
-                              const leadId = lead?._id;
-                              const contact = lead.phone || lead.email || "---";
-
-                              const isEmailLoading = vipDispatchingKey === `email:${leadId}`;
-                              const isSmsLoading = vipDispatchingKey === `sms:${leadId}`;
-                              const isWaLoading = vipDispatchingKey === `whatsapp:${leadId}`;
-
-                              return (
-                                <div
-                                  key={i}
-                                  className="flex flex-col xl:flex-row justify-between xl:items-center p-4 md:p-5 bg-black/40 border border-[#D4AF37]/20 rounded-xl hover:border-[#D4AF37]/50 transition-colors gap-4 shadow-lg w-full"
-                                >
-                                  <div className="flex items-center gap-3 md:gap-4">
-                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center shrink-0 shadow-[0_0_18px_rgba(212,175,55,0.18)]">
-                                      <AlertTriangle size={18} />
-                                    </div>
-                                    <div className="overflow-hidden">
-                                      <p className="font-bold text-white text-sm md:text-base truncate">
-                                        {lead.name || "Client"}
-                                      </p>
-                                      <p className="text-[10px] md:text-xs text-[#D4AF37] font-mono mt-1 truncate">
-                                        ₹{lead.cartTotal?.toLocaleString() || "---"} <span className="mx-2 text-white/20">|</span> {contact}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-col gap-3 w-full xl:w-auto items-start xl:items-end">
-                                    <div className="flex flex-wrap gap-2 justify-start md:justify-end w-full">
-                                      <button
-                                        type="button"
-                                        onClick={() => dispatchVIPRecovery("email", lead)}
-                                        disabled={isEmailLoading}
-                                        className={`flex-1 md:flex-none px-4 py-3 min-h-[44px] rounded-lg border text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${
-                                          isEmailLoading
-                                            ? "bg-white/10 text-white/60 border-[#D4AF37]/20"
-                                            : "bg-white/10 text-gray-200 border-white/10 hover:bg-[#D4AF37]/15 hover:text-[#D4AF37]"
-                                        }`}
-                                      >
-                                        ✉️ Email
-                                      </button>
-
-                                      <button
-                                        type="button"
-                                        onClick={() => dispatchVIPRecovery("sms", lead)}
-                                        disabled={isSmsLoading}
-                                        className={`flex-1 md:flex-none px-4 py-3 min-h-[44px] rounded-lg border text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${
-                                          isSmsLoading
-                                            ? "bg-white/10 text-white/60 border-[#D4AF37]/20"
-                                            : "bg-white/10 text-gray-200 border-white/10 hover:bg-[#D4AF37]/15 hover:text-[#D4AF37]"
-                                        }`}
-                                      >
-                                        📱 Text
-                                      </button>
-
-                                      <button
-                                        type="button"
-                                        onClick={() => dispatchVIPRecovery("whatsapp", lead)}
-                                        disabled={isWaLoading}
-                                        className={`w-full md:w-auto px-4 py-3 min-h-[44px] rounded-lg border text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${
-                                          isWaLoading
-                                            ? "bg-white/10 text-white/60 border-[#D4AF37]/20"
-                                            : "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/25 hover:bg-[#D4AF37]/20 hover:text-black"
-                                        }`}
-                                      >
-                                        💬 WhatsApp
-                                      </button>
-                                    </div>
-
-                                    <div className="text-right w-full">
-                                      <button
-                                        onClick={() => handleDeleteLead(lead._id)}
-                                        className="text-red-500/70 text-[9px] md:text-[10px] uppercase font-bold tracking-widest hover:text-red-500 transition-colors flex items-center justify-end gap-1 ml-auto p-2"
-                                      >
-                                        <Trash2 size={12} /> Remove
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )
-                       )}
-                    </div>
-                 </div>
-
-                 <div className="bg-[#111] border border-white/10 rounded-[20px] md:rounded-[30px] p-6 md:p-8 flex flex-col">
-                    <h3 className="text-xs md:text-sm font-bold text-gray-400 mb-4 flex items-center gap-2"><Terminal size={16}/> System Logs</h3>
-                    <div className="flex-1 overflow-hidden flex flex-col justify-end space-y-2">
-                        {systemLogs.map((log, i) => (
-                            <div key={i} className="text-[10px] md:text-xs text-gray-500">
-                                <span className="text-[#D4AF37] mr-2">[{new Date().toLocaleTimeString()}]</span> {log}
-                            </div>
-                        ))}
-                    </div>
-                 </div>
-              </div>
-             </motion.div>
+            <DashboardTab
+              fullAnalytics={fullAnalytics}
+              dashboardView={dashboardView}
+              setDashboardView={setDashboardView}
+              leads={leads}
+              orders={orders}
+              dispatchVIPRecovery={dispatchVIPRecovery}
+              vipDispatchingKey={vipDispatchingKey}
+              handleDeleteLead={handleDeleteLead}
+              systemLogs={systemLogs}
+            />
           )}
 
           {/* ================= 2. INVENTORY ================= */}
           {activeTab === 'INVENTORY' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="inv" className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-               <div className="xl:col-span-5 space-y-8 h-max sticky top-0 w-full">
-                 
-                 <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10">
-                     <h3 className="text-white text-base md:text-lg font-bold mb-4 flex items-center gap-2"><Layout size={18} className="text-[#D4AF37]"/> Manage Categories</h3>
-                     <div className="flex gap-2 md:gap-3 mb-4">
-                        <input value={newCategory} onChange={e=>setNewCategory(e.target.value)} className="flex-1 min-h-[44px] bg-black border border-white/20 p-3 rounded-xl text-xs md:text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="New category..." />
-                        <button onClick={() => { if(newCategory){ setCategories([...categories, newCategory]); setNewCategory(""); } }} className="px-6 min-h-[44px] bg-[#D4AF37] text-black font-bold text-xs rounded-xl hover:bg-white transition-all">Add</button>
-                     </div>
-                     <div className="flex flex-wrap gap-2">
-                        {categories.map((cat, i) => (
-                           <div key={i} className="flex items-center gap-2 bg-black px-3 py-2 rounded-lg border border-white/20">
-                              <span className="text-[10px] md:text-xs text-gray-300">{cat}</span>
-                              <button onClick={()=>setCategories(categories.filter(c=>c!==cat))} className="text-red-400 hover:text-red-500 min-h-[44px] min-w-[20px] flex items-center justify-center"><X size={14}/></button>
-                           </div>
-                        ))}
-                     </div>
-                 </div>
-
-                 <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10 shadow-lg relative overflow-hidden">
-                     <h3 className="text-xl md:text-2xl font-bold text-white mb-6">Add a product</h3>
-                     <div className="space-y-4 md:space-y-5 relative z-10">
-                        <input value={watchForm.name} onChange={(e) => setWatchForm({...watchForm, name: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-4 rounded-xl text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="Product Name (e.g. Royal Oak)"/>
-                        
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <input 
-                            value={watchForm.brand} 
-                            onChange={(e) => setWatchForm({...watchForm, brand: e.target.value})} 
-                            className="w-full min-h-[44px] bg-black border border-white/20 p-4 rounded-xl text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" 
-                            placeholder="Brand Name"
-                          />
-                          <input 
-                            value={watchForm.category} 
-                            onChange={(e) => setWatchForm({...watchForm, category: e.target.value})} 
-                            className="w-full min-h-[44px] bg-black border border-white/20 p-4 rounded-xl text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" 
-                            placeholder="Category Name"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                           <div><label className="text-[10px] md:text-xs text-gray-500 mb-1 block">Display Order</label><input type="number" value={watchForm.priority} onChange={(e) => setWatchForm({...watchForm, priority: Number(e.target.value)})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="100" /></div>
-                           <div><label className="text-[10px] md:text-xs text-gray-500 mb-1 block">Product Badge</label><input value={watchForm.badge} onChange={(e) => setWatchForm({...watchForm, badge: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="e.g. Limited" /></div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-y border-white/10 py-5">
-                            <div><label className="text-[10px] md:text-xs text-gray-500 mb-1 block">Base Price (₹)</label><input value={watchForm.price} onChange={(e) => setWatchForm({...watchForm, price: e.target.value})} type="number" className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
-                            <div><label className="text-[10px] md:text-xs text-[#00F0FF] mb-1 block">Sale Price (₹)</label><input value={watchForm.offerPrice} onChange={(e) => setWatchForm({...watchForm, offerPrice: e.target.value})} type="number" className="w-full min-h-[44px] bg-black border border-[#00F0FF]/30 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#00F0FF] text-white" /></div>
-                            <div><label className="text-[10px] md:text-xs text-gray-500 mb-1 block">Available Stock</label><input value={watchForm.stock} onChange={(e) => setWatchForm({...watchForm, stock: e.target.value})} type="number" className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" /></div>
-                        </div>
-
-                        <div className="space-y-6 pt-4 border-t border-white/10">
-                            <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                                <label className="text-xs md:text-sm font-bold text-white flex items-center gap-2">
-                                    <ImageIcon size={16}/> Add photos or video
-                                </label>
-                            </div>
-                            
-                            <div className="bg-[#1a1a1a] p-4 md:p-5 rounded-xl border border-white/10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                                <div className="flex-1 w-full">
-                                    <label className="text-[10px] md:text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest text-center md:text-left">Main Product Image</label>
-                                    <div className="flex justify-center md:justify-start">
-                                      <PremiumUploadNode 
-                                          placeholder="Main Image" 
-                                          onUploadSuccess={(url: string) => setWatchForm({...watchForm, imageUrl: url})} 
-                                      />
-                                    </div>
-                                </div>
-                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-2 border-dashed border-white/20 flex items-center justify-center bg-black shrink-0 relative group">
-                                    {watchForm.imageUrl ? (
-                                        <>
-                                            <img src={watchForm.imageUrl} alt="Main Preview" className="w-full h-full object-cover" />
-                                            <button 
-                                                onClick={() => setWatchForm({...watchForm, imageUrl: ''})}
-                                                className="absolute inset-0 bg-red-600/80 text-white opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase min-h-[44px]"
-                                            >
-                                                <Trash2 size={16} /> Remove
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <span className="text-[10px] md:text-xs text-gray-600 font-bold uppercase">No Source</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="bg-[#1a1a1a] p-4 md:p-5 rounded-xl border border-white/10 w-full overflow-x-auto">
-                                <label className="text-[10px] md:text-xs text-gray-400 block mb-4 font-bold uppercase tracking-widest text-center md:text-left">Additional Gallery (Max 6)</label>
-                                
-                                <div className="flex flex-row md:flex-wrap gap-4 items-center w-max md:w-full pb-2 md:pb-0">
-                                    {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').map((img, i) => (
-                                        <div key={i} className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden relative group border border-white/20 shadow-lg shrink-0">
-                                            <img src={img} className="w-full h-full object-cover" />
-                                            <button 
-                                                onClick={() => setWatchForm({...watchForm, images: watchForm.images.filter((_, idx) => idx !== i)})} 
-                                                className="absolute top-1 right-1 min-h-[30px] min-w-[30px] flex items-center justify-center bg-red-600 rounded-lg text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <X size={14}/>
-                                            </button>
-                                        </div>
-                                    ))}
-                                    
-                                    {watchForm.images.filter(img => typeof img === 'string' && img.trim() !== '').length < 6 && (
-                                        <div className="scale-75 md:scale-90 origin-left shrink-0">
-                                            <PremiumUploadNode 
-                                                placeholder="Add Details" 
-                                                onUploadSuccess={(url: string) => { 
-                                                    const newGallery = [...watchForm.images.filter(x => typeof x === 'string' && x.trim() !== '')]; 
-                                                    newGallery.push(url); 
-                                                    setWatchForm({...watchForm, images: newGallery}); 
-                                                }} 
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                               <div><label className="text-[10px] md:text-xs text-gray-500 mb-1 block">Cinematic Video URL</label><input value={watchForm.videoUrl} onChange={(e) => setWatchForm({...watchForm, videoUrl: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Paste Video URL"/></div>
-                               <div><label className="text-[10px] md:text-xs text-gray-500 mb-1 block">3D Model Link (Optional)</label><input value={watchForm.model3DUrl} onChange={(e) => setWatchForm({...watchForm, model3DUrl: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none text-white focus:border-[#D4AF37]" placeholder="Paste 3D File URL"/></div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 pt-4 border-t border-white/10">
-                           <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-2 gap-2">
-                               <label className="text-xs md:text-sm font-bold text-white flex items-center gap-2"><AlignJustify size={16}/> Specifications</label>
-                               <button onClick={()=>setWatchForm({...watchForm, amazonDetails: [...watchForm.amazonDetails, {key:'', value:''}]})} className="text-[#D4AF37] min-h-[44px] text-[10px] md:text-xs font-bold hover:text-white px-4 py-2 bg-[#D4AF37]/10 rounded-lg transition-colors w-full md:w-auto">+ Add Row</button>
-                           </div>
-                           
-                           <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2 w-full overflow-x-hidden">
-                               {watchForm.amazonDetails.map((detail, i) => (
-                                   <div key={i} className="flex flex-col md:flex-row gap-2 md:gap-3 items-center w-full bg-black/30 p-2 md:p-0 rounded-xl">
-                                       <input 
-                                          value={detail.key} 
-                                          onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].key=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} 
-                                          className="w-full md:w-1/3 min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" 
-                                          placeholder="e.g. Dial Color"
-                                       />
-                                       <input 
-                                          value={detail.value} 
-                                          onChange={e=>{ const n=[...watchForm.amazonDetails]; n[i].value=e.target.value; setWatchForm({...watchForm, amazonDetails:n}); }} 
-                                          className="w-full md:flex-1 min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" 
-                                          placeholder="e.g. Matte Black"
-                                       />
-                                       <button 
-                                          onClick={()=>{ const n=watchForm.amazonDetails.filter((_,idx)=>idx!==i); setWatchForm({...watchForm, amazonDetails:n}); }} 
-                                          className="w-full md:w-auto text-red-500 p-3 min-h-[44px] bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg transition-colors flex justify-center items-center"
-                                       >
-                                          <X size={16}/> <span className="md:hidden ml-2 text-xs font-bold uppercase">Remove Row</span>
-                                       </button>
-                                   </div>
-                               ))}
-                           </div>
-
-                           <div className="pt-4 border-t border-white/5">
-                              <label className="text-[10px] md:text-xs text-gray-500 mb-2 block font-bold uppercase tracking-widest">Quick Tags</label>
-                              <input value={watchForm.seoTags} onChange={(e) => setWatchForm({...watchForm, seoTags: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-4 rounded-lg text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" placeholder="luxury, watch, automatic..." />
-                           </div>
-                           
-                           <div>
-                               <label className="text-[10px] md:text-xs text-gray-500 mb-2 block font-bold uppercase tracking-widest">Detailed Description</label>
-                               <textarea value={watchForm.description} onChange={(e) => setWatchForm({...watchForm, description: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-4 rounded-xl text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white custom-scrollbar leading-relaxed" placeholder="Describe the masterpiece..."/>
-                           </div>
-                        </div>
-
-                        <div className="mt-8 p-4 md:p-6 bg-black/40 border border-[#D4AF37]/30 rounded-2xl shadow-inner relative overflow-hidden">
-                            <div className="absolute -right-10 -top-10 opacity-5 pointer-events-none"><ShieldCheck size={120} className="text-[#D4AF37]"/></div>
-                            <h3 className="text-base md:text-lg font-serif font-bold mb-4 md:mb-6 flex items-center gap-2 text-white relative z-10">
-                                <ShieldCheck size={20} className="text-[#D4AF37]" /> Price and VIP code
-                            </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10">
-                                <div className="p-3 md:p-4 bg-black rounded-xl border border-white/10">
-                                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 flex justify-between">
-                                        VIP product code <span className="text-gray-500 font-mono">(optional)</span>
-                                    </label>
-                                    <input value={watchForm.vipVaultKey} onChange={(e) => setWatchForm({...watchForm, vipVaultKey: e.target.value.toUpperCase()})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm font-mono outline-none focus:border-[#D4AF37] uppercase text-[#D4AF37]" placeholder="e.g. ROLEXVIP" />
-                                </div>
-                                <div className="p-3 md:p-4 bg-black rounded-xl border border-white/10">
-                                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">VIP discount (₹)</label>
-                                    <input type="number" value={watchForm.vipDiscount} onChange={(e) => setWatchForm({...watchForm, vipDiscount: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="5000" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-                                <div className="p-3 md:p-4 bg-black rounded-xl border border-white/10">
-                                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Transit Fee (₹)</label>
-                                    <input type="number" value={watchForm.transitFee} onChange={(e) => setWatchForm({...watchForm, transitFee: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm font-mono outline-none focus:border-[#D4AF37] text-white" placeholder="0 for Free" />
-                                </div>
-                                <div className="p-3 md:p-4 bg-black rounded-xl border border-white/10">
-                                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">Tax Bracket (GST %)</label>
-                                    <select value={watchForm.taxPercentage} onChange={(e) => setWatchForm({...watchForm, taxPercentage: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm font-mono outline-none focus:border-[#D4AF37] text-white appearance-none">
-                                        <option className="bg-black" value="0">0% (Exempt)</option>
-                                        <option className="bg-black" value="3">3% (Bullion)</option>
-                                        <option className="bg-black" value="12">12%</option>
-                                        <option className="bg-black" value="18">18% (Standard)</option>
-                                        <option className="bg-black" value="28">28% (Luxury)</option>
-                                    </select>
-                                </div>
-                                <div className="p-3 md:p-4 bg-black rounded-xl border border-white/10 flex flex-col justify-center items-center cursor-pointer transition-all hover:border-[#D4AF37]/50" onClick={() => setWatchForm({...watchForm, taxInclusive: !watchForm.taxInclusive})}>
-                                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block text-center">Tax Configuration</label>
-                                    <div className={`px-2 py-3 md:py-2 min-h-[44px] flex items-center justify-center rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors w-full text-center ${watchForm.taxInclusive ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                                        {watchForm.taxInclusive ? 'Inclusive' : 'Exclusive'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 pt-8 border-t border-white/10 space-y-8 w-full overflow-hidden">
-                            <SeoPanel entityData={watchForm} setEntityData={setWatchForm} />
-                            <ImageSeoPanel entityData={watchForm} setEntityData={setWatchForm} />
-                        </div>
-
-                        <button onClick={handleSaveProduct} className="w-full py-4 md:py-5 min-h-[50px] bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2 text-xs md:text-sm"><Save size={18}/> Push to Live Inventory</button>
-                     </div>
-                 </div>
-               </div>
-
-               <div className="xl:col-span-7 w-full max-w-[100vw]">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-white/10 pb-4 gap-3">
-                     <h3 className="text-xl md:text-2xl font-serif text-white">Live Assets</h3>
-                     <span className="text-[10px] md:text-xs font-bold bg-[#D4AF37]/20 text-[#D4AF37] px-4 py-2 rounded-lg">{liveWatches.length} Active</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pb-20 w-full">
-                     {liveWatches.length === 0 ? <p className="col-span-1 md:col-span-2 text-center text-gray-600 py-20 font-bold uppercase tracking-widest text-xs md:text-sm">No products yet</p> : liveWatches.map((watch, idx) => (
-                       <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} transition={{delay: idx*0.05}} key={watch._id || idx} className="bg-[#111] p-4 md:p-6 rounded-[20px] border border-white/10 flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all shadow-lg relative overflow-hidden w-full">
-                          <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
-                             {watch.badge && <span className="bg-[#D4AF37] text-black text-[8px] md:text-[10px] font-bold px-2 py-1 rounded uppercase">{watch.badge}</span>}
-                             {watch.stock < 3 && <span className="bg-red-500 text-white text-[8px] md:text-[10px] font-bold px-2 py-1 rounded uppercase">Low: {watch.stock}</span>}
-                          </div>
-                          <div className="h-40 md:h-48 bg-black rounded-xl flex items-center justify-center p-4 relative mb-4 border border-white/10 w-full">
-                             <img src={watch.imageUrl || (watch.images && watch.images[0])} className="h-full w-full object-contain transition-transform group-hover:scale-105 duration-500" />
-                          </div>
-                          <div className="flex-1 flex flex-col w-full">
-                             <p className="text-[10px] md:text-xs text-[#D4AF37] font-bold uppercase mb-1">{watch.brand}</p>
-                             <h4 className="text-base md:text-lg font-bold text-white mb-2 line-clamp-1">{watch.name}</h4>
-                             <div className="flex justify-between items-end border-t border-white/10 pt-4 mt-auto">
-                                <div><p className="text-[10px] md:text-xs text-gray-500 mb-1">Price</p><p className="text-lg md:text-xl font-bold text-green-400">₹{Number(watch.offerPrice || watch.price).toLocaleString('en-IN')}</p></div>
-                                <button onClick={() => handleDeleteProduct(watch._id)} className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors"><Trash2 size={16}/></button>
-                             </div>
-                          </div>
-                       </motion.div>
-                     ))}
-                  </div>
-               </div>
-            </motion.div>
+            <InventoryTab
+              categories={categories}
+              newCategory={newCategory}
+              setNewCategory={setNewCategory}
+              setCategories={setCategories}
+              watchForm={watchForm}
+              setWatchForm={setWatchForm}
+              handleSaveProduct={handleSaveProduct}
+              liveWatches={liveWatches}
+              handleDeleteProduct={handleDeleteProduct}
+              PremiumUploadNode={PremiumUploadNode}
+            />
           )}
 
           {/* ================= 3. MANAGE ORDERS ================= */}
           {activeTab === 'ORDER_TRACKER' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="orders" className="space-y-8">
-               <div className="bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[30px] border border-blue-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div className="flex items-center gap-4 md:gap-6">
-                    <div className="p-4 md:p-5 bg-blue-500/20 rounded-2xl text-blue-400"><Truck size={24} className="md:w-[30px] md:h-[30px]"/></div>
-                    <div>
-                       <h3 className="text-xl md:text-3xl font-bold text-white mb-1">Order Logistics</h3>
-                       <p className="text-[10px] md:text-sm text-gray-400">Track and fulfill global acquisitions.</p>
-                    </div>
-                  </div>
-                  <button onClick={exportToCSV} className="w-full md:w-auto min-h-[44px] bg-green-600 text-white px-6 py-3 md:py-4 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-500 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-                      <Download size={18}/> Export Excel
-                  </button>
-               </div>
-               
-               <div className="space-y-4">
-                 {orders.length === 0 ? <p className="text-center py-20 text-gray-600 font-bold tracking-widest uppercase text-xs md:text-sm">No Active Operations</p> : orders.map((o: any, i: number) => (
-                    <div key={i} className="p-4 md:p-6 bg-[#111] border border-white/10 rounded-[20px] flex flex-col gap-4 hover:border-blue-500/50 transition-colors shadow-lg w-full max-w-[100vw]">
-                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full gap-4">
-                           <div className="flex items-center gap-4 w-full md:w-auto">
-                              <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-black border border-white/20 flex items-center justify-center text-white font-bold text-xs md:text-sm shrink-0">#{o.orderId?.slice(-4) || 'UKN'}</div>
-                              <div className="overflow-hidden">
-                                 <h4 className="font-bold text-base md:text-xl text-white mb-1 truncate">{o.customer?.name || 'Guest'}</h4>
-                                 <p className="text-[10px] md:text-xs text-gray-400 flex items-center gap-1 md:gap-2 truncate"><MapPin size={10} className="md:w-3 md:h-3"/> {o.customer?.city || 'Unknown'} <span className="mx-1 md:mx-2 text-white/20">|</span> <Package size={10} className="md:w-3 md:h-3"/> {o.items?.length || 1} Unit(s)</p>
-                              </div>
-                           </div>
-                           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
-                              <div className="text-left md:text-right w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-center">
-                                <p className="text-[10px] md:text-xs text-gray-500 mb-1">Clearance Value</p>
-                                <p className="font-bold text-green-400 text-lg md:text-2xl">₹{(o.totalAmount || 0).toLocaleString()}</p>
-                              </div>
-                              <select value={o.status} onChange={(e) => handleUpdateOrderStatus(o._id, e.target.value)} className="w-full md:w-48 min-h-[44px] bg-black border border-white/30 text-white text-[10px] md:text-xs font-bold uppercase rounded-xl p-3 md:p-4 cursor-pointer hover:border-[#D4AF37] transition-colors appearance-none text-center">
-                                <option value="PENDING">Clearance Pending</option>
-                                <option value="PROCESSING">Processing</option>
-                                <option value="DISPATCHED">In Transit</option>
-                                <option className="text-green-500" value="DELIVERED">Secured Delivery</option>
-                                <option className="text-red-500" value="CANCELLED">Aborted</option>
-                              </select>
-                              
-                              <div className="flex gap-2 w-full md:w-auto justify-end">
-                                 <button onClick={() => setSelectedOrder(o)} className="flex-1 md:flex-none p-3 md:p-4 min-h-[44px] bg-white/5 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl transition-all border border-white/10 flex justify-center items-center">
-                                     <Eye size={18}/>
-                                 </button>
-                                 <button onClick={() => handleDeleteOrder(o._id)} className="flex-1 md:flex-none p-3 md:p-4 min-h-[44px] bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all flex justify-center items-center">
-                                     <Trash2 size={18}/>
-                                 </button>
-                              </div>
-                           </div>
-                       </div>
-                       
-                       {/* Tracking ID Mobile Card Row */}
-                       <div className="bg-black/50 p-3 md:p-4 rounded-xl border border-white/10 flex flex-col md:flex-row gap-3 w-full items-center mt-2">
-                           <input 
-                               placeholder="Enter Tracking ID..." 
-                               defaultValue={o.trackingId || ""} 
-                               id={`track-${o._id}`}
-                               className="w-full min-h-[44px] bg-black border border-white/20 px-3 md:px-4 py-3 md:py-4 rounded-xl text-xs md:text-sm outline-none focus:border-[#D4AF37] text-white" 
-                           />
-                           <button onClick={() => handleUpdateTracking(o._id, (document.getElementById(`track-${o._id}`) as HTMLInputElement).value)} className="w-full md:w-auto min-h-[44px] bg-[#D4AF37] text-black px-6 py-3 md:py-4 rounded-xl font-bold uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-center gap-2 hover:bg-white transition-all whitespace-nowrap">
-                               <Truck size={16}/> Save Tracking
-                           </button>
-                       </div>
-                    </div>
-                 ))}
-               </div>
-            </motion.div>
+            <OrderTrackerTab
+              orders={orders}
+              exportToCSV={exportToCSV}
+              handleUpdateOrderStatus={handleUpdateOrderStatus}
+              handleUpdateTracking={handleUpdateTracking}
+              setSelectedOrder={setSelectedOrder}
+              handleDeleteOrder={handleDeleteOrder}
+            />
           )}
 
           {/* ================= 4. CUSTOMERS & CRM ================= */}
@@ -1156,7 +676,7 @@ function AdminDashboard() {
                         </tr>
                      </thead>
                      <tbody>
-                        {leads.length === 0 ? <tr><td colSpan={5} className="p-10 md:p-20 text-center text-gray-600 font-bold uppercase tracking-widest text-[10px] md:text-xs">Database Empty</td></tr> : leads.map((c:any, i:number) => (
+                       {leads.length === 0 ? <tr><td colSpan={5} className="p-10 md:p-20 text-center text-gray-600 font-bold uppercase tracking-widest text-[10px] md:text-xs">Database Empty</td></tr> : leads.map((c:any, i:number) => (
                            <tr key={i} className="border-b border-white/10 hover:bg-white/5 transition-colors">
                               <td className="p-4 md:p-6 pl-6 md:pl-10">
                                  <div className="flex items-center gap-3 md:gap-4">
@@ -1174,7 +694,7 @@ function AdminDashboard() {
                                   <button onClick={() => handleDeleteLead(c._id)} className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all mx-auto">
                                       <Trash2 size={16}/>
                                   </button>
-                              </td>
+                               </td>
                            </tr>
                         ))}
                      </tbody>
@@ -1251,7 +771,7 @@ function AdminDashboard() {
                                         <img src={galleryImages[idx]} className="w-full h-full object-cover" />
                                         <button onClick={()=>{ const arr=[...galleryImages]; arr.splice(idx,1); setGalleryImages(arr); }} className="absolute top-1 right-1 p-1.5 min-h-[30px] min-w-[30px] flex items-center justify-center bg-red-500 rounded text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"><Trash2 size={12}/></button>
                                     </div>
-                                ) : ( 
+                                 ) : ( 
                                     <div className="mt-4 scale-[0.6] md:scale-75 origin-center">
                                         <PremiumUploadNode placeholder="Push" onUploadSuccess={(url: string)=>{ const arr=[...galleryImages]; arr[idx]=url; setGalleryImages(arr); }} />
                                     </div> 
@@ -1342,325 +862,57 @@ function AdminDashboard() {
 
           {/* ================= 8. SEO ENGINE ================= */}
           {activeTab === 'SEO_ENGINE' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="seo" className="space-y-8 w-full max-w-[100vw] overflow-x-hidden">
-                <SeoAnalyticsDashboard />
-                <RedirectManager /> 
-            </motion.div>
+            <SeoEngineTab />
           )}
 
           {/* ================= 9. LEGAL PAGES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
-             <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 pb-20 w-full">
-                <div className="lg:col-span-4 space-y-6 md:space-y-8">
-                  <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10 w-full">
-                     <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-white/10 pb-4">
-                        <h3 className="text-base md:text-lg font-bold text-white">Policy pages</h3>
-                        <button 
-                            onClick={() => {
-                                const cinematicTemplate = `<h1>New page</h1>\n\n<p>Add your policy text for <strong>Essential Rush</strong> here.</p>\n\n<h2>Section one</h2>\n<p>Write clear, simple sentences your customers can understand.</p>`;
-                                const newId = Date.now().toString();
-                                setLegalPages([...legalPages, { id: newId, title: 'New policy', slug: 'new-policy', content: cinematicTemplate }]);
-                                setActiveLegalPageId(newId);
-                            }} 
-                            className="text-[#D4AF37] min-h-[44px] text-[10px] md:text-xs font-bold uppercase tracking-widest bg-[#D4AF37]/10 px-3 py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
-                        >
-                            + Add page
-                        </button>
-                     </div>
-                     <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {legalPages.length === 0 ? <p className="text-gray-600 text-[10px] md:text-xs font-bold text-center uppercase tracking-widest py-4">No pages yet</p> : legalPages.map((page) => (
-                           <div key={page.id} onClick={() => setActiveLegalPageId(page.id)} className={`p-3 md:p-4 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${activeLegalPageId === page.id ? 'bg-[#D4AF37]/10 border-[#D4AF37]' : 'bg-black border-white/20 hover:border-gray-500'}`}>
-                              <div className="overflow-hidden">
-                                 <h4 className={`font-bold text-xs md:text-sm truncate ${activeLegalPageId === page.id ? 'text-[#D4AF37]' : 'text-white'}`}>{page.title}</h4>
-                                 <p className="text-[9px] md:text-xs text-gray-500 mt-1 font-mono truncate">/policies/{page.slug}</p>
-                              </div>
-                              <button onClick={(e)=>{ e.stopPropagation(); setLegalPages(legalPages.filter(p=>p.id!==page.id)); if(activeLegalPageId===page.id) setActiveLegalPageId(legalPages[0]?.id||''); }} className="text-red-500 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-red-500/20 rounded-lg shrink-0"><Trash2 size={16}/></button>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-
-                  <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10 w-full">
-                     <h3 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 border-b border-white/10 pb-4">Business details</h3>
-                     <div className="space-y-4">
-                        <input value={corporateInfo.companyName} onChange={e=>setCorporateInfo({...corporateInfo, companyName: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Company name" />
-                        <textarea value={corporateInfo.address} onChange={e=>setCorporateInfo({...corporateInfo, address: e.target.value})} rows={2} className="w-full bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Address" />
-                        <input value={corporateInfo.phone1} onChange={e=>setCorporateInfo({...corporateInfo, phone1: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Phone" />
-                        <input value={corporateInfo.email} onChange={e=>setCorporateInfo({...corporateInfo, email: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 rounded-lg text-xs md:text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Email" />
-                     </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-8 bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[30px] border border-white/10 w-full">
-                   {activeLegalPageId ? (
-                      <div className="space-y-6 flex flex-col h-full w-full">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                            <div>
-                               <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">Page title</label>
-                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.title || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].title=e.target.value; setLegalPages(n); }} className="w-full min-h-[44px] bg-black border border-white/20 p-3 md:p-4 rounded-xl text-sm md:text-lg text-white outline-none focus:border-[#D4AF37]" placeholder="e.g. Privacy policy"/>
-                            </div>
-                            <div>
-                               <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">URL slug</label>
-                               <input value={legalPages.find(p=>p.id===activeLegalPageId)?.slug || ''} onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].slug=e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'-'); setLegalPages(n); }} className="w-full min-h-[44px] bg-black border border-white/20 p-3 md:p-4 rounded-xl text-xs md:text-sm text-[#00F0FF] font-mono outline-none focus:border-[#D4AF37]" placeholder="e.g. privacy-policy"/>
-                            </div>
-                         </div>
-                         
-                         <div className="flex-1 flex flex-col w-full">
-                            <div className="flex flex-col md:flex-row justify-between md:items-end mb-3 gap-3 md:gap-0">
-                               <label className="text-[10px] md:text-xs text-[#D4AF37] font-bold uppercase tracking-widest block">Page content (HTML)</label>
-                               
-                               <div className="flex items-center justify-between md:justify-start gap-3 bg-black border border-white/10 p-2 rounded-xl">
-                                   <span className="text-[9px] md:text-[10px] text-gray-500 uppercase font-bold ml-2">Add media:</span>
-                                   <div className="scale-[0.6] md:scale-75 origin-right h-10 md:h-12">
-                                       <PremiumUploadNode 
-                                          placeholder="File" 
-                                          onUploadSuccess={(url: string) => {
-                                             const isVideo = url.match(/\.(mp4|webm|mov)$/i);
-                                             const mediaTag = isVideo 
-                                                 ? `\n\n<video src="${url}" autoplay loop muted playsinline></video>\n\n` 
-                                                 : `\n\n<img src="${url}" alt="Policy image" />\n\n`;
-                                             
-                                             const n = [...legalPages];
-                                             const idx = n.findIndex(p => p.id === activeLegalPageId);
-                                             if (idx > -1) {
-                                                n[idx].content = (n[idx].content || '') + mediaTag;
-                                                setLegalPages(n);
-                                                addLog("Image added to page content.");
-                                             }
-                                          }} 
-                                       />
-                                   </div>
-                               </div>
-                            </div>
-
-                            <textarea 
-                                value={legalPages.find(p=>p.id===activeLegalPageId)?.content || ''} 
-                                onChange={e=>{ const n=[...legalPages]; const idx=n.findIndex(p=>p.id===activeLegalPageId); if(idx>-1) n[idx].content=e.target.value; setLegalPages(n); }} 
-                                rows={14} 
-                                className="w-full h-full min-h-[250px] bg-black border border-white/20 p-4 md:p-6 rounded-2xl text-xs md:text-sm text-[#b3b3b3] font-mono outline-none focus:border-[#D4AF37] custom-scrollbar leading-relaxed" 
-                                placeholder="Construct layout parameters here..."
-                            />
-                         </div>
-
-                         <div className="mt-6 md:mt-8 p-4 md:p-6 bg-[#0a0a0a] border border-[#D4AF37]/20 rounded-2xl w-full overflow-hidden">
-                             <h4 className="text-[10px] md:text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                                 <ImageIcon size={16} /> Asset Detection Stream
-                             </h4>
-                             
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                                 {(() => {
-                                     const currentContent = legalPages.find(p=>p.id===activeLegalPageId)?.content || '';
-                                     const urls: string[] = [];
-                                     const regex = /src="(https?:\/\/[^"]+)"/g;
-                                     let match;
-                                     while ((match = regex.exec(currentContent)) !== null) {
-                                         urls.push(match[1]);
-                                     }
-
-                                     if (urls.length === 0) return <p className="text-[10px] md:text-xs text-gray-600 col-span-full uppercase font-bold tracking-widest text-center py-4">Stream Clear</p>;
-
-                                     return urls.map((url, idx) => (
-                                         <div key={idx} className="group relative rounded-xl overflow-hidden border border-white/10 aspect-video bg-black">
-                                             {url.match(/\.(mp4|webm|mov)$/i) ? (
-                                                 <video src={url} className="w-full h-full object-cover" />
-                                             ) : (
-                                                 <img src={url} className="w-full h-full object-cover" />
-                                             )}
-                                             
-                                             <button 
-                                                 onClick={() => {
-                                                     const n = [...legalPages];
-                                                     const pageIndex = n.findIndex(p => p.id === activeLegalPageId);
-                                                     if(pageIndex > -1) {
-                                                         const tagRegex = new RegExp(`<img[^>]*src="${url}"[^>]*>|<video[^>]*src="${url}"[^>]*>[^<]*</video>`, 'g');
-                                                         n[pageIndex].content = n[pageIndex].content.replace(tagRegex, '');
-                                                         setLegalPages(n);
-                                                     }
-                                                 }}
-                                                 className="absolute inset-0 bg-red-600/90 text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 text-[8px] md:text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm"
-                                             >
-                                                 <Trash2 size={16} className="md:w-[24px] md:h-[24px] mb-0 md:mb-1"/>
-                                                 Erase Target
-                                             </button>
-                                         </div>
-                                     ));
-                                 })()}
-                             </div>
-                         </div>
-
-                         <button onClick={handleSaveCMS} className="w-full min-h-[44px] py-4 md:py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl hover:bg-white transition-all mt-4 flex justify-center items-center gap-2 text-[10px] md:text-xs"><Save size={18}/> Save site settings</button>
-                      </div>
-                   ) : (
-                      <div className="h-full flex items-center justify-center flex-col text-gray-500 py-20 md:py-32 border-2 border-dashed border-white/10 rounded-2xl w-full">
-                         <Radar size={40} className="md:w-[60px] md:h-[60px] mb-4 opacity-50 text-[#D4AF37]"/>
-                         <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-center px-4">Choose a page to edit</p>
-                      </div>
-                   )}
-                </div>
-             </motion.div>
+            <LegalPagesTab
+              legalPages={legalPages}
+              setLegalPages={setLegalPages}
+              activeLegalPageId={activeLegalPageId}
+              setActiveLegalPageId={setActiveLegalPageId}
+              corporateInfo={corporateInfo}
+              setCorporateInfo={setCorporateInfo}
+              handleSaveCMS={handleSaveCMS}
+              PremiumUploadNode={PremiumUploadNode}
+            />
           )}
 
           {/* ================= 10. REVIEWS ================= */}
           {activeTab === 'REVIEWS' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="rev" className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 w-full">
-               <div className="lg:col-span-4 space-y-6 md:space-y-8 w-full">
-                   <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10">
-                      <h3 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 border-b border-white/10 pb-4">Inject Manual Feedback</h3>
-                      <div className="space-y-4">
-                         <input value={manualReview.userName} onChange={e=>setManualReview({...manualReview, userName: e.target.value})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 md:p-4 rounded-xl text-xs md:text-sm text-white outline-none focus:border-[#D4AF37]" placeholder="Client Alias" />
-                         <select value={manualReview.rating} onChange={e=>setManualReview({...manualReview, rating: Number(e.target.value)})} className="w-full min-h-[44px] bg-black border border-white/20 p-3 md:p-4 rounded-xl text-xs md:text-sm text-[#D4AF37] outline-none focus:border-[#D4AF37] appearance-none"><option value={5}>Tier 5 - Flawless</option><option value={4}>Tier 4 - Acceptable</option></select>
-                         <textarea value={manualReview.comment} onChange={e=>setManualReview({...manualReview, comment: e.target.value})} rows={4} className="w-full bg-black border border-white/20 p-3 md:p-4 rounded-xl text-xs md:text-sm text-white outline-none focus:border-[#D4AF37] custom-scrollbar" placeholder="Formulate feedback structure..." />
-                         
-                         <div>
-                             <label className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Upload Evidence</label>
-                             <div className="flex gap-2 md:gap-3 items-center flex-wrap">
-                                 {manualReview.media && manualReview.media.map((url, idx) => (
-                                     <div key={idx} className="relative w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-white/20 shadow-lg group">
-                                         <img src={url} className="w-full h-full object-cover"/>
-                                         <button onClick={()=>setManualReview({...manualReview, media: manualReview.media.filter(x => x !== url)})} className="absolute inset-0 bg-red-600/80 flex items-center justify-center text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"><X size={16}/></button>
-                                     </div>
-                                 ))}
-                                 {manualReview.media.length < 3 && (
-                                    <div className="scale-[0.65] md:scale-75 origin-left w-16 md:w-auto shrink-0">
-                                        <PremiumUploadNode placeholder="Scan" onUploadSuccess={(url: string)=>setManualReview({...manualReview, media: [...(manualReview.media || []), url]})} />
-                                    </div>
-                                 )}
-                             </div>
-                         </div>
-                         <button onClick={handleAddManualReview} className="w-full min-h-[44px] py-4 md:py-5 bg-[#D4AF37] text-black font-bold uppercase tracking-widest rounded-xl text-[10px] md:text-xs hover:bg-white transition-all mt-4">Compile Entry</button>
-                      </div>
-                   </div>
-               </div>
-               
-               <div className="lg:col-span-8 bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[30px] border border-white/10 w-full">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-4 md:pb-6 mb-6 md:mb-8">
-                    <h3 className="text-xl md:text-2xl font-bold text-white">Feedback Stream</h3>
-                  </div>
-                  
-                  <div className="space-y-4 max-h-[500px] md:max-h-[700px] overflow-y-auto custom-scrollbar pr-2 md:pr-4 w-full">
-                     {allReviews.length === 0 ? <p className="text-center text-gray-600 font-bold uppercase tracking-widest py-10 text-[10px] md:text-xs">Stream Empty</p> : allReviews.map((rev:any, i:number) => (
-                       <div key={i} className={`bg-black border p-4 md:p-6 rounded-2xl flex flex-col md:flex-row justify-between gap-4 md:gap-6 transition-all shadow-lg ${rev.visibility === 'pending' ? 'border-[#00F0FF]' : 'border-white/10 hover:border-[#D4AF37]/30'}`}>
-                          <div className="flex-1 overflow-hidden">
-                             <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
-                                <h4 className="font-bold text-white text-base md:text-lg truncate">{rev.userName}</h4>
-                                <span className={`text-[8px] md:text-[10px] font-bold uppercase tracking-widest px-2 md:px-3 py-1 rounded border ${rev.visibility === 'public' ? 'bg-green-500/10 text-green-500 border-green-500/20' : rev.visibility === 'pending' ? 'bg-[#00F0FF]/10 text-[#00F0FF] border-[#00F0FF]/20 animate-pulse' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>{rev.visibility || 'STANDBY'}</span>
-                             </div>
-                             <div className="flex gap-1 text-[#D4AF37] mb-3 md:mb-4">{[...Array(rev.rating)].map((_, idx)=><Star key={idx} size={12} className="md:w-[14px] md:h-[14px]" fill="currentColor"/>)}</div>
-                             <p className="text-gray-300 text-xs md:text-sm leading-relaxed mb-4 line-clamp-4">"{rev.comment}"</p>
-                             {rev.media && rev.media.length > 0 && (
-                                <div className="flex flex-wrap gap-2 md:gap-3">
-                                   {rev.media.map((m:string, idx:number) => m.match(/\.(mp4|webm|mov)$/i) ? <video key={idx} src={m} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl border border-white/10" controls/> : <img key={idx} src={m} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl border border-white/10"/>)}
-                                </div>
-                             )}
-                          </div>
-                          <div className={`flex flex-row md:flex-col gap-2 md:gap-3 justify-center w-full md:w-auto md:min-w-[140px] mt-4 md:mt-0`}>
-                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'public')} className="flex-1 md:flex-none min-h-[44px] py-2 md:py-3 bg-green-500/10 border border-green-500/20 text-green-500 hover:bg-green-500 hover:text-black rounded-xl text-[9px] md:text-xs font-bold uppercase tracking-widest transition-all">Validate</button>
-                             <button onClick={()=>handleUpdateReviewStatus(rev._id, 'rejected')} className="flex-1 md:flex-none min-h-[44px] py-2 md:py-3 bg-orange-500/10 border border-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-black rounded-xl text-[9px] md:text-xs font-bold uppercase tracking-widest transition-all">Suppress</button>
-                             <button onClick={()=>handleDeleteReview(rev._id)} className="flex-1 md:flex-none min-h-[44px] py-2 md:py-3 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-[9px] md:text-xs font-bold uppercase tracking-widest transition-all mt-0 md:mt-auto flex items-center justify-center gap-1 md:gap-2"><Trash2 size={12} className="md:w-[14px] md:h-[14px]"/> Erase</button>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-               </div>
-            </motion.div>
+            <ReviewsTab
+              manualReview={manualReview}
+              setManualReview={setManualReview}
+              handleAddManualReview={handleAddManualReview}
+              allReviews={allReviews}
+              handleUpdateReviewStatus={handleUpdateReviewStatus}
+              handleDeleteReview={handleDeleteReview}
+              PremiumUploadNode={PremiumUploadNode}
+            />
           )}
 
           {/* ================= 11. AFFILIATES ================= */}
           {activeTab === 'SALES_FORCE' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="salesforce" className="space-y-6 md:space-y-8 w-full">
-               <div className="bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[40px] border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8 w-full">
-                  <div><h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Network Terminals</h3><p className="text-gray-400 text-xs md:text-sm">Oversee registered referral vectors.</p></div>
-                  <button onClick={() => setIsAgentModalOpen(true)} className="w-full md:w-auto min-h-[44px] bg-[#D4AF37] text-black px-6 md:px-8 py-4 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2"><PlusCircle size={18}/> Provision Terminal</button>
-               </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
-                  <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10"><p className="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2">Active reps</p><h2 className="text-3xl md:text-4xl font-bold text-white">{agents.length}</h2></div>
-                  <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10"><p className="text-[#00F0FF] text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2">Total Packets</p><h2 className="text-3xl md:text-4xl font-bold text-white">{agents.reduce((acc, a) => acc + (a.clicks || 0), 0).toLocaleString()}</h2></div>
-                  <div className="bg-[#111] p-6 md:p-8 rounded-[20px] md:rounded-[30px] border border-white/10"><p className="text-green-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2">Total Output</p><h2 className="text-3xl md:text-4xl font-bold text-white">₹{agents.reduce((acc, a) => acc + (a.revenue || 0), 0).toLocaleString()}</h2></div>
-               </div>
-
-               <div className="bg-[#111] rounded-[20px] md:rounded-[30px] border border-white/10 overflow-hidden shadow-2xl w-full">
-                  <div className="p-6 md:p-8 border-b border-white/10"><h4 className="text-base md:text-lg font-bold text-white">Terminal Ledger</h4></div>
-                  <div className="overflow-x-auto w-full max-w-[100vw]">
-                      <table className="w-full text-left min-w-[600px]">
-                         <thead className="bg-black/50 text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-gray-500 border-b border-white/10">
-                            <tr><th className="p-4 md:p-6 pl-6 md:pl-8">Identity</th><th className="p-4 md:p-6 text-center">Pings</th><th className="p-4 md:p-6 text-center">Conversions</th><th className="p-4 md:p-6 text-right">Yield</th><th className="p-4 md:p-6 text-center pr-6 md:pr-8">Actions</th></tr>
-                         </thead>
-                         <tbody>
-                            {agents.length === 0 ? (
-                                <tr><td colSpan={5} className="p-10 md:p-16 text-center text-gray-600 font-bold uppercase tracking-widest text-[10px] md:text-xs">No Active Vectors.</td></tr>
-                            ) : agents.map((agent, i) => (
-                               <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                  <td className="p-4 md:p-6 pl-6 md:pl-8">
-                                     <div className="flex items-center gap-3 md:gap-4">
-                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-black border border-white/20 rounded-full flex items-center justify-center text-white font-bold shrink-0">{agent.name?.charAt(0) || 'U'}</div>
-                                        <div className="overflow-hidden"><p className="font-bold text-white text-xs md:text-sm truncate">{agent.name}</p><p className="text-[8px] md:text-[10px] text-[#00F0FF] uppercase tracking-widest mt-1 truncate">Key: {agent.code}</p></div>
-                                     </div>
-                                  </td>
-                                  <td className="p-4 md:p-6 text-center text-gray-300 font-mono text-xs md:text-sm">{agent.clicks || 0}</td>
-                                  <td className="p-4 md:p-6 text-center font-bold text-green-400 font-mono text-xs md:text-sm">{agent.sales || 0}</td>
-                                  <td className="p-4 md:p-6 text-right font-bold text-white font-mono text-xs md:text-sm">₹{(agent.revenue || 0).toLocaleString()}</td>
-                                  <td className="p-4 md:p-6 text-center pr-6 md:pr-8"><button onClick={() => handleDeleteAffiliate(agent._id)} className="p-3 min-h-[44px] min-w-[44px] flex items-center justify-center bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all mx-auto"><Trash2 size={16}/></button></td>
-                               </tr>
-                            ))}
-                         </tbody>
-                      </table>
-                  </div>
-               </div>
-            </motion.div>
+            <SalesForceTab
+              agents={agents}
+              setIsAgentModalOpen={setIsAgentModalOpen}
+              handleDeleteAffiliate={handleDeleteAffiliate}
+            />
           )}
 
           {/* ================= 12. AI PRICING ================= */}
           {activeTab === 'AI_ENGINE' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ai" className="max-w-3xl mx-auto space-y-8 md:space-y-10 w-full px-2">
-               <div className="text-center mb-6 md:mb-10">
-                   <BrainCircuit size={40} className="md:w-[60px] md:h-[60px] text-[#00F0FF] mx-auto mb-4 md:mb-6"/>
-                   <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Algorithmic Valuation</h2>
-                   <p className="text-gray-400 text-xs md:text-sm px-4">Dynamic fluctuation based on market velocity.</p>
-               </div>
-
-               <div className="bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[30px] border border-[#00F0FF]/30 space-y-6 md:space-y-8 shadow-[0_0_50px_rgba(0,240,255,0.05)] w-full">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-4 md:pb-6 gap-4">
-                     <div>
-                        <h4 className="text-base md:text-lg font-bold text-white">Enable Deep Learning</h4>
-                        <p className="text-[10px] md:text-xs text-gray-500 mt-1">Permit automatic price recalibration for limited stock assets.</p>
-                     </div>
-                     <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                        <span className={`text-[10px] md:text-xs font-bold uppercase tracking-widest ${pricingRules.isAiPricingActive ? 'text-[#00F0FF]' : 'text-gray-600'}`}>{pricingRules.isAiPricingActive ? 'ONLINE' : 'OFFLINE'}</span>
-                        <button onClick={() => setPricingRules({...pricingRules, isAiPricingActive: !pricingRules.isAiPricingActive})} className={`w-16 min-h-[32px] md:h-8 rounded-full p-1 transition-colors ${pricingRules.isAiPricingActive ? 'bg-[#00F0FF]' : 'bg-gray-800'}`}>
-                           <div className={`w-6 h-6 bg-white rounded-full transition-transform ${pricingRules.isAiPricingActive ? 'translate-x-8' : 'translate-x-0'}`}></div>
-                        </button>
-                     </div>
-                  </div>
-
-                  <div>
-                     <div className="flex justify-between items-end mb-4">
-                        <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-400">Absolute Price Ceiling</label>
-                        <span className="text-xl md:text-2xl font-mono text-[#00F0FF]">{pricingRules.maxMarkupPercent}%</span>
-                     </div>
-                     <input type="range" min="0" max="50" value={pricingRules.maxMarkupPercent} onChange={(e) => setPricingRules({...pricingRules, maxMarkupPercent: Number(e.target.value)})} className="w-full h-2 min-h-[44px] md:min-h-auto bg-transparent md:bg-gray-800 rounded-full appearance-none cursor-pointer" style={{accentColor: '#00F0FF'}} />
-                     <p className="text-[10px] md:text-xs text-gray-600 mt-0 md:mt-4">Restricts the maximum allowable deviation from the base coordinate.</p>
-                  </div>
-
-                  <button onClick={handleSaveAIRules} className="w-full min-h-[44px] py-4 md:py-5 bg-[#00F0FF] text-black font-bold uppercase tracking-widest rounded-xl text-[10px] md:text-sm hover:bg-white transition-all mt-6 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
-                     Compile Algorithm
-                  </button>
-               </div>
-            </motion.div>
+            <AiEngineTab
+              pricingRules={pricingRules}
+              setPricingRules={setPricingRules}
+              handleSaveAIRules={handleSaveAIRules}
+            />
           )}
 
           {/* ================= 13. SECURITY ================= */}
           {activeTab === 'SECURITY' && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} className="max-w-2xl mx-auto mt-10 md:mt-20 w-full px-4">
-               <div className="bg-[#111] border border-red-500/30 p-8 md:p-16 rounded-[30px] md:rounded-[40px] flex flex-col items-center text-center shadow-[0_0_100px_rgba(239,68,68,0.1)] w-full">
-                  <div className="p-4 md:p-6 bg-red-500/10 rounded-full mb-6 md:mb-8"><Fingerprint size={40} className="md:w-[60px] md:h-[60px] text-red-500" /></div>
-                  <h3 className="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">System Integrity</h3>
-                  <p className="text-gray-400 text-[10px] md:text-sm mb-8 md:mb-12">All external nodes are secure. Execute full lockdown in case of breach.</p>
-                  <button className="w-full md:w-auto min-h-[44px] px-6 md:px-10 py-4 md:py-5 bg-red-600 text-white text-[10px] md:text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-red-500 transition-all flex items-center justify-center gap-2 md:gap-3 shadow-[0_0_40px_rgba(239,68,68,0.3)] hover:scale-105">
-                     <AlertTriangle size={16} className="md:w-[18px] md:h-[18px]"/> Initiate Lockdown
-                  </button>
-               </div>
-            </motion.div>
+            <SecurityTab />
           )}
 
         </AnimatePresence>

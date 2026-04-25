@@ -68,7 +68,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           const textContent = await res.text();
           
           if (!textContent) {
-            console.log("Cart Sync API returned empty response, skipping DB merge.");
             return; 
           }
 

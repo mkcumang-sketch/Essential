@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import connectDB from '@/lib/mongoose';
+import connectDB from '@/lib/mongodb';
 import Celebrity from '@/models/Celebrity';
 import mongoose from 'mongoose';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+const isSuperAdmin = async () => {
+    const session = await getServerSession(authOptions);
+    return (session?.user as any)?.role === 'SUPER_ADMIN';
+};
 
 // POST: Add new Celebrity
 export async function POST(req: Request) {
     try {
+        if (!(await isSuperAdmin())) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
         await connectDB();
         const body = await req.json();
         const { name, title, imageUrl, cloudinaryPublicId } = body;
@@ -23,6 +33,7 @@ export async function POST(req: Request) {
             cloudinaryPublicId
         });
 
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true, data: newCelebrity });
     } catch (error) {
         console.error("Celebrity API Error:", error);
@@ -44,6 +55,10 @@ export async function GET() {
 // Add this at the bottom of the file
 export async function DELETE(req: Request) {
     try {
+        if (!(await isSuperAdmin())) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+        }
+        await connectDB();
         const body = await req.json();
         const { id } = body;
         if (!id) return NextResponse.json({ success: false, error: "ID missing" });

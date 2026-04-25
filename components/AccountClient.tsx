@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -17,7 +17,26 @@ const VirtualVault = dynamic(() => import("@/components/VirtualVault"), { ssr: f
 
 type TabType = "overview" | "profile" | "orders" | "addresses" | "wallet" | "wishlist" | "offers" | "security" | "support";
 
-export default function AccountClient({ initialData, session }: { initialData: any; session: any }) {
+interface AccountClientProps {
+  initialData: {
+    walletPoints?: number;
+    loyaltyTier?: string;
+    orders?: any[];
+    phone?: string;
+    dob?: string;
+    myReferralCode?: string; // 🚀 YEH LINE ADD KAR DE
+    totalEarned?: number;    // 🚀 Ise bhi add kar de for safety
+  };
+  session: {
+    user?: {
+      name?: string;
+      email?: string;
+      id?: string;
+    };
+  };
+}
+
+export default function AccountClient({ initialData, session }: AccountClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isPending, startTransition] = useTransition();
@@ -26,7 +45,7 @@ export default function AccountClient({ initialData, session }: { initialData: a
   // 💸 WITHDRAW STATE ADDED HERE
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  const su = session?.user as any;
+  const su = session?.user;
   const name = su?.name || "VIP Member";
   const email = su?.email || "";
   const walletPoints = Number(initialData?.walletPoints ?? 0);
@@ -40,14 +59,14 @@ export default function AccountClient({ initialData, session }: { initialData: a
     phone: initialData?.phone || "", 
     dob: initialData?.dob || "" 
   });
-  const [profileErrors, setProfileErrors] = useState<any>({});
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
   const [profileSaving, setProfileSaving] = useState(false);
 
   const [addresses, setAddresses] = useState<any[]>([]);
   const [addrLoading, setAddrLoading] = useState(true);
   const [addrForm, setAddrForm] = useState({ line1: "", city: "", state: "", zip: "", isDefault: false });
 
-  const tabVariants: any = {
+  const tabVariants: Record<string, any> = {
     hidden: { opacity: 0, y: 15, scale: 0.98 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
     exit: { opacity: 0, y: -15, scale: 0.98, transition: { duration: 0.3 } }
@@ -110,7 +129,7 @@ export default function AccountClient({ initialData, session }: { initialData: a
   }, []);
 
   const validateProfile = () => {
-    const errs: any = {};
+    const errs: Record<string, string> = {};
     if (!profile.name || profile.name.length < 2) errs.name = "Enter a valid name";
     if (!profile.email || !/^[^@]+@[^@]+\.[^@]+$/.test(profile.email)) errs.email = "Enter a valid email";
     if (profile.phone && profile.phone.replace(/\D/g, "").length < 10) errs.phone = "Enter a valid phone";
@@ -122,11 +141,11 @@ export default function AccountClient({ initialData, session }: { initialData: a
     if (!validateProfile()) return;
     setProfileSaving(true);
     try {
-      const res = await fetch("/api/user/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
+    
+      const res = await fetch('/api/orders', { 
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+});
       
       if (res.ok) {
         notify("Profile details updated successfully.");

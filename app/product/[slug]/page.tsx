@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import mongoose from "mongoose";
 import ProductClientPage from "./ProductClientPage";
 import { Product } from "@/models/Product";
-import { connectDB } from "@/lib/db";
+import  connectDB  from "@/lib/mongodb"; // Aapka standard db connection import
 
 // 🛡️ 1. DYNAMIC METADATA (SEO) - Next.js 15 Pattern
 export async function generateMetadata({

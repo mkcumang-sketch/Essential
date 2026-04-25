@@ -3,8 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
+interface ThemeConfig {
+  saleActive: boolean;
+  primaryColor?: string;
+  saleName?: string;
+  bannerText?: string;
+}
+
 export default function GlobalBanner() {
-  const [themeConfig, setThemeConfig] = useState<any>(null);
+  const [themeConfig, setThemeConfig] = useState<ThemeConfig | null>(null);
 
   useEffect(() => {
     const fetchSystemConfig = async () => {

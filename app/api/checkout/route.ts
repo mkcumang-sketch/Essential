@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import mongoose from 'mongoose';
-import User from '@/models/usertemp'; // 🚀 FIXED: Capital 'User', lowercase path
+import { Order } from '@/models/Order';
+import User from '@/models/usertemp'; 
 import { Product } from '@/models/Product';
+import { Agent } from '@/models/Agent';
+import { AbandonedCart } from '@/models/AbandonedCart';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import mongoose from 'mongoose';
 import { z } from "zod";
 import Razorpay from 'razorpay';
-import { userRateLimit } from '@/lib/ratelimit';
-import { getLoyaltyDiscount, calculateCheckoutDiscount } from '@/lib/loyalty';
-import { checkFraudRisk, flagSuspiciousOrder } from '@/lib/fraud';
+import { calculateCheckoutDiscount } from '@/lib/loyalty';
+import { checkFraudRisk } from '@/lib/fraud';
+
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 let razorpay: any = null;
 
@@ -34,17 +39,13 @@ const checkoutSchema = z.object({
         state: z.string().optional(),
         pincode: z.string().length(6, "Pincode must be exactly 6 digits"),
     }),
-    appliedReferralCode: z.string().nullable().optional(),
+    referralCode: z.string().nullable().optional(),
+    useWallet: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
     try {
         const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
-        const { success } = await userRateLimit.limit(ip);
-        if (!success) {
-            return NextResponse.json({ success: false, error: "Too many requests. Please try again." }, { status: 429 });
-        }
-
         const isRazorpayConfigured = !!razorpay;
 
         await connectDB();
@@ -53,19 +54,14 @@ export async function POST(req: Request) {
         
         const validation = checkoutSchema.safeParse(json);
         if (!validation.success) {
-            const errorDetails = validation.error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
-            return NextResponse.json({ success: false, error: `Validation failed: ${errorDetails}` }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Validation failed" }, { status: 400 });
         }
-        const { items, shippingData, appliedReferralCode } = validation.data;
+        
+        const { items, shippingData, referralCode, useWallet } = validation.data;
 
         let dbUser: any = null;
-        if (session && session.user && (session.user as any).id) {
-            // 🚀 FIXED: Used Capital 'User'
+        if (session?.user) {
             dbUser = await User.findById((session.user as any).id);
-            if (dbUser && (!dbUser.phone || dbUser.phone.trim() === '')) {
-                dbUser.phone = shippingData.phone;
-                await dbUser.save();
-            }
         }
 
         let trueTotal = 0;
@@ -73,143 +69,119 @@ export async function POST(req: Request) {
 
         for (const item of items) {
             const dbProduct = await Product.findById(item._id);
-            if (!dbProduct) return NextResponse.json({ success: false, error: `Product not found` }, { status: 404 });
-            if (dbProduct.stock < item.qty) return NextResponse.json({ success: false, error: `Insufficient stock` }, { status: 400 });
-
+            if (!dbProduct || dbProduct.stock < item.qty) {
+                return NextResponse.json({ success: false, error: "Product unavailable or insufficient stock" }, { status: 400 });
+            }
             const unitPrice = dbProduct.offerPrice || dbProduct.price;
             trueTotal += unitPrice * item.qty;
-
-            validatedItems.push({
-                productId: dbProduct._id,
-                name: dbProduct.name || dbProduct.title,
-                price: unitPrice,
-                qty: item.qty,
-                image: dbProduct.images[0]
-            });
+            validatedItems.push({ productId: dbProduct._id, name: dbProduct.name || dbProduct.title, price: unitPrice, qty: item.qty, image: dbProduct.images[0] });
         }
 
-        // 💎 LOYALTY DISCOUNT (Automatic based on tier)
+        // LOYALTY & REFERRAL (10% OFF)
         const userTotalSpent = dbUser?.totalSpent || 0;
         const loyaltyDiscount = calculateCheckoutDiscount(trueTotal, userTotalSpent);
-        let loyaltyDiscountAmount = 0;
-        
-        if (loyaltyDiscount.tierDiscount > 0 && dbUser) {
-            loyaltyDiscountAmount = loyaltyDiscount.discount;
-            trueTotal = trueTotal - loyaltyDiscountAmount;
-            if (trueTotal < 0) trueTotal = 0;
-        }
+        if (loyaltyDiscount.discount > 0) trueTotal -= loyaltyDiscount.discount;
 
-        // 🌟 PYRAMID SCHEME LOGIC: 10% DISCOUNT AT CHECKOUT 🌟
-        let referrerId = null;
-        let referralDiscountAmount = 0;
-
-        if (appliedReferralCode) {
-            // Find the person whose code is being used
-            // 🚀 FIXED: Used Capital 'User'
-            const referrerUser = await User.findOne({ myReferralCode: appliedReferralCode.trim() });
-            
-            if (referrerUser) {
-                // Give Person B (the buyer) a flat 10% discount
-                referralDiscountAmount = trueTotal * 0.10;
-                referrerId = referrerUser._id;
-            } else {
-                return NextResponse.json({ success: false, error: "Invalid Referral Code" }, { status: 400 });
-            }
-        }
-
-        // Apply Discount to Total
-        trueTotal = trueTotal - referralDiscountAmount;
+        if (referralCode) trueTotal -= (trueTotal * 0.10);
         if (trueTotal < 0) trueTotal = 0;
 
-        // 💰 Calculate 10% Points to be credited AFTER delivery
-        const pointsToBeCredited = Math.round(trueTotal * 0.10); 
-
-        // 🚨 FRAUD DETECTION ENGINE
-        const fraudCheck = await checkFraudRisk(
-            ip,
-            shippingData.email,
-            shippingData.phone,
-            appliedReferralCode || undefined 
-        );
-
-        if (fraudCheck.shouldBlock) {
-            return NextResponse.json({
-                success: false,
-                error: "Order flagged for manual review. Please contact support.",
-                code: "FRAUD_BLOCKED"
-            }, { status: 403 });
+        // WALLET DEDUCTION
+        let walletDeduction = 0;
+        if (useWallet && dbUser && dbUser.walletBalance > 0) {
+            walletDeduction = Math.min(dbUser.walletBalance, trueTotal);
+            trueTotal -= walletDeduction;
+            await User.findByIdAndUpdate(dbUser._id, { $inc: { walletBalance: -walletDeduction } });
         }
 
         let rzpOrder = null;
         if (isRazorpayConfigured && trueTotal > 0) {
-            const options = {
-                amount: Math.round(trueTotal * 100), 
-                currency: "INR",
-                receipt: `receipt_${Date.now()}`,
-            };
-            rzpOrder = await razorpay.orders.create(options);
+            rzpOrder = await razorpay.orders.create({ amount: Math.round(trueTotal * 100), currency: "INR", receipt: `receipt_${Date.now()}` });
         }
 
-        const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({}, { strict: false }));
+        // 🚀 PHASE 1 & 4: Nuke 500 Errors & Payment Perfection
         const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const autoTrackingId = `TRK-ER-${Math.floor(10000000 + Math.random() * 90000000)}`;
         
-        const newOrder = await Order.create({
+        const orderPayload = {
             orderId: uniqueId,
             orderNumber: uniqueId,
-            trackingId: autoTrackingId, 
-            razorpayOrderId: rzpOrder ? rzpOrder.id : `MOCK_RZP_${Date.now()}`,
-            userId: session?.user ? (session.user as any).id : null,
+            razorpayOrderId: rzpOrder ? rzpOrder.id : (trueTotal === 0 ? 'WALLET_PAID' : 'COD_PENDING'),
+            userId: dbUser?._id || null,
             items: validatedItems,
             totalAmount: trueTotal,
+            walletDeduction,
             shippingData,
-            status: isRazorpayConfigured ? 'PENDING_PAYMENT' : 'PROCESSING', 
-            appliedReferralCode,
-
-            // 🚨 SECURE REWARD DATA (Awaiting Delivery)
-            referrerId: referrerId,
-            pendingPoints: pointsToBeCredited,
-            pointsCredited: false, // Will turn true when DELIVERED
-
+            customer: {
+                name: shippingData.name,
+                email: shippingData.email,
+                phone: shippingData.phone
+            },
+            shippingAddress: {
+                address: shippingData.address,
+                city: shippingData.city,
+                state: shippingData.state || 'N/A',
+                pincode: shippingData.pincode,
+                country: 'India'
+            },
+            paymentMethod: trueTotal === 0 ? 'WALLET' : (isRazorpayConfigured ? 'RAZORPAY' : 'COD'),
+            paymentStatus: trueTotal === 0 ? 'PAID' : 'PENDING',
+            status: 'PROCESSING',
+            referralCode,
             createdAt: new Date()
-        });
+        };
 
-        // 🗑️ Auto-Purge Abandoned Cart
+        let newOrder;
         try {
-            const AbandonedCart = mongoose.models.AbandonedCart || mongoose.model('AbandonedCart', new mongoose.Schema({}, { strict: false }));
-            const customerEmail = shippingData.email?.trim().toLowerCase();
-            const customerPhone = shippingData.phone?.trim();
+            newOrder = await Order.create(orderPayload);
+        } catch (mongooseError: any) {
+            console.error('CRITICAL: Order Creation Failed (Schema Mismatch?):', {
+                message: mongooseError.message,
+                errors: mongooseError.errors,
+                payloadSent: orderPayload
+            });
+            throw mongooseError; // Re-throw to be caught by the main catch block
+        }
 
-            const orConditions = [];
-            if (customerEmail) orConditions.push({ email: customerEmail });
-            if (customerPhone) orConditions.push({ phone: customerPhone });
-
-            if (orConditions.length > 0) {
-                await AbandonedCart.findOneAndDelete({ $or: orConditions });
+        // REWARD PENDING (For Users)
+        if (referralCode) {
+            const referringUser = await User.findOne({ myReferralCode: { $regex: new RegExp(`^${referralCode.trim()}$`, 'i') } });
+            if (referringUser) {
+                await User.findByIdAndUpdate(referringUser._id, { $inc: { pendingWalletBalance: 500 } });
             }
-        } catch (purgeError) {}
+        }
 
-        // 🚨 Flag suspicious orders for admin review
-        if (fraudCheck.isSuspicious) {
-            await flagSuspiciousOrder(uniqueId, fraudCheck, ip);
+        // 🚀 PHASE 3: Purge Abandoned Cart on Success
+        try {
+            await AbandonedCart.findOneAndDelete({ 
+                $or: [
+                    { email: shippingData.email }, 
+                    { phone: shippingData.phone },
+                    { userId: dbUser?._id ? String(dbUser._id) : 'NON_EXISTENT' }
+                ] 
+            });
+        } catch(abandonedError) {
+            console.error('Abandoned Cart Purge Error (Non-Critical):', abandonedError);
         }
 
         return NextResponse.json({ 
             success: true, 
             orderId: newOrder.orderId, 
-            razorpayOrderId: rzpOrder?.id,
-            amount: rzpOrder?.amount,
-            currency: rzpOrder?.currency,
-            isMock: !isRazorpayConfigured,
-            loyaltyInfo: {
-                tier: loyaltyDiscount.tier,
-                discount: loyaltyDiscount.tierDiscount,
-                discountAmount: loyaltyDiscountAmount
-            }
+            razorpayOrderId: orderPayload.razorpayOrderId, 
+            amount: Math.round(trueTotal * 100) 
         });
 
     } catch (error: any) {
-        console.error("Checkout System Error:", error);
-        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+        // 🚀 PHASE 1: Detailed Error Logging
+        console.error('--- 500 INTERNAL SERVER ERROR DURING CHECKOUT ---');
+        console.error('Error Message:', error.message);
+        if (error.errors) {
+            console.error('Mongoose Validation Errors:', JSON.stringify(error.errors, null, 2));
+        }
+        console.error('Stack Trace:', error.stack);
+        
+        return NextResponse.json({ 
+            success: false, 
+            error: "Internal Server Error",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+        }, { status: 500 });
     }
 }

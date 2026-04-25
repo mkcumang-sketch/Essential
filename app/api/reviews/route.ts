@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
             media: Array.isArray(body.media) ? body.media : [],
         });
 
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true, data: newReview });
     } catch (error) { 
         console.error("POST Review Error:", error);
@@ -117,6 +118,7 @@ export async function PATCH(req: NextRequest) {
         }
         
         const updatedReview = await Review.findByIdAndUpdate(reviewId, { visibility }, { new: true });
+        revalidatePath('/', 'layout');
         return NextResponse.json({ success: true, data: updatedReview });
     } catch (error) { 
         console.error("PATCH Review Error:", error);
