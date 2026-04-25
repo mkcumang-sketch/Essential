@@ -26,12 +26,12 @@ const nextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com" },
     ],
   },
-  
+
   // 🚀 Sirf yeh block add kiya hai Ghost Data (Cache) rokne ke liye
   experimental: {
     staleTimes: {
       dynamic: 0,
-      static: 0,
+      static: 30, // Updated to 30 to comply with Next.js 16 requirements
     },
   },
 
