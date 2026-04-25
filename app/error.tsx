@@ -16,7 +16,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
       </div>
       <h2 className="text-4xl font-serif italic mb-4">A temporary anomaly occurred.</h2>
       <p className="text-gray-400 font-black uppercase tracking-widest text-[10px] mb-10 max-w-md">
-        Our automated systems have caught a glitch. You don't need to worry, the vault is still secure.
+        Our automated systems have caught a glitch. You don&apos;t need to worry, the vault is still secure.
       </p>
       <button 
         onClick={() => reset()} 

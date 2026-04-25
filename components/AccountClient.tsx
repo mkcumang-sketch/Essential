@@ -332,7 +332,7 @@ export default function AccountClient({ initialData, session }: AccountClientPro
                         <div className="flex-1">
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Essential Network</p>
                             <h4 className="text-3xl md:text-4xl font-serif font-black italic mb-2 text-white">Give 10% Off, Get 10% Vault Points</h4>
-                            <p className="text-xs md:text-sm text-gray-400 max-w-md">When your friend's order is DELIVERED using your code, they get 10% cashback and you get 10% of their order value as Vault Points. Redeem for watches or withdraw as Cash!</p>
+                            <p className="text-xs md:text-sm text-gray-400 max-w-md">When your friend&apos;s order is DELIVERED using your code, they get 10% cashback and you get 10% of their order value as Vault Points. Redeem for watches or withdraw as Cash!</p>
                         </div>
                         
                         <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">

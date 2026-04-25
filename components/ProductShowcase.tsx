@@ -8,7 +8,7 @@ export default function ProductShowcase({ products }: any) {
       <div className="max-w-[1500px] mx-auto px-10">
         <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-10">
           <div className="max-w-xl">
-            <h2 className="text-6xl font-serif italic mb-6">The Curator's Selection</h2>
+            <h2 className="text-6xl font-serif italic mb-6">The Curator&apos;s Selection</h2>
             <p className="text-zinc-500 leading-loose text-sm font-medium">
               Every timepiece in our collection is a testament to the relentless pursuit of horological excellence, hand-selected for the discerning few.
             </p>
