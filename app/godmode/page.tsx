@@ -26,6 +26,13 @@ import ReviewsTab from '../../components/godmode/tabs/ReviewsTab';
 import SalesForceTab from '../../components/godmode/tabs/SalesForceTab';
 import AiEngineTab from '../../components/godmode/tabs/AiEngineTab';
 import SecurityTab from '../../components/godmode/tabs/SecurityTab';
+import StatCard from '../../components/godmode/StatCard';
+import SeoPanel from '../../components/godmode/SeoPanel';
+import SeoAnalyticsDashboard from '../../components/godmode/SeoAnalyticsDashboard';
+import RedirectManager from '../../components/godmode/RedirectManager';
+import ImageSeoPanel from '../../components/godmode/ImageSeoPanel';
+
+
 
 const MODULES = [
   { id: 'FULL_DASHBOARD', icon: BarChart3, label: 'Main Dashboard' },

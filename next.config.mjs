@@ -30,7 +30,7 @@ const nextConfig = {
   // 🚀 Sirf yeh block add kiya hai Ghost Data (Cache) rokne ke liye
   experimental: {
     staleTimes: {
-      dynamic: 0,
+      dynamic: 30,
       static: 30, // Updated to 30 to comply with Next.js 16 requirements
     },
   },

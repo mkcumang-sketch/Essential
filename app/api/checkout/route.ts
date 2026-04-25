@@ -110,24 +110,24 @@ export async function POST(req: Request) {
             totalAmount: trueTotal,
             walletDeduction,
             shippingData,
-            customer: {
-                name: shippingData.name,
-                email: shippingData.email,
-                phone: shippingData.phone
-            },
-            shippingAddress: {
-                address: shippingData.address,
-                city: shippingData.city,
-                state: shippingData.state || 'N/A',
-                pincode: shippingData.pincode,
-                country: 'India'
-            },
+                customer: {
+               name: shippingData.name,
+              email: shippingData.email,
+            phone: shippingData.phone
+         },
+               shippingAddress: {
+            address: shippingData.address,
+           city: shippingData.city,
+           pincode: shippingData.pincode,
+           country: 'India'
+    },
             paymentMethod: trueTotal === 0 ? 'WALLET' : (isRazorpayConfigured ? 'RAZORPAY' : 'COD'),
             paymentStatus: trueTotal === 0 ? 'PAID' : 'PENDING',
             status: 'PROCESSING',
             referralCode,
             createdAt: new Date()
         };
+        
 
         let newOrder;
         try {
@@ -138,6 +138,7 @@ export async function POST(req: Request) {
                 errors: mongooseError.errors,
                 payloadSent: orderPayload
             });
+            const newOrder = await Order.create(orderPayload);
             throw mongooseError; // Re-throw to be caught by the main catch block
         }
 

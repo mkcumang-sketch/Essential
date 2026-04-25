@@ -2,8 +2,8 @@ import { getToken } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-      const { pathname } = req.nextUrl;
+export default async function proxy(request: NextRequest) {
+      const { pathname } = request.nextUrl;
       const response = NextResponse.next();
 
       // 🛡️ SECURITY HEADERS (Production Only)
@@ -30,17 +30,21 @@ export async function middleware(req: NextRequest) {
             response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
       }
 
+      // Allow Auth APIs
       if (pathname.startsWith('/api/auth')) return response;
 
-      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+      // 🛡️ AUTHENTICATION CHECK
+      const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
+      // Super Admin Protection
       if (pathname.startsWith('/godmode')) {
-            if (!token) return NextResponse.redirect(new URL('/login', req.url));
-            if ((token as any).role !== 'SUPER_ADMIN') return NextResponse.redirect(new URL('/account', req.url));
+            if (!token) return NextResponse.redirect(new URL('/login', request.url));
+            if ((token as any).role !== 'SUPER_ADMIN') return NextResponse.redirect(new URL('/account', request.url));
       }
 
+      // User Protection
       if (pathname.startsWith('/account') || pathname.startsWith('/checkout')) {
-            if (!token) return NextResponse.redirect(new URL('/login', req.url));
+            if (!token) return NextResponse.redirect(new URL('/login', request.url));
       }
 
       return response;
