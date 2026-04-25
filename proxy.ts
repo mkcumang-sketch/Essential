@@ -6,7 +6,7 @@ export async function middleware(req: NextRequest) {
       const { pathname } = req.nextUrl;
       const response = NextResponse.next();
 
-      // SECURITY HEADERS (Production Only)
+      // 🛡️ SECURITY HEADERS (Production Only)
       if (process.env.NODE_ENV === 'production') {
             const cspHeader = `
             default-src 'self';
