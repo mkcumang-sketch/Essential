@@ -17,20 +17,20 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 // 🚀 BATCH 1 MODULAR COMPONENTS 
-import DashboardTab from '../../components/godmode/tabs/DashboardTab';
-import InventoryTab from '../../components/godmode/tabs/InventoryTab';
-import OrderTrackerTab from '../../components/godmode/tabs/OrderTrackerTab';
-import SeoEngineTab from '../../components/godmode/tabs/SeoEngineTab';
-import LegalPagesTab from '../../components/godmode/tabs/LegalPagesTab';
-import ReviewsTab from '../../components/godmode/tabs/ReviewsTab';
-import SalesForceTab from '../../components/godmode/tabs/SalesForceTab';
-import AiEngineTab from '../../components/godmode/tabs/AiEngineTab';
-import SecurityTab from '../../components/godmode/tabs/SecurityTab';
-import StatCard from '../../components/godmode/StatCard';
-import SeoPanel from '../../components/godmode/SeoPanel';
-import SeoAnalyticsDashboard from '../../components/godmode/SeoAnalyticsDashboard';
-import RedirectManager from '../../components/godmode/RedirectManager';
-import ImageSeoPanel from '../../components/godmode/ImageSeoPanel';
+import DashboardTab from '@/components/godmode/tabs/DashboardTab';
+import InventoryTab from '@/components/godmode/tabs/InventoryTab';
+import OrderTrackerTab from '@/components/godmode/tabs/OrderTrackerTab';
+import SeoEngineTab from '@/components/godmode/tabs/SeoEngineTab';
+import LegalPagesTab from '@/components/godmode/tabs/LegalPagesTab';
+import ReviewsTab from '@/components/godmode/tabs/ReviewsTab';
+import SalesForceTab from '@/components/godmode/tabs/SalesForceTab';
+import AiEngineTab from '@/components/godmode/tabs/AiEngineTab';
+import SecurityTab from '@/components/godmode/tabs/SecurityTab';
+import StatCard from '@/components/godmode/StatCard';
+import SeoPanel from '@/components/godmode/SeoPanel';
+import SeoAnalyticsDashboard from '@/components/godmode/SeoAnalyticsDashboard';
+import RedirectManager from '@/components/godmode/RedirectManager';
+import ImageSeoPanel from '@/components/godmode/ImageSeoPanel';
 
 
 
