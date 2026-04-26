@@ -4,17 +4,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
-interface SalesForceTabProps {
+interface SalesForceProps {
   agents: any[];
   setIsAgentModalOpen: (open: boolean) => void;
   handleDeleteAffiliate: (id: string) => void;
 }
 
-export default function SalesForceTab({
+export default function SalesForce({
   agents,
   setIsAgentModalOpen,
   handleDeleteAffiliate,
-}: SalesForceTabProps) {
+}: SalesForceProps) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} key="salesforce" className="space-y-6 md:space-y-8 w-full">
        <div className="bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[40px] border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8 w-full">

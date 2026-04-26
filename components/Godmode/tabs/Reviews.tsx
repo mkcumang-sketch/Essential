@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Star, X } from 'lucide-react';
 
-interface ReviewsTabProps {
+interface ReviewsProps {
   manualReview: any;
   setManualReview: (review: any) => void;
   handleAddManualReview: () => void;
@@ -14,7 +14,7 @@ interface ReviewsTabProps {
   PremiumUploadNode: React.ComponentType<{ placeholder?: string; onUploadSuccess: (url: string) => void }>;
 }
 
-export default function ReviewsTab({
+export default function Reviews({
   manualReview,
   setManualReview,
   handleAddManualReview,
@@ -22,7 +22,7 @@ export default function ReviewsTab({
   handleUpdateReviewStatus,
   handleDeleteReview,
   PremiumUploadNode,
-}: ReviewsTabProps) {
+}: ReviewsProps) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} key="rev" className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 w-full">
        <div className="lg:col-span-4 space-y-6 md:space-y-8 w-full">

@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Save, Radar, ImageIcon } from 'lucide-react';
 
-interface LegalPagesTabProps {
+interface LegalPagesProps {
   legalPages: any[];
   setLegalPages: (pages: any[]) => void;
   activeLegalPageId: string;
@@ -15,7 +15,7 @@ interface LegalPagesTabProps {
   PremiumUploadNode: React.ComponentType<{ placeholder?: string; onUploadSuccess: (url: string) => void }>;
 }
 
-export default function LegalPagesTab({
+export default function LegalPages({
   legalPages,
   setLegalPages,
   activeLegalPageId,
@@ -24,7 +24,7 @@ export default function LegalPagesTab({
   setCorporateInfo,
   handleSaveCMS,
   PremiumUploadNode,
-}: LegalPagesTabProps) {
+}: LegalPagesProps) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} key="legal" className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 pb-20 w-full">
        <div className="lg:col-span-4 space-y-6 md:space-y-8">

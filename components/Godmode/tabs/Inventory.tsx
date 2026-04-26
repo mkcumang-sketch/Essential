@@ -6,7 +6,7 @@ import { Layout, X, Trash2, Save, ImageIcon, AlignJustify, ShieldCheck } from 'l
 import SeoPanel from '../SeoPanel';
 import ImageSeoPanel from '../ImageSeoPanel';
 
-interface InventoryTabProps {
+interface InventoryProps {
     categories: string[];
     newCategory: string;
     setNewCategory: (val: string) => void;
@@ -19,7 +19,7 @@ interface InventoryTabProps {
     PremiumUploadNode: React.ComponentType<{ placeholder?: string; onUploadSuccess: (url: string) => void }>;
 }
 
-export default function InventoryTab({
+export default function Inventory({
     categories,
     newCategory,
     setNewCategory,
@@ -30,7 +30,7 @@ export default function InventoryTab({
     liveWatches,
     handleDeleteProduct,
     PremiumUploadNode,
-}: InventoryTabProps) {
+}: InventoryProps) {
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key="inv" className="grid grid-cols-1 xl:grid-cols-12 gap-8">
             <div className="xl:col-span-5 space-y-8 h-max sticky top-0 w-full">

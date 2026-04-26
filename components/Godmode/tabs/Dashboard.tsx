@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, Wallet, Package, AlertTriangle, ChevronRight, Terminal, Trash2 } from 'lucide-react';
 
-interface DashboardTabProps {
+interface DashboardProps {
   fullAnalytics: any;
   dashboardView: 'orders' | 'abandoned';
   setDashboardView: (view: 'orders' | 'abandoned') => void;
@@ -16,7 +16,7 @@ interface DashboardTabProps {
   systemLogs: string[];
 }
 
-export default function DashboardTab({
+export default function Dashboard({
   fullAnalytics,
   dashboardView,
   setDashboardView,
@@ -26,7 +26,7 @@ export default function DashboardTab({
   vipDispatchingKey,
   handleDeleteLead,
   systemLogs,
-}: DashboardTabProps) {
+}: DashboardProps) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} key="dash" className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">

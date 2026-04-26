@@ -4,17 +4,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BrainCircuit } from 'lucide-react';
 
-interface AiEngineTabProps {
+interface AiEngineProps {
   pricingRules: any;
   setPricingRules: (rules: any) => void;
   handleSaveAIRules: () => void;
 }
 
-export default function AiEngineTab({
+export default function AiEngine({
   pricingRules,
   setPricingRules,
   handleSaveAIRules,
-}: AiEngineTabProps) {
+}: AiEngineProps) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} key="ai" className="max-w-3xl mx-auto space-y-8 md:space-y-10 w-full px-2">
        <div className="text-center mb-6 md:mb-10">

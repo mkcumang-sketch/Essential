@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import SeoAnalyticsDashboard from '../SeoAnalyticsDashboard';
 import RedirectManager from '../RedirectManager';
 
-export default function SeoEngineTab() {
+export default function SeoEngine() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key="seo" className="space-y-8 w-full max-w-[100vw] overflow-x-hidden">
       <SeoAnalyticsDashboard />

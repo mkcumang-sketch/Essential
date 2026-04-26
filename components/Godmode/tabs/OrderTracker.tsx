@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Truck, Download, Package, MapPin, Eye, Trash2 } from 'lucide-react';
 
-interface OrderTrackerTabProps {
+interface OrderTrackerProps {
   orders: any[];
   exportToCSV: () => void;
   handleUpdateOrderStatus: (id: string, newStatus: string) => void;
@@ -13,14 +13,14 @@ interface OrderTrackerTabProps {
   handleDeleteOrder: (id: string) => void;
 }
 
-export default function OrderTrackerTab({
+export default function OrderTracker({
   orders,
   exportToCSV,
   handleUpdateOrderStatus,
   handleUpdateTracking,
   setSelectedOrder,
   handleDeleteOrder,
-}: OrderTrackerTabProps) {
+}: OrderTrackerProps) {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} key="orders" className="space-y-8">
        <div className="bg-[#111] p-6 md:p-10 rounded-[20px] md:rounded-[30px] border border-blue-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">

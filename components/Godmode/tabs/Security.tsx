@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Fingerprint, AlertTriangle } from 'lucide-react';
 
-export default function SecurityTab() {
+export default function Security() {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} className="max-w-2xl mx-auto mt-10 md:mt-20 w-full px-4">
        <div className="bg-[#111] border border-red-500/30 p-8 md:p-16 rounded-[30px] md:rounded-[40px] flex flex-col items-center text-center shadow-[0_0_100px_rgba(239,68,68,0.1)] w-full">

@@ -17,15 +17,15 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 // 🚀 BATCH 1 MODULAR COMPONENTS 
-import DashboardTab from '@/components/godmode/tabs/DashboardTab';
-import InventoryTab from '@/components/godmode/tabs/InventoryTab';
-import OrderTrackerTab from '@/components/godmode/tabs/OrderTrackerTab';
-import SeoEngineTab from '@/components/godmode/tabs/SeoEngineTab';
-import LegalPagesTab from '@/components/godmode/tabs/LegalPagesTab';
-import ReviewsTab from '@/components/godmode/tabs/ReviewsTab';
-import SalesForceTab from '@/components/godmode/tabs/SalesForceTab';
-import AiEngineTab from '@/components/godmode/tabs/AiEngineTab';
-import SecurityTab from '@/components/godmode/tabs/SecurityTab';
+import Dashboard from '@/components/godmode/tabs/Dashboard';
+import Inventory from '@/components/godmode/tabs/Inventory';
+import OrderTracker from '@/components/godmode/tabs/OrderTracker';
+import SeoEngine from '@/components/godmode/tabs/SeoEngine';
+import LegalPages from '@/components/godmode/tabs/LegalPages';
+import Reviews from '@/components/godmode/tabs/Reviews';
+import SalesForce from '@/components/godmode/tabs/SalesForce';
+import AiEngine from '@/components/godmode/tabs/AiEngine';
+import Security from '@/components/godmode/tabs/Security';
 import StatCard from '@/components/godmode/StatCard';
 import SeoPanel from '@/components/godmode/SeoPanel';
 import SeoAnalyticsDashboard from '@/components/godmode/SeoAnalyticsDashboard';
@@ -618,7 +618,7 @@ function AdminDashboard() {
           
           {/* ================= 1. COMMAND CENTER (DASHBOARD) ================= */}
           {activeTab === 'FULL_DASHBOARD' && (
-            <DashboardTab
+            <Dashboard
               fullAnalytics={fullAnalytics}
               dashboardView={dashboardView}
               setDashboardView={setDashboardView}
@@ -633,7 +633,7 @@ function AdminDashboard() {
 
           {/* ================= 2. INVENTORY ================= */}
           {activeTab === 'INVENTORY' && (
-            <InventoryTab
+            <Inventory
               categories={categories}
               newCategory={newCategory}
               setNewCategory={setNewCategory}
@@ -649,7 +649,7 @@ function AdminDashboard() {
 
           {/* ================= 3. MANAGE ORDERS ================= */}
           {activeTab === 'ORDER_TRACKER' && (
-            <OrderTrackerTab
+            <OrderTracker
               orders={orders}
               exportToCSV={exportToCSV}
               handleUpdateOrderStatus={handleUpdateOrderStatus}
@@ -864,12 +864,12 @@ function AdminDashboard() {
 
           {/* ================= 8. SEO ENGINE ================= */}
           {activeTab === 'SEO_ENGINE' && (
-            <SeoEngineTab />
+            <SeoEngine />
           )}
 
           {/* ================= 9. LEGAL PAGES ================= */}
           {activeTab === 'LEGAL_PAGES' && (
-            <LegalPagesTab
+            <LegalPages
               legalPages={legalPages}
               setLegalPages={setLegalPages}
               activeLegalPageId={activeLegalPageId}
@@ -883,7 +883,7 @@ function AdminDashboard() {
 
           {/* ================= 10. REVIEWS ================= */}
           {activeTab === 'REVIEWS' && (
-            <ReviewsTab
+            <Reviews
               manualReview={manualReview}
               setManualReview={setManualReview}
               handleAddManualReview={handleAddManualReview}
@@ -896,7 +896,7 @@ function AdminDashboard() {
 
           {/* ================= 11. AFFILIATES ================= */}
           {activeTab === 'SALES_FORCE' && (
-            <SalesForceTab
+            <SalesForce
               agents={agents}
               setIsAgentModalOpen={setIsAgentModalOpen}
               handleDeleteAffiliate={handleDeleteAffiliate}
@@ -905,7 +905,7 @@ function AdminDashboard() {
 
           {/* ================= 12. AI PRICING ================= */}
           {activeTab === 'AI_ENGINE' && (
-            <AiEngineTab
+            <AiEngine
               pricingRules={pricingRules}
               setPricingRules={setPricingRules}
               handleSaveAIRules={handleSaveAIRules}
@@ -914,7 +914,7 @@ function AdminDashboard() {
 
           {/* ================= 13. SECURITY ================= */}
           {activeTab === 'SECURITY' && (
-            <SecurityTab />
+            <Security />
           )}
 
         </AnimatePresence>
