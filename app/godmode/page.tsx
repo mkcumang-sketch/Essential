@@ -26,6 +26,7 @@ import ReviewsTab from '@/components/godmode/tabs/ReviewsTab';
 import SalesForceTab from '@/components/godmode/tabs/SalesForceTab';
 import AiEngineTab from '@/components/godmode/tabs/AiEngineTab';
 import SecurityTab from '@/components/godmode/tabs/SecurityTab';
+import WithdrawalTab from '@/components/godmode/tabs/WithdrawalTab';
 import StatCard from '@/components/godmode/StatCard';
 import SeoPanel from '@/components/godmode/SeoPanel';
 import SeoAnalyticsDashboard from '@/components/godmode/SeoAnalyticsDashboard';
@@ -46,6 +47,7 @@ const MODULES = [
   { id: 'LEGAL_PAGES', icon: FileText, label: 'Legal Policies' },
   { id: 'REVIEWS', icon: Star, label: 'Customer Reviews' },
   { id: 'SALES_FORCE', icon: LinkIcon, label: 'Affiliates & Partners' },
+  { id: 'WITHDRAWALS', icon: Landmark, label: 'Withdrawal Requests' },
   { id: 'AI_ENGINE', icon: Zap, label: 'Smart Pricing AI' },
   { id: 'SECURITY', icon: ShieldAlert, label: 'Security & Maintenance' }
 ];
@@ -455,7 +457,14 @@ function AdminDashboard() {
               <button onClick={() => setSelectedOrder(null)} className="absolute top-4 right-4 md:top-8 md:right-8 text-gray-500 hover:text-white transition-colors p-2 bg-white/5 rounded-full"><X size={24} /></button>
 
               <h3 className="text-2xl md:text-3xl font-bold text-[#D4AF37] mb-2 italic font-serif">Deep Intelligence Report</h3>
-              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[5px] text-gray-500 mb-8">ORDER ID: {selectedOrder.orderId}</p>
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[5px] text-gray-500">ORDER ID: {selectedOrder.orderId}</p>
+                {selectedOrder.referralCode && (
+                  <span className="bg-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold px-3 py-1 rounded-full border border-[#D4AF37]/30 animate-pulse">
+                    🎁 Friend Referral Applied: {selectedOrder.referralCode}
+                  </span>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 border-b border-white/5 pb-10">
                 <div className="space-y-6">
@@ -914,6 +923,11 @@ function AdminDashboard() {
           {/* ================= 13. SECURITY ================= */}
           {activeTab === 'SECURITY' && (
             <SecurityTab />
+          )}
+
+          {/* ================= 14. WITHDRAWALS ================= */}
+          {activeTab === 'WITHDRAWALS' && (
+            <WithdrawalTab />
           )}
 
         </AnimatePresence>
