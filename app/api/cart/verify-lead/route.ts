@@ -18,6 +18,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Email or phone required" }, { status: 400 });
     }
 
+    const orConditions: any[] = [];
+    if (email) orConditions.push({ email });
+    if (phone) orConditions.push({ phone });
+
+    // 🔥 GHOST CART KILLER (VERIF-LEAD EDITION)
+    // Agar items 0 hain (jaise checkout ke baad frontend empty ho gaya ho),
+    // Toh database se Abandoned Cart hamesha ke liye uda do, naya mat banao!
+    if (items.length === 0) {
+      await AbandonedCart.deleteMany({ $or: orConditions });
+      return NextResponse.json({ success: true, action: 'cart_deleted', message: 'Empty cart received, purged from DB' });
+    }
+
     const computedTotal = items.reduce((acc: number, item: any) => {
       const price = Number(item?.offerPrice ?? item?.price ?? 0);
       const qty = Number(item?.qty ?? 1);
@@ -27,10 +39,6 @@ export async function POST(req: Request) {
     const cartTotal = Number.isFinite(Number(payload?.cartTotal))
       ? Number(payload?.cartTotal)
       : computedTotal;
-
-    const orConditions: any[] = [];
-    if (email) orConditions.push({ email });
-    if (phone) orConditions.push({ phone });
 
     const lead = await AbandonedCart.findOneAndUpdate(
       { $or: orConditions },
@@ -48,6 +56,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, leadId: lead._id });
   } catch (error) {
+    console.error("Verif-lead API Error:", error);
     return NextResponse.json({ success: false, error: "We could not save your details." }, { status: 500 });
   }
 }

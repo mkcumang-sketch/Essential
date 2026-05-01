@@ -1,47 +1,32 @@
 /** @type {import('next').NextConfig} */
-
-// CSP: keep in sync with middleware.ts (production) for media/video CDNs used by the app.
-const csp = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://js.stripe.com https://checkout.razorpay.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.pexels.com https://res.cloudinary.com https://*.googleusercontent.com https://cdn.pixabay.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
-  "media-src 'self' blob: data: https://cdn.pixabay.com https://*.pixabay.com https://videos.pexels.com https://*.pexels.com https://www.pexels.com https://res.cloudinary.com",
-  "connect-src 'self' https://api.resend.com https://*.mongodb.net https://*.upstash.io https://www.google.com https://accounts.google.com https://oauth2.googleapis.com https://api.stripe.com https://checkout.razorpay.com https://cdn.pixabay.com https://res.cloudinary.com https://*.cloudinary.com",
-  "frame-src 'self' https://www.google.com https://checkout.razorpay.com https://js.stripe.com",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
-].join("; ");
-
 const nextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      { protocol: "https", hostname: "images.pexels.com" },
-      { protocol: "https", hostname: "cdn.pixabay.com" },
-      { protocol: "https", hostname: "res.cloudinary.com" },
-    ],
-  },
-
-  // 🚀 Sirf yeh block add kiya hai Ghost Data (Cache) rokne ke liye
+  // Tera purana staleTimes wala setting yahan hoga
   experimental: {
     staleTimes: {
-      dynamic: 30,
-      static: 30, // Updated to 30 to comply with Next.js 16 requirements
+      static: 30,
     },
   },
-
-  async headers() {
-    return [
+  
+  // 🔥 YE NAYA BLOCK ADD KARNA HAI
+  images: {
+    remotePatterns: [
       {
-        source: "/(.*)",
-        headers: [{ key: "Content-Security-Policy", value: csp }],
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**', // Iska matlab unsplash ki koi bhi image allow kar do
       },
-    ];
+      // Agar tu Pexels ya Cloudinary bhi use kar raha hai, toh unhe bhi yahan daal de:
+      {
+        protocol: 'https',
+        hostname: 'images.pexels.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      }
+    ],
   },
 };
 

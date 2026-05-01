@@ -44,7 +44,14 @@ export default function OrderTracker({
                       <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-black border border-white/20 flex items-center justify-center text-white font-bold text-xs md:text-sm shrink-0">#{o.orderId?.slice(-4) || 'UKN'}</div>
                       <div className="overflow-hidden">
                          <h4 className="font-bold text-base md:text-xl text-white mb-1 truncate">{o.customer?.name || 'Guest'}</h4>
-                         <p className="text-[10px] md:text-xs text-gray-400 flex items-center gap-1 md:gap-2 truncate"><MapPin size={10} className="md:w-3 md:h-3"/> {o.customer?.city || 'Unknown'} <span className="mx-1 md:mx-2 text-white/20">|</span> <Package size={10} className="md:w-3 md:h-3"/> {o.items?.length || 1} Unit(s)</p>
+                         <div className="flex flex-wrap items-center gap-2">
+                           <p className="text-[10px] md:text-xs text-gray-400 flex items-center gap-1 md:gap-2 truncate"><MapPin size={10} className="md:w-3 md:h-3"/> {o.customer?.city || 'Unknown'} <span className="mx-1 md:mx-2 text-white/20">|</span> <Package size={10} className="md:w-3 md:h-3"/> {o.items?.length || 1} Unit(s)</p>
+                           {o.referralCode && (
+                             <span className="bg-[#D4AF37]/20 text-[#D4AF37] text-[8px] md:text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#D4AF37]/30 flex items-center gap-1">
+                               🎁 Referral: {o.referralCode}
+                             </span>
+                           )}
+                         </div>
                       </div>
                    </div>
                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">

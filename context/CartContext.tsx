@@ -26,6 +26,7 @@ interface CartContextType {
   isSyncing: boolean;
   openCart: () => void;
   closeCart: () => void;
+  clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -37,7 +38,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const closeCart = useCallback(() => setIsCartOpen(false), []);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Initial Hydration: LocalStorage -> State
@@ -72,17 +73,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           }
 
           const data = JSON.parse(textContent);
-          
+
           if (data.success && data.items) {
-            // Merge logic: DB takes precedence for quantity, but keep LocalStorage items if not in DB
-            setCartItems(prev => {
+            // 🛡️ GHOST CART FIX: If DB returns empty cart, it MUST clear localStorage
+            if (data.items.length === 0) {
+              setCartItems([]);
+              localStorage.setItem("luxury_cart", "[]");
+              return;
+            }
+
+            // Merge logic: DB takes precedence for quantity
+            setCartItems(() => {
               const dbItems = data.items as CartItem[];
               const merged = [...dbItems];
-              prev.forEach(localItem => {
-                if (!dbItems.find(dbItem => dbItem._id === localItem._id)) {
-                  merged.push(localItem);
-                }
-              });
+              // Only keep local items that are NOT in DB if we want to preserve guest items,
+              // but for a strict sync, DB should be the source of truth.
               return merged;
             });
           }
@@ -178,6 +183,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const cartTotal = cartItems.reduce((total, item) => total + (item.offerPrice || item.price) * item.qty, 0);
 
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+    localStorage.setItem("luxury_cart", "[]");
+    
+    if (status === "authenticated") {
+      fetch("/api/cart/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: [], totalAmount: 0 }),
+        keepalive: true
+      }).catch(e => console.error("Clear cart sync failed", e));
+    }
+  }, [status]);
+
   return (
     <CartContext.Provider value={{ 
         cart: cartItems, 
@@ -185,6 +204,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addToCart, 
         updateQty, 
         removeFromCart, 
+        clearCart,
         isCartOpen, 
         setIsCartOpen,
         cartTotal,

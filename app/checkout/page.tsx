@@ -25,9 +25,19 @@ const LuxuryToast = ({ message, type, show }: { message: string, type: 'success'
 
 export default function CheckoutPage() {
     const { data: session } = useSession();
-    const { clearCart } = useCartStore();
     
-    const [cart, setCart] = useState<any[]>([]);
+    // 🚀 THE BULLETPROOF HYDRATION FIX
+    const [isMounted, setIsMounted] = useState(false);
+    const store: any = useCartStore();
+    
+    // Auto-detect the correct cart array name from your Zustand store
+    const cart = store.items || store.cart || store.cartItems || [];
+
+    useEffect(() => {
+        // Ye line Next.js ko force karegi ki client side load hone ke baad hi cart render kare
+        setIsMounted(true);
+    }, []);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
 
@@ -53,19 +63,11 @@ export default function CheckoutPage() {
     };
 
     useEffect(() => {
-        const savedCart = JSON.parse(localStorage.getItem('luxury_cart') || '[]');
-        setCart(savedCart);
         if (session?.user) {
             setShippingData(prev => ({...prev, name: session.user?.name || '', email: session.user?.email || '', phone: (session.user as any)?.phone || ''}));
             fetchWalletBalance();
         }
     }, [session]);
-
-    const handleRemoveItem = (indexToRemove: number) => {
-        const updatedCart = cart.filter((_, index) => index !== indexToRemove);
-        setCart(updatedCart);
-        localStorage.setItem('luxury_cart', JSON.stringify(updatedCart));
-    };
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToast({ show: true, message, type });
@@ -73,7 +75,7 @@ export default function CheckoutPage() {
     };
 
     const subTotal = useMemo(() => {
-        return cart.reduce((acc, item) => acc + ((item.offerPrice || item.price) * item.qty), 0);
+        return cart.reduce((acc: number, item: any) => acc + ((item.offerPrice || item.price || 0) * (item.qty || 1)), 0);
     }, [cart]);
 
     const discountAmount = useMemo(() => {
@@ -89,15 +91,17 @@ export default function CheckoutPage() {
     const lastCaptured = useRef("");
     useEffect(() => {
         const captureCart = async () => {
-            if (cart.length > 0 && (shippingData.email || shippingData.phone)) {
-                // Safe checking to prevent infinite loops
+            if (isMounted && cart.length > 0 && (shippingData.email || shippingData.phone)) {
                 const payloadStr = JSON.stringify({ e: shippingData.email, t: grandTotal, c: cart.length });
                 if (lastCaptured.current === payloadStr) return;
                 lastCaptured.current = payloadStr;
 
                 try {
-                    // Sanitize cart to prevent browser memory leaks
-                    const cleanItems = cart.map(i => ({ _id: i._id, qty: i.qty, price: i.price }));
+                    const cleanItems = cart.map((i: any) => ({ 
+                        productId: i.productId || i._id || i.id, 
+                        qty: i.qty, 
+                        price: i.offerPrice || i.price || 0 
+                    }));
                     await fetch('/api/abandoned-cart', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -114,8 +118,7 @@ export default function CheckoutPage() {
         };
         const timer = setTimeout(captureCart, 2000); 
         return () => clearTimeout(timer);
-    }, [shippingData.email, shippingData.phone, cart.length, grandTotal, session]);
-
+    }, [shippingData.email, shippingData.phone, cart.length, grandTotal, session, isMounted]);
 
     const handleVerifyVaultKey = async () => {
         if (!vaultKeyInput.trim()) return;
@@ -146,16 +149,6 @@ export default function CheckoutPage() {
         }
     };
 
-    const loadRazorpay = () => {
-        return new Promise((resolve) => {
-            const script = document.createElement("script");
-            script.src = "https://checkout.razorpay.com/v1/checkout.js";
-            script.onload = () => resolve(true);
-            script.onerror = () => resolve(false);
-            document.body.appendChild(script);
-        });
-    };
-
     const handleCheckout = async (e: React.FormEvent) => {
         e.preventDefault();
         if (cart.length === 0) {
@@ -167,9 +160,8 @@ export default function CheckoutPage() {
         const refCode = localStorage.getItem('active_referral') || (promoDetails?.type === 'referral' ? promoDetails.code : null);
 
         try {
-            // CRITICAL FIX: Sanitize items to prevent browser crash (Circular JSON / Memory overload)
-            const cleanItems = cart.map(item => ({
-                _id: item._id,
+            const cleanItems = cart.map((item: any) => ({
+                _id: item.productId || item._id || item.id,
                 qty: item.qty
             }));
 
@@ -178,7 +170,10 @@ export default function CheckoutPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     items: cleanItems,
-                    shippingData,
+                    shippingData: {
+                        ...shippingData,
+                        state: shippingData.state || 'N/A'
+                    },
                     referralCode: refCode,
                     useWallet: userWallet.useWallet,
                     userId: session?.user ? (session.user as any).id : null,
@@ -189,75 +184,30 @@ export default function CheckoutPage() {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                if (data.isMock || data.amount === 0) {
-                    showToast("Order Secured Successfully!", "success");
-                    localStorage.removeItem('luxury_cart');
-                    localStorage.removeItem('guest_lead_captured');
-                    clearCart(); 
-                    setPlacedOrderId(data.orderId || `ORD-${Date.now().toString().slice(-6)}`); 
-                    return;
-                }
-
-                const rzpLoaded = await loadRazorpay();
-                if (!rzpLoaded) {
-                    showToast("Payment Gateway failed to load", 'error');
-                    setIsSubmitting(false);
-                    return;
-                }
-
-                const options = {
-                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-                    amount: data.amount,
-                    currency: data.currency || "INR",
-                    name: "Essential Rush",
-                    description: "Secure Checkout",
-                    order_id: data.razorpayOrderId,
-                    handler: async function (response: any) {
-                        try {
-                            const verifyRes = await fetch('/api/verify-payment', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    orderId: data.orderId,
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_signature: response.razorpay_signature,
-                                })
-                            });
-                            
-                            if (verifyRes.ok) {
-                                showToast("Transaction Authorized.", "success");
-                                localStorage.removeItem('luxury_cart');
-                                localStorage.removeItem('guest_lead_captured');
-                                clearCart();
-                                setPlacedOrderId(data.orderId);
-                            } else {
-                                showToast("Payment Verification Failed", 'error');
-                            }
-                        } catch (err) {
-                            showToast("Error during verification", 'error');
-                        }
-                    },
-                    prefill: {
-                        name: shippingData.name,
-                        email: shippingData.email,
-                        contact: shippingData.phone,
-                    },
-                    theme: { color: "#333333" },
-                };
-
-                const rzp = new (window as any).Razorpay(options);
-                rzp.open();
-
+                showToast("Order Secured Successfully!", "success");
+                
+                // Nuke the cart
+                if (store.clearCart) store.clearCart(); 
+                localStorage.removeItem('cart'); 
+                localStorage.removeItem('cart-storage');
+                localStorage.removeItem('luxury_cart'); 
+                localStorage.removeItem('guest_lead_captured');
+                
+                setPlacedOrderId(data.orderId || `ORD-${Date.now().toString().slice(-6)}`); 
+                setIsSubmitting(false);
+                return;
             } else {
                 showToast(data.error || "Authorization Failed", 'error');
             }
         } catch (error) {
             showToast("System Malfunction. Try again.", 'error');
         } finally {
-            setIsSubmitting(false);
+            if (!placedOrderId) setIsSubmitting(false);
         }
     };
+
+    // 🔥 PREVENTS HYDRATION MISMATCH - Renders nothing until client is ready
+    if (!isMounted) return null;
 
     if (placedOrderId) {
         return (
@@ -359,7 +309,7 @@ export default function CheckoutPage() {
                             
                             <div className="flex items-center justify-center gap-4 text-xs text-gray-500 uppercase tracking-widest mt-4">
                                 <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> SSL Secured</span>
-                                <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> Razorpay</span>
+                                <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> Cash on Delivery</span>
                             </div>
                         </form>
                     </div>
@@ -372,19 +322,28 @@ export default function CheckoutPage() {
                             </h2>
                             
                             <div className="space-y-6 max-h-[40vh] overflow-y-auto pr-2 mb-8">
-                                {cart.map((item, index) => (
+                                {cart.map((item: any, index: number) => (
                                     <div key={index} className="flex gap-4 group relative border-b border-gray-100 pb-4 last:border-0">
                                         <div className="relative w-16 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-                                            <Image src={item.images?.[0] || '/placeholder.png'} alt={item.name || item.title} fill className="object-cover" />
+                                            <Image 
+                                                src={item.imageUrl || (item.images && item.images[0]) || item.image || '/placeholder.png'} 
+                                                alt={item.name || item.title || 'Product Image'} 
+                                                fill 
+                                                className="object-cover" 
+                                            />
                                         </div>
                                         <div className="flex flex-col justify-center flex-grow">
                                             <h3 className="font-semibold text-sm tracking-wide text-gray-800 line-clamp-2">{item.name || item.title}</h3>
-                                            <p className="text-gray-500 font-mono text-xs mt-1">QTY: {item.qty}</p>
+                                            <p className="text-gray-500 font-mono text-xs mt-1">QTY: {item.qty || 1}</p>
                                         </div>
                                         <div className="flex flex-col justify-between items-end text-right flex-shrink-0">
-                                            <p className="font-mono text-sm tracking-wider font-semibold">₹{((item.offerPrice || item.price) * item.qty).toLocaleString('en-IN')}</p>
+                                            <p className="font-mono text-sm tracking-wider font-semibold">₹{((item.offerPrice || item.price || 0) * (item.qty || 1)).toLocaleString('en-IN')}</p>
                                             <button 
-                                                onClick={() => handleRemoveItem(index)}
+                                                onClick={() => {
+                                                    const id = item.productId || item._id || item.id;
+                                                    if (store.removeItem) store.removeItem(id);
+                                                    else if (store.removeFromCart) store.removeFromCart(id);
+                                                }}
                                                 className="text-gray-400 hover:text-red-500 transition-colors mt-2"
                                             >
                                                 <Trash2 className="w-4 h-4" />

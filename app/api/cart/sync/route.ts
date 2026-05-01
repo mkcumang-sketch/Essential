@@ -1,11 +1,11 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'; 
 import connectDB from '@/lib/mongodb';
 import { UserBehavior } from '@/models/UserBehavior'; // 🚀 Naya model import kiya
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store'; 
 
 // GET: Frontend ko purani cart wapas dene ke liye
 export async function GET() {
@@ -13,7 +13,11 @@ export async function GET() {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             return NextResponse.json({ success: false, items: [] }, {
-                headers: { 'Cache-Control': 'no-store, max-age=0' }
+                headers: { 
+                    'Cache-Control': 'no-store, max-age=0, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             });
         }
 
@@ -23,13 +27,21 @@ export async function GET() {
 
         if (!behavior) {
             return NextResponse.json({ success: true, items: [] }, {
-                headers: { 'Cache-Control': 'no-store, max-age=0' }
+                headers: { 
+                    'Cache-Control': 'no-store, max-age=0, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             });
         }
 
         // Return cartAbandons array
         return NextResponse.json({ success: true, items: behavior.cartAbandons || [] }, {
-            headers: { 'Cache-Control': 'no-store, max-age=0' } 
+            headers: { 
+                'Cache-Control': 'no-store, max-age=0, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            } 
         });
     } catch (error) {
         console.error("GET Cart Error:", error);

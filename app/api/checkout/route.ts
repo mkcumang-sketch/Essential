@@ -69,12 +69,21 @@ export async function POST(req: Request) {
 
         for (const item of items) {
             const dbProduct = await Product.findById(item._id);
-            if (!dbProduct || dbProduct.stock < item.qty) {
-                return NextResponse.json({ success: false, error: "Product unavailable or insufficient stock" }, { status: 400 });
+            if (!dbProduct) {
+                return NextResponse.json({ success: false, error: `Product not found: ${item._id}` }, { status: 404 });
+            }
+            if (dbProduct.stock < item.qty) {
+                return NextResponse.json({ success: false, error: `Insufficient stock for ${dbProduct.name || dbProduct.title}` }, { status: 400 });
             }
             const unitPrice = dbProduct.offerPrice || dbProduct.price;
             trueTotal += unitPrice * item.qty;
-            validatedItems.push({ productId: dbProduct._id, name: dbProduct.name || dbProduct.title, price: unitPrice, qty: item.qty, image: dbProduct.images[0] });
+            validatedItems.push({ 
+                productId: dbProduct._id, 
+                name: dbProduct.name || dbProduct.title, 
+                price: unitPrice, 
+                qty: item.qty, 
+                image: dbProduct.images?.[0] || dbProduct.imageUrl || dbProduct.image 
+            });
         }
 
         // LOYALTY & REFERRAL (10% OFF)
@@ -98,33 +107,41 @@ export async function POST(req: Request) {
             rzpOrder = await razorpay.orders.create({ amount: Math.round(trueTotal * 100), currency: "INR", receipt: `receipt_${Date.now()}` });
         }
 
-        // 🚀 PHASE 1 & 4: Nuke 500 Errors & Payment Perfection
+        // 🚀 PHASE 1 & 4: Nuke 500 Errors & Order Perfection
         const uniqueId = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        
+        // Handle payment method logic when Razorpay is missing
+        const isCOD = !isRazorpayConfigured || trueTotal > 0;
         
         const orderPayload = {
             orderId: uniqueId,
             orderNumber: uniqueId,
-            razorpayOrderId: rzpOrder ? rzpOrder.id : (trueTotal === 0 ? 'WALLET_PAID' : 'COD_PENDING'),
+            razorpayOrderId: rzpOrder ? rzpOrder.id : (trueTotal === 0 ? 'WALLET_PAID' : 'DIRECT_ORDER'),
             userId: dbUser?._id || null,
             items: validatedItems,
             totalAmount: trueTotal,
             walletDeduction,
-            shippingData,
-                customer: {
+            shippingData: {
+                ...shippingData,
+                state: shippingData.state || 'N/A'
+            },
+            customer: {
                name: shippingData.name,
-              email: shippingData.email,
-            phone: shippingData.phone
-         },
-               shippingAddress: {
-            address: shippingData.address,
-           city: shippingData.city,
-           pincode: shippingData.pincode,
-           country: 'India'
-    },
-            paymentMethod: trueTotal === 0 ? 'WALLET' : (isRazorpayConfigured ? 'RAZORPAY' : 'COD'),
+               email: shippingData.email,
+               phone: shippingData.phone
+            },
+            shippingAddress: {
+               address: shippingData.address,
+               city: shippingData.city,
+               pincode: shippingData.pincode,
+               state: shippingData.state || 'N/A',
+               country: 'India'
+            },
+            paymentMethod: trueTotal === 0 ? 'WALLET' : (rzpOrder ? 'RAZORPAY' : 'COD'),
             paymentStatus: trueTotal === 0 ? 'PAID' : 'PENDING',
             status: 'PROCESSING',
-            referralCode,
+            referralCode: referralCode || null,
+            isRewardCredited: false,
             createdAt: new Date()
         };
         
@@ -138,7 +155,6 @@ export async function POST(req: Request) {
                 errors: mongooseError.errors,
                 payloadSent: orderPayload
             });
-            const newOrder = await Order.create(orderPayload);
             throw mongooseError; // Re-throw to be caught by the main catch block
         }
 
@@ -161,6 +177,20 @@ export async function POST(req: Request) {
             });
         } catch(abandonedError) {
             console.error('Abandoned Cart Purge Error (Non-Critical):', abandonedError);
+        }
+
+        // 🔥 GHOST CART KILLER: Clear the actual user's cart in the database (UserBehavior)
+        if (dbUser) {
+            try {
+                // 🚀 FIX: Synchronize with UserBehavior which is the actual cart source of truth
+                const { UserBehavior } = await import('@/models/UserBehavior');
+                await UserBehavior.findOneAndUpdate(
+                    { userId: dbUser._id },
+                    { $set: { cartAbandons: [] } }
+                );
+            } catch (cartClearError) {
+                console.error('Ghost Cart Clear Error (Non-Critical):', cartClearError);
+            }
         }
 
         return NextResponse.json({ 
